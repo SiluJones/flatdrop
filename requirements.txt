@@ -1,0 +1,11 @@
+# Dependências do FlatDrop.
+#
+# pathspec é a ÚNICA dependência e ainda assim é OPCIONAL: sem ela a ferramenta
+# roda usando apenas os ignores embutidos (node_modules, .git, lockfiles, etc.),
+# mas NÃO consegue interpretar o .gitignore do projeto. Instale para ter o
+# casamento de .gitignore correto (negação, globs **, âncoras).
+#
+# A GUI (tkinter) já vem embutida no Python oficial do Windows/macOS — não entra aqui.
+# pytest só é necessário para rodar os testes (veja tests/), não para usar o app.
+
+pathspec>=0.12
