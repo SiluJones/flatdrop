@@ -223,7 +223,14 @@ def _scan(root: Path, cfg: ScanConfig) -> tuple[list[tuple[Path, PurePath, int]]
     """
     spec = _build_gitignore_spec(root, cfg)
     candidates: list[tuple[Path, PurePath, int]] = []
-    skipped: dict[str, int] = {"gitignore": 0, "tipo": 0, "sensível": 0, "ignore_padrão": 0}
+    skipped: dict[str, int] = {
+        "gitignore": 0,
+        "gitignore (pasta)": 0,
+        "tipo": 0,
+        "sensível": 0,
+        "ignore_padrão": 0,
+        "ignore_padrão (pasta)": 0,
+    }
     samples: dict[str, list[str]] = {k: [] for k in skipped}
     warnings: list[str] = []
 
@@ -237,12 +244,18 @@ def _scan(root: Path, cfg: ScanConfig) -> tuple[list[tuple[Path, PurePath, int]]
         rel_dir = cur.relative_to(root)
 
         # Poda de diretórios IN-PLACE (evita descer em node_modules etc.).
+        # IMPORTANTE: cada poda é CONTABILIZADA com motivo e amostra. Antes era
+        # silenciosa: uma pasta casada pelo .gitignore sumia com a subárvore
+        # inteira sem deixar rastro na pré-visualização (FIX-001 — caso real:
+        # pastas "logs" engolidas pelo .gitignore do monorepo do usuário).
         kept = []
         for d in dirnames:
-            if d in cfg.dir_ignores:
-                continue
             rel_sub = (rel_dir / d).as_posix()
+            if d in cfg.dir_ignores:
+                note("ignore_padrão (pasta)", rel_sub + "/")
+                continue
             if spec is not None and spec.match_file(rel_sub + "/"):
+                note("gitignore (pasta)", rel_sub + "/")
                 continue
             kept.append(d)
         dirnames[:] = kept
@@ -387,6 +400,17 @@ def make_plan(root: str | os.PathLike, cfg: ScanConfig) -> FlattenPlan:
     candidates, skipped, samples, warnings = _scan(root_path, cfg)
     planned, collisions, name_warnings = _plan_names(candidates, cfg)
     warnings += name_warnings
+    # FIX-001: pasta inteira engolida pelo .gitignore é fácil de não perceber
+    # (o conteúdo nem é varrido) — então vira um aviso de primeira classe.
+    pruned_gi = skipped.get("gitignore (pasta)", 0)
+    if pruned_gi:
+        ex = ", ".join(samples["gitignore (pasta)"][:4])
+        more = " …" if pruned_gi > 4 else ""
+        warnings.append(
+            f".gitignore pulou {pruned_gi} pasta(s) INTEIRA(s): {ex}{more} — "
+            "o conteúdo delas nem foi varrido. Se você precisa desses arquivos, "
+            "desative a leitura do .gitignore (os ignores embutidos continuam ativos)."
+        )
     if cfg.use_gitignore and not HAS_PATHSPEC:
         warnings.append(
             "pathspec não instalado: .gitignore ignorado nesta execução "

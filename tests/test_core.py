@@ -153,6 +153,58 @@ def test_foreign_dest_gets_numbered_variant(project, tmp_path):
     assert (dest / "alheio.txt").exists()   # original intacta
 
 
+def test_gitignore_pruned_dirs_are_reported(tmp_path):
+    """FIX-001: pasta inteira engolida pelo .gitignore agora deixa rastro.
+
+    Reproduz o teste 2 do caso real (monorepo 'cinzeiro'): três subprojetos com
+    pasta logs/ contendo arquivos de mesmo nome e um .gitignore com 'logs/'.
+    Antes: poda silenciosa (sem contador, sem amostra, sem aviso) e os arquivos
+    'sumiam'. Agora: contador + amostra + aviso de primeira classe.
+    """
+    root = tmp_path / "cinzeiro"
+    root.mkdir()
+    _tree(
+        root,
+        {
+            ".gitignore": "logs/\n",
+            "Cinzeiro-Story/logs/2026-06-11.md": "s",
+            "Cinzeiro-Art/logs/2026-06-11.md": "a",
+            "Cinzeiro-OST/logs/2026-06-11.md": "o",
+            "Cinzeiro-Story/historia.md": "h",
+        },
+    )
+    plan = make_plan(root, ScanConfig(mode="collisions"))
+    targets = {f.rel.as_posix() for f in plan.files}
+    assert "Cinzeiro-Story/historia.md" in targets
+    assert not any("2026-06-11" in t for t in targets)      # podados de fato...
+    assert plan.skipped["gitignore (pasta)"] == 3           # ...mas com rastro
+    assert any(s.endswith("logs/") for s in plan.skipped_samples["gitignore (pasta)"])
+    assert any("pasta(s) INTEIRA(s)" in w for w in plan.warnings)
+
+
+def test_partial_prune_leaves_survivor_unsuffixed(tmp_path):
+    """Documenta o teste 1 do usuário: duas pastas renomeadas para 'logs' são
+    podadas pelo .gitignore; a sobrevivente fica SEM colisão e portanto mantém
+    o nome original sem sufixo (não é sobrescrita — é filtragem na varredura).
+    """
+    root = tmp_path / "cinzeiro"
+    root.mkdir()
+    _tree(
+        root,
+        {
+            ".gitignore": "logs/\n",
+            "Cinzeiro-Story/logs-story/2026-06-11.md": "s",
+            "Cinzeiro-Art/logs/2026-06-11.md": "a",
+            "Cinzeiro-OST/logs/2026-06-11.md": "o",
+        },
+    )
+    plan = make_plan(root, ScanConfig(mode="collisions"))
+    by_rel = {f.rel.as_posix(): f for f in plan.files}
+    logs_md = [r for r in by_rel if r.endswith("2026-06-11.md")]
+    assert logs_md == ["Cinzeiro-Story/logs-story/2026-06-11.md"]
+    assert by_rel["Cinzeiro-Story/logs-story/2026-06-11.md"].target == "2026-06-11.md"
+
+
 def test_split_name_edges():
     assert split_name("page.tsx") == ("page", ".tsx")
     assert split_name(".gitignore") == (".gitignore", "")

@@ -277,14 +277,24 @@ class FlatDropApp(ttk.Frame):
         self.out.insert("1.0", text)
 
     def _plan_summary(self, plan: core.FlattenPlan) -> list[str]:
+        skipped_txt = ", ".join(f"{k}={v}" for k, v in plan.skipped.items() if v)
         lines = [
             f"Raiz: {plan.root}",
             f"Arquivos a copiar: {len(plan.files)}  |  "
             f"nomes repetidos: {plan.collisions}  |  "
             f"total: {core.human_size(plan.total_bytes)}  (~{plan.est_tokens:,} tokens, estimativa)",
-            "Pulados: " + ", ".join(f"{k}={v}" for k, v in plan.skipped.items() if v) or "Pulados: nenhum",
-            "",
+            f"Pulados: {skipped_txt or 'nenhum'}",
         ]
+        # Amostras do que foi pulado, por motivo. Sem isso, o sumiço de
+        # arquivos/pastas é invisível na pré-visualização (FIX-001).
+        for reason, sample in plan.skipped_samples.items():
+            if not sample:
+                continue
+            total = plan.skipped.get(reason, 0)
+            shown = sample[:5]
+            extra = f" … (+{total - len(shown)})" if total > len(shown) else ""
+            lines.append(f"  ↳ {reason}: " + ", ".join(shown) + extra)
+        lines.append("")
         if plan.warnings:
             lines.append("AVISOS:")
             lines += [f"  ⚠ {w}" for w in plan.warnings]
