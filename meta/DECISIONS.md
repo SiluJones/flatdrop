@@ -165,3 +165,105 @@ numa thread e renderiza. O entrypoint `run.py` só ajusta o `sys.path`.
 
 **Consequência.** O core é coberto por testes sem precisar de display. Uma CLU/CLI
 futura (Fase 3) reaproveita o mesmo core sem reescrever nada.
+
+---
+
+## DEC-010 — Coleta multi-fonte com manifesto único (não dois passos)
+**Data:** 2026-06-14 · **Status:** aceita
+
+**Contexto.** O usuário precisa montar uma saída que junte "todos os `.md` do
+repositório (a partir da raiz)" com "os arquivos desenvolvidos de uma subpasta
+(tudo menos `.md`)". Pensou em fazer em dois passos (duas execuções) e fundir,
+mas isso geraria **dois** `_MANIFEST.md` e a segunda execução limparia/duplicaria
+a pasta da primeira. Além disso, a garantia de unicidade (DEC-003) só vale dentro
+de um único plano — dois passos independentes poderiam colidir entre si.
+
+**Decisão.** Introduzir o conceito de **fonte de coleta** (`Source` = raiz +
+filtros próprios) e `make_plan_sources([...])`, que varre várias fontes, **une**
+os candidatos, **deduplica** por caminho real, roda a renomeação sobre o conjunto
+unido e grava **um** manifesto. Os caminhos no manifesto passam a ser relativos à
+**raiz comum** das fontes (para o cinzeiro, isso é a própria raiz do repo). Os
+parâmetros de nomeação/execução (modo, separador, destino) são globais e vêm da
+fonte primária; só os filtros variam por fonte. `make_plan(root, cfg)` continua
+existindo como atalho de fonte única (delega a `make_plan_sources`).
+
+**Consequência.** O caso "docs + área" sai numa execução só, com unicidade
+garantida e sem sobreposição. A complexidade extra fica contida em
+`make_plan_sources`; o resto da core não muda. O `--also-md-from` (DEC-011) é o
+açúcar que expõe isso na CLI.
+
+---
+
+## DEC-011 — CLI reaproveitando a core; multi-fonte é CLI-first
+**Data:** 2026-06-14 · **Status:** aceita
+
+**Contexto.** O usuário quer `.bat` de duplo-clique para achatar pastas de
+trabalho com configuração fixa (ex.: as 4 áreas do cinzeiro). Um `.bat` não tem
+como dirigir uma GUI — então era preciso uma interface de linha de comando. A
+separação core×gui (DEC-009) tornou isso barato.
+
+**Decisão.** Criar `flatdrop/cli.py` e tornar `run.py` de modo duplo: **sem
+argumentos abre a GUI** (duplo-clique como antes); **com argumentos roda a CLI** e
+executa (com `--preview` para só simular — executar direto é seguro pelo
+`safe_clear`, que nunca apaga pasta de terceiros). O atalho `--also-md-from`
+implementa o padrão multi-fonte do DEC-010 numa linha legível. **Multi-fonte fica
+só na CLI por enquanto** (CLI-first): a GUI segue fonte-única; expor multi-fonte
+visualmente virá com o exportador de `.bat` (registrado em IDEAS/ROADMAP).
+Imagens/áudio/vídeo seguem fora por construção (confirmado com o usuário) — não
+há razão para movê-los, o Projeto do Claude não os usa como texto.
+
+**Consequência.** O mesmo core serve GUI e CLI sem duplicação. Os 5 `.bat` do
+cinzeiro nascem da CLI. O filtro `--add-ext` cobre arquivos de engine fora da
+allowlist padrão (ex.: Godot `.gd`); como não se sabe o engine do usuário, não se
+cravou extensão no padrão — o controle é por flag, com palpite ajustável nos
+`.bat`.
+
+---
+
+## FIX-001 — Poda de pastas pelo .gitignore era silenciosa
+**Data:** 2026-06-14 · **Status:** corrigido
+
+**Sintoma.** Ao achatar o monorepo `cinzeiro`, arquivos de mesmo nome em pastas
+`logs` "sumiam" da saída — sem erro, sem aviso, sem aparecer nos pulados.
+
+**Causa raiz.** O `.gitignore` da raiz tinha `logs/`; a varredura poda diretórios
+casados **in-place** para nem descer neles. A poda funcionava, mas **não era
+contabilizada**: só arquivos pulados entravam nos contadores; pasta inteira podada
+não deixava rastro. Como o conteúdo nem era varrido, a subárvore desaparecia da
+pré-visualização. (A GUI ainda agravava ao exibir só contadores, nunca as
+amostras que o plano já guardava.) Diagnóstico confirmado: com as pastas atuais
+`logs-story`/`logs-art`/… o `.gitignore` `logs/` não casa (casa só `logs` exato),
+por isso o manifesto real tinha os arquivos; o erro só apareceu quando foram
+renomeadas para `logs`.
+
+**Solução.** Contabilizar a poda com motivo (`gitignore (pasta)` /
+`ignore_padrão (pasta)`) e amostras; emitir um **aviso de primeira classe** quando
+o `.gitignore` engole pastas inteiras, sugerindo desativar a leitura do
+`.gitignore` (os ignores embutidos seguem ativos). A GUI passou a listar amostras
+de pulados por motivo. Dois testes de regressão reproduzem os cenários reais.
+
+**Lição.** Filtragem que remove em silêncio é pior que ruído: o usuário precisa
+**ver** o que não subiu. Toda exclusão (arquivo ou pasta) tem de deixar rastro.
+
+---
+
+## FIX-002 — Pasta de saída caía na raiz do perfil em vez do Downloads
+**Data:** 2026-06-14 · **Status:** corrigido
+
+**Sintoma.** Em um dos PCs, a saída ia parar em `C:\Users\<user>\` em vez de
+`...\Downloads`.
+
+**Causa raiz.** `default_downloads_dir` fazia `home / "Downloads"` e, se esse
+caminho não existisse, caía **silenciosamente na home**. No Windows, Downloads é
+uma *Known Folder* que pode ter sido movida para outro disco (Propriedades →
+Local), redirecionada por política ou pelo OneDrive — nesses casos
+`home\Downloads` não existe e o fallback disparava cedo demais.
+
+**Solução.** Resolver o local **real**: no Windows via `SHGetKnownFolderPath`
+(GUID `FOLDERID_Downloads`) por `ctypes` (stdlib, sem dependência nova); no Linux
+via `XDG_DOWNLOAD_DIR` e `~/.config/user-dirs.dirs`; no macOS `~/Downloads`. A
+home permanece só como último recurso. Testável de fato só o ramo XDG aqui
+(ambiente Linux); o ramo Windows é coberto por estrutura + confirmação no PC.
+
+**Lição.** "Pasta conhecida" do SO não é um caminho fixo derivável do nome — tem
+de ser perguntada ao sistema, ou o fallback mascara o problema.

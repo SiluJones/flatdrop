@@ -6,9 +6,12 @@ import pytest
 
 from flatdrop.core import (
     ScanConfig,
+    Source,
+    default_downloads_dir,
     execute_plan,
     is_our_folder,
     make_plan,
+    make_plan_sources,
     safe_clear,
     split_name,
 )
@@ -211,3 +214,132 @@ def test_split_name_edges():
     assert split_name(".eslintrc.json") == (".eslintrc", ".json")
     assert split_name("Makefile") == ("Makefile", "")
     assert split_name("types.d.ts") == ("types.d", ".ts")
+
+
+# --------------------------------------------------------------------------- #
+# Filtros desta execução (only_ext / exclude_ext / pasta) — Lote E
+# --------------------------------------------------------------------------- #
+@pytest.fixture()
+def mono(tmp_path: Path) -> Path:
+    """Mini-monorepo no estilo cinzeiro: .md em cada área + alguns não-.md."""
+    root = tmp_path / "cinzeiro"
+    root.mkdir()
+    _tree(
+        root,
+        {
+            "HUB.md": "h",
+            "Story/meta/BIBLIA.md": "b",
+            "Story/dev/cena.gd": "x",       # .gd não está na allowlist padrão
+            "Story/dev/dados.json": "{}",   # .json está
+            "Story/sprite.png": "PNG",      # binário: nunca entra
+            "Art/meta/ESTILO.md": "e",
+            "Game/dev/player.gd": "x",
+        },
+    )
+    return root
+
+
+def test_only_ext_restricts_hard(mono):
+    # só .md: nada de .json, .gd, .png, nem o extensionless seria incluído
+    plan = make_plan(mono, ScanConfig(mode="collisions", only_ext={"md"}))
+    exts = {Path(f.rel.name).suffix for f in plan.files}
+    assert exts == {".md"}
+    assert any(f.rel.name == "BIBLIA.md" for f in plan.files)
+
+
+def test_exclude_ext_subtracts(mono):
+    # tudo permitido MENOS .md; .json continua, .md sai, .gd nunca esteve, .png fora
+    plan = make_plan(mono, ScanConfig(mode="collisions", exclude_ext={"md"}))
+    names = {f.rel.name for f in plan.files}
+    assert "dados.json" in names
+    assert not any(n.endswith(".md") for n in names)
+
+
+def test_add_to_allowlist_brings_gd(mono):
+    # acrescentar "gd" à allowlist faz os scripts de engine entrarem
+    exts = set(ScanConfig().extensions) | {"gd"}
+    plan = make_plan(mono, ScanConfig(mode="collisions", extensions=exts))
+    names = {f.rel.name for f in plan.files}
+    assert "cena.gd" in names and "player.gd" in names
+    assert "sprite.png" not in names  # binário continua de fora
+
+
+def test_folder_filter_starts(mono):
+    # só pastas que começam com "dev" (com gd na allowlist p/ haver conteúdo)
+    exts = set(ScanConfig().extensions) | {"gd"}
+    cfg = ScanConfig(mode="collisions", extensions=exts,
+                     only_folders=["dev"], folder_match="starts")
+    plan = make_plan(mono, cfg)
+    parents = {f.rel.parent.as_posix() for f in plan.files}
+    assert parents == {"Story/dev", "Game/dev"}
+    assert all("dev" in p for p in parents)
+
+
+# --------------------------------------------------------------------------- #
+# Multi-fonte com manifesto único — Lote E (o caso do --also-md-from)
+# --------------------------------------------------------------------------- #
+def test_multisource_area_pack_single_manifest(mono, tmp_path):
+    """Pacote de área: não-.md da subpasta + TODOS os .md do repo, num plano só.
+
+    Reproduz o que o --also-md-from monta: duas fontes, uma saída, um manifesto,
+    sem sobreposição (os .md vêm só da fonte global; os não-.md só da área).
+    """
+    primary = ScanConfig(
+        mode="collisions", exclude_ext={"md"},
+        extensions=set(ScanConfig().extensions) | {"gd"}, use_gitignore=False,
+    )
+    md_cfg = ScanConfig(mode="collisions", only_ext={"md"}, use_gitignore=False)
+    sources = [Source(mono / "Story", primary), Source(mono, md_cfg)]
+    plan = make_plan_sources(sources)
+
+    names = {f.rel.name for f in plan.files}
+    # não-.md só da Story:
+    assert {"cena.gd", "dados.json"} <= names
+    assert "player.gd" not in names           # player.gd é de Game, não entra
+    # todos os .md do repo (inclusive de outras áreas):
+    assert {"HUB.md", "BIBLIA.md", "ESTILO.md"} <= names
+    assert "sprite.png" not in names          # binário fora
+
+    # raiz comum = cinzeiro; caminhos do manifesto relativos a ela
+    assert plan.root == (mono).resolve()
+    by_name = {f.rel.name: f.rel.as_posix() for f in plan.files}
+    assert by_name["ESTILO.md"] == "Art/meta/ESTILO.md"
+    assert by_name["cena.gd"] == "Story/dev/cena.gd"
+
+    # um único manifesto, com as duas fontes descritas
+    assert len(plan.sources) == 2
+    res = execute_plan(plan, tmp_path / "out" / "Story-pack", primary)
+    manifests = list(res.dest.glob("_MANIFEST*.md"))
+    assert len(manifests) == 1
+    body = manifests[0].read_text(encoding="utf-8")
+    assert "Fontes (2)" in body and "Raiz comum" in body
+
+
+def test_multisource_dedup_no_double_copy(tmp_path):
+    """Se duas fontes aceitam o MESMO arquivo, ele entra uma vez só."""
+    root = tmp_path / "p"
+    _tree(root, {"a/README.md": "r", "a/b/nota.md": "n"})
+    # duas fontes idênticas apontando para a mesma subpasta
+    s = ScanConfig(mode="collisions", only_ext={"md"}, use_gitignore=False)
+    plan = make_plan_sources([Source(root / "a", s), Source(root / "a", s)])
+    rels = sorted(f.rel.as_posix() for f in plan.files)
+    assert rels == ["README.md", "b/nota.md"]  # sem duplicatas
+
+
+# --------------------------------------------------------------------------- #
+# Resolução de Downloads (Lote A) — ramo XDG é testável no Linux
+# --------------------------------------------------------------------------- #
+def test_downloads_respects_xdg_env(tmp_path, monkeypatch):
+    target = tmp_path / "Baixados"
+    target.mkdir()
+    monkeypatch.setattr("sys.platform", "linux")
+    monkeypatch.setenv("XDG_DOWNLOAD_DIR", str(target))
+    assert default_downloads_dir() == target
+
+
+def test_downloads_fallback_to_home_when_no_downloads(tmp_path, monkeypatch):
+    monkeypatch.setattr("sys.platform", "linux")
+    monkeypatch.delenv("XDG_DOWNLOAD_DIR", raising=False)
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
+    # não há ~/Downloads nem user-dirs.dirs -> cai na home
+    assert default_downloads_dir() == tmp_path

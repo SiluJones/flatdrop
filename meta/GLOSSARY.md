@@ -66,3 +66,40 @@ corretamente (negação, `**`, âncoras). Dependência única e opcional do Flat
 **TBW (terabytes written).** Métrica de durabilidade de SSD. Citada para concluir
 que copiar poucos MB de texto ocasionalmente é irrelevante para o desgaste do
 disco (ver DEC-002).
+
+---
+
+*Termos acrescentados na 0.2.0 (multi-fonte, filtros, CLI):*
+
+**Fonte (`Source`).** Uma coleta: uma raiz com seu próprio conjunto de filtros.
+Várias fontes podem ser combinadas numa única saída/manifesto (ver Multi-fonte).
+
+**Multi-fonte.** Combinar mais de uma `Source` numa execução só, fundindo os
+candidatos, deduplicando por caminho real e gravando **um** `_MANIFEST.md`. É o
+que permite "todos os `.md` do repo + conteúdo de uma área" sem dois manifestos.
+Implementado por `make_plan_sources`.
+
+**Raiz comum.** Em multi-fonte, a pasta ancestral comum a todas as raízes das
+fontes. Os caminhos no manifesto ficam relativos a ela, para a tabela ser coerente
+entre coletas de raízes diferentes.
+
+**Filtro de tipo.** `only_ext` (restringe a saída a certas extensões — corte
+duro, ignora a allowlist ampla e os extensionless), `exclude_ext` (subtrai
+extensões do que seria aceito) e `add_ext` (acrescenta extensões à allowlist
+padrão, ex.: `gd`/`tscn` para Godot).
+
+**Filtro de pasta.** `only_folders` + `folder_match` (`starts`/`contains`/
+`exact`): um arquivo só entra se algum componente de pasta do seu caminho casar um
+termo; um termo com `/` é tratado como prefixo de caminho relativo à raiz da fonte.
+
+**CLI.** Interface de linha de comando (`flatdrop/cli.py`), acionada por
+`python run.py <opções>`. Sem argumentos, `run.py` abre a GUI; com argumentos,
+roda a CLI. Reaproveita a mesma core (sem regra de negócio duplicada).
+
+**`--also-md-from <raiz>`.** Flag da CLI que adiciona a coleta "todos os `.md` a
+partir de `<raiz>`" à mesma saída. Açúcar sobre o multi-fonte para o padrão "docs
+do repositório + conteúdo de uma subpasta".
+
+**Pacote de área.** No contexto do cinzeiro: a saída de um `.bat` de área — os
+arquivos desenvolvidos (não-`.md`) daquela área **mais** todos os `.md` do grupo,
+num só manifesto.

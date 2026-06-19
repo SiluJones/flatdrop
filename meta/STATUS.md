@@ -2,55 +2,67 @@
 
 Estado atual do projeto. Atualize ao fim de cada sessão de trabalho.
 
-- **Versão:** 0.1.0
-- **Data:** 2026-06-05
-- **Fase:** F1 (MVP) concluída ✅ — ver `ROADMAP.md`.
-- **Situação geral:** funcional e testado. Pronto para o primeiro teste em um
-  projeto real do usuário, no Windows.
+> **Mudanças nesta revisão (2026-06-14):** v0.1.0 → **0.2.0**. Saiu do STATUS o
+> que virou release (foi para o CHANGELOG): a CLI, o multi-fonte, os filtros e as
+> duas correções. Entrou o estado novo e o backlog re-priorizado. O teste em
+> projeto real foi feito (funciona) — então deixou de ser pendência.
 
-## O que já funciona
+- **Versão:** 0.2.0
+- **Data:** 2026-06-14
+- **Fase:** F1 (MVP) concluída ✅ · F2 (robustez/conveniência) **em curso** — ver `ROADMAP.md`.
+- **Situação geral:** em uso real. O fluxo do monorepo `cinzeiro` está coberto de
+  ponta a ponta por linha de comando + `.bat`.
 
-- GUI tkinter completa: seleção de pasta raiz (auto-preenche o nome da saída),
-  destino (padrão `Downloads`), nome da pasta de saída, três modos de renomeação,
-  toggles (ler `.gitignore`, pular sensíveis, limpar destino, gerar manifesto),
-  campo de separador, editor de extensões com "Restaurar padrão", e os botões
-  Pré-visualizar / Executar / Abrir pasta, com área de saída e status.
-- Pipeline planejar→executar (`make_plan` / `execute_plan`) operante.
-- Varredura com poda de diretórios, leitura de `.gitignore` (via pathspec),
-  ignores embutidos, denylist de sensíveis e allowlist de tipos.
-- Renomeação à prova de colisão com unicidade garantida (case-insensitive),
-  profundidade uniforme por grupo, truncamento de nomes longos e contador final.
-- Três modos verificados: `collisions`, `all`, `fullpath`.
-- `safe_clear` que só limpa pasta vazia ou comprovadamente nossa; pasta de
-  terceiros vira variante `nome (2)`. Reexecução reusa e limpa a mesma pasta.
-- `_MANIFEST.md` gerado com metadados + mapa origem→nome + estimativa de tokens.
+## O que já funciona (além do MVP)
+
+- **CLI** (`python run.py <opções>`): mesma core da GUI. Sem argumentos abre a
+  GUI; com argumentos roda no terminal e executa (com `--preview` para só simular).
+- **Multi-fonte com manifesto único** (`make_plan_sources`): combina várias
+  coletas (cada uma com raiz e filtros próprios) numa só pasta de saída, com um
+  `_MANIFEST.md` único, caminhos relativos à raiz comum e dedup por caminho real.
+- **Filtros desta execução:** `--only-ext` (restringe a certas extensões),
+  `--exclude-ext` (subtrai), `--add-ext` (acrescenta à allowlist), `--only-folder`
+  + `--folder-match` (starts/contains/exact).
+- **`--also-md-from <raiz>`:** atalho que monta o padrão "todos os `.md` do repo +
+  conteúdo de uma área" numa saída só (o caso `cinzeiro`).
+- **5 `.bat` do cinzeiro** em `bat/cinzeiro/`: um só-`.md` do grupo e um por área
+  (Story/Art/Game/OST), prontos para duplo-clique.
+- **Downloads resolvido de verdade** (Known Folder no Windows via ctypes; XDG no
+  Linux) — corrige a saída que caía na raiz do perfil quando a pasta fora movida.
+- A poda de pastas pelo `.gitignore`/ignores agora é **visível** (contador +
+  amostra + aviso), tanto na GUI quanto na CLI (FIX-001).
 
 ## Qualidade / testes
 
-- **13 testes pytest passando** (`python -m pytest -q` a partir da raiz).
-- Cobrem: unicidade nos três modos; `.gitignore` + ignores embutidos; `.env`
-  pulado mas `.env.example` permitido; modo `collisions` deixa único intacto;
-  modo `all` sufixa único em subpasta; grupo de colisão com profundidade
-  uniforme; execução grava manifesto e marca a pasta; reexecução limpa a pasta
-  própria; `safe_clear` recusa pasta de terceiros; destino de terceiros vira
-  `(2)`; casos-limite de `split_name`.
-- Smoke test manual executado com saída conferida (os quatro `index.tsx` viram
-  nomes distintos; sensíveis e ruído pulados corretamente).
+- **26 testes pytest passando** (`python -m pytest -q` a partir da raiz):
+  13 do MVP + 2 do FIX-001 + 6 dos filtros/multi-fonte/Downloads + 3 da CLI
+  (`tests/test_cli.py`).
+- Validação manual da CLI com um `cinzeiro` simulado: pacote de área traz os
+  não-`.md` da área + todos os `.md` do grupo num só manifesto; binário (`.png`)
+  fica fora; `--add-ext gd` traz os scripts de engine.
 
-## Pendências imediatas (próxima sessão)
+## Pendências imediatas (próxima sessão) — restante da Fase 2
 
-- **Testar em um projeto real** no Windows (um Next.js e um Python seriam ideais
-  para exercitar `page.tsx`/`__init__.py`). É o próximo passo natural.
-- Confirmar a experiência do `python run.py` no Windows com tkinter nativo
-  (aqui no ambiente de desenvolvimento Linux o tkinter não está disponível, então
-  a GUI não foi aberta de fato — só a core foi exercída).
-- A partir do feedback do teste real, priorizar itens da Fase 2 (ver `ROADMAP.md`
-  e `IDEAS.md`): persistir configurações, `.gitignore` aninhado, CLI sem GUI.
+- **B — `_TREE.md` opcional:** árvore da origem na saída, marcando o que foi
+  pulado e as pastas podadas (casa com o FIX-001). Era do plano da 0.2.0; ficou
+  parqueado para a próxima leva.
+- **C — Pastas recentes + persistência:** `settings.py` com JSON em
+  `%APPDATA%`/`~/.config`; Combobox de raízes recentes na GUI.
+- **D — Ignores de pasta editáveis** com núcleo imutável
+  (`.git`/`node_modules`/`__pycache__`/VCS) na GUI.
+- **Confirmar no Windows:** (a) a GUI abre e opera com tkinter nativo (aqui no
+  Linux o tkinter não existe, só a core/CLI foram exercidas); (b) o fix do
+  Downloads resolve no(s) PC(s) onde a pasta estava caindo na home; (c) os 5
+  `.bat` rodam (ajustar `--add-ext` quando houver arquivos de dev de fato).
 
 ## Riscos / pontos de atenção
 
 - Nenhum bug aberto.
-- O modo degradado sem pathspec ignora o `.gitignore` silenciosamente, exceto por
-  um aviso na saída — fácil de não perceber. Instalar pathspec é o recomendado.
-- A estimativa de tokens é grosseira (`bytes/4`); serve só para sentir proximidade
-  do teto de contexto, não como contagem real.
+- **`--add-ext` nos `.bat` de área é um palpite (Godot).** Hoje, sem arquivos de
+  desenvolvimento no cinzeiro, não muda nada; quando você adicionar o conteúdo
+  desenvolvido, ajuste a lista para os formatos reais do seu engine.
+- Multi-fonte só existe na **CLI/`.bat`** (decisão CLI-first). A GUI segue
+  fonte-única; expor multi-fonte na GUI virá com o exportador de `.bat` (futuro).
+- O fix do Downloads no Windows usa ctypes e **só foi testável na estrutura**
+  aqui (sem Windows no ambiente); confirmar no PC afetado.
+- A estimativa de tokens segue grosseira (`bytes/4`).

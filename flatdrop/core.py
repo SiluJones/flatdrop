@@ -16,6 +16,7 @@ from __future__ import annotations
 import hashlib
 import os
 import shutil
+import sys
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path, PurePath
@@ -57,6 +58,36 @@ class ScanConfig:
     write_manifest: bool = True
     clear_dest: bool = True  # só limpa pastas que SÃO nossas (ver safe_clear)
 
+    # --- Filtros desta execução (todos opcionais; vazio/None = sem filtro) --- #
+    # only_ext: se definido, RESTRINGE a só estas extensões (ex.: {"md"} = só .md).
+    #   Quando ligado, ignora a allowlist ampla e os extensionless (corte duro).
+    # exclude_ext: SUBTRAI estas extensões do que seria aceito (ex.: {"md"}).
+    # Estes dois são o que o --also-md-from usa para montar "todos os .md" numa
+    # fonte e "tudo menos .md" na outra, sem sobreposição.
+    only_ext: set[str] | None = None
+    exclude_ext: set[str] = field(default_factory=set)
+    # Filtro de pasta: um arquivo só entra se algum componente de pasta do seu
+    # caminho casar um dos termos (modo starts/contains/exact); um termo com "/"
+    # é tratado como prefixo de caminho relativo à raiz da fonte.
+    only_folders: list[str] = field(default_factory=list)
+    folder_match: str = "starts"  # "starts" | "contains" | "exact"
+
+
+@dataclass
+class Source:
+    """Uma fonte de coleta: uma raiz com seu próprio conjunto de filtros.
+
+    Multi-fonte permite combinar coletas diferentes numa ÚNICA saída e um único
+    manifesto — ex.: "todos os .md a partir da raiz do repositório" + "tudo menos
+    .md a partir de uma subpasta". Os campos de NOMEAÇÃO/EXECUÇÃO (mode, sep,
+    dest, clear_dest, write_manifest) são globais e vêm da fonte primária (a
+    primeira da lista); só os campos de FILTRO variam por fonte (only_ext,
+    exclude_ext, only_folders, use_gitignore, include_sensitive).
+    """
+
+    root: Path
+    cfg: ScanConfig
+
 
 # --------------------------------------------------------------------------- #
 # Estruturas de resultado
@@ -82,6 +113,9 @@ class FlattenPlan:
     skipped_samples: dict[str, list[str]]  # motivo -> alguns exemplos (rel paths)
     collisions: int                       # quantos nomes-base tinham repetição
     warnings: list[str]
+    # Descrições legíveis de cada fonte (vazio/1 item = execução de fonte única).
+    # Usado pelo manifesto para registrar de onde veio cada coleta em multi-fonte.
+    sources: list[str] = field(default_factory=list)
 
     @property
     def total_bytes(self) -> int:
@@ -181,14 +215,59 @@ def is_sensitive(name: str) -> bool:
 
 
 def is_allowed_type(name: str, cfg: ScanConfig) -> bool:
-    """True se a extensão (ou o nome, p/ extensionless) está na allowlist."""
+    """True se a extensão (ou o nome, p/ extensionless) está na allowlist.
+
+    Os filtros desta execução agem por cima da allowlist padrão:
+    - exclude_ext SUBTRAI (um .md vira não-aceito se "md" estiver em exclude_ext);
+    - only_ext RESTRINGE de forma dura: se definido, só passam as extensões
+      listadas — nem extensionless (Dockerfile, .gitignore) nem o resto da
+      allowlist ampla. É o que faz "--only-ext md" trazer apenas .md.
+    """
     low = name.lower()
+    _, ext = split_name(name)
+    ext_nodot = ext[1:].lower() if ext else ""
+
+    # exclude_ext: corte por subtração (não afeta extensionless, que tem ext "").
+    if ext_nodot and ext_nodot in cfg.exclude_ext:
+        return False
+    # only_ext: corte por restrição (ignora extensionless e a allowlist ampla).
+    if cfg.only_ext is not None:
+        return ext_nodot in cfg.only_ext
+    # comportamento padrão (sem filtro de tipo):
     if low in cfg.extensionless_allow:
         return True
-    _, ext = split_name(name)
     if not ext:
         return False
-    return ext[1:].lower() in cfg.extensions
+    return ext_nodot in cfg.extensions
+
+
+def _folder_matches(rel: PurePath, cfg: ScanConfig) -> bool:
+    """True se o arquivo passa o filtro de pasta (vazio = passa tudo).
+
+    Casa se QUALQUER componente de pasta do caminho satisfaz um termo no modo
+    escolhido (starts/contains/exact). Um termo contendo "/" é tratado como
+    prefixo de caminho relativo à raiz da fonte (ex.: "Cinzeiro-Story/docs").
+    """
+    if not cfg.only_folders:
+        return True
+    parent_posix = rel.parent.as_posix().lower()
+    parts = [p.lower() for p in rel.parent.parts]
+    for term in cfg.only_folders:
+        t = term.strip().strip("/").lower()
+        if not t:
+            continue
+        if "/" in t:  # prefixo de caminho
+            if parent_posix == t or parent_posix.startswith(t + "/"):
+                return True
+            continue
+        for p in parts:  # casa um componente de pasta
+            if cfg.folder_match == "exact" and p == t:
+                return True
+            if cfg.folder_match == "contains" and t in p:
+                return True
+            if cfg.folder_match == "starts" and p.startswith(t):
+                return True
+    return False
 
 
 def _build_gitignore_spec(root: Path, cfg: ScanConfig):
@@ -228,6 +307,7 @@ def _scan(root: Path, cfg: ScanConfig) -> tuple[list[tuple[Path, PurePath, int]]
         "gitignore (pasta)": 0,
         "tipo": 0,
         "sensível": 0,
+        "filtro (pasta)": 0,
         "ignore_padrão": 0,
         "ignore_padrão (pasta)": 0,
     }
@@ -276,9 +356,13 @@ def _scan(root: Path, cfg: ScanConfig) -> tuple[list[tuple[Path, PurePath, int]]
             if not cfg.include_sensitive and is_sensitive(fn):
                 note("sensível", rel_str)
                 continue
-            # 3) tipo aceito?
+            # 3) tipo aceito? (inclui only_ext/exclude_ext desta execução)
             if not is_allowed_type(fn, cfg):
                 note("tipo", rel_str)
+                continue
+            # 3b) filtro de pasta (se houver): só certas pastas desta fonte
+            if not _folder_matches(rel, cfg):
+                note("filtro (pasta)", rel_str)
                 continue
             # 4) candidato
             try:
@@ -392,39 +476,127 @@ def _plan_names(
 # API pública: planejar e executar
 # --------------------------------------------------------------------------- #
 def make_plan(root: str | os.PathLike, cfg: ScanConfig) -> FlattenPlan:
-    """Pré-visualização: varre a raiz e calcula nomes, SEM escrever nada."""
+    """Pré-visualização de FONTE ÚNICA: varre a raiz e calcula nomes, sem gravar.
+
+    É um atalho para o caso comum. Internamente delega a make_plan_sources com
+    uma única fonte, então todo o comportamento (e os testes) seguem idênticos.
+    """
     root_path = Path(root).resolve()
     if not root_path.is_dir():
         raise NotADirectoryError(f"Pasta raiz não encontrada: {root_path}")
+    return make_plan_sources([Source(root_path, cfg)])
 
-    candidates, skipped, samples, warnings = _scan(root_path, cfg)
-    planned, collisions, name_warnings = _plan_names(candidates, cfg)
+
+def _describe_source(root: Path, cfg: ScanConfig) -> str:
+    """Resumo legível de uma fonte para registrar no manifesto/saída."""
+    bits: list[str] = []
+    if cfg.only_ext is not None:
+        bits.append("só: " + ", ".join(sorted(cfg.only_ext)) if cfg.only_ext else "só: (nenhuma)")
+    if cfg.exclude_ext:
+        bits.append("exceto: " + ", ".join(sorted(cfg.exclude_ext)))
+    if cfg.only_folders:
+        bits.append(f"pastas[{cfg.folder_match}]: " + ", ".join(cfg.only_folders))
+    if not cfg.use_gitignore:
+        bits.append("sem .gitignore")
+    suffix = f"  ({'; '.join(bits)})" if bits else ""
+    return f"`{root}`{suffix}"
+
+
+def make_plan_sources(sources: list["Source"]) -> FlattenPlan:
+    """Pré-visualização MULTI-FONTE: varre várias raízes/filtros e funde tudo
+    numa única lista plana com unicidade garantida e UM manifesto.
+
+    Passos:
+      1. Resolve e valida cada raiz; calcula a RAIZ COMUM (para os caminhos do
+         manifesto e para a desambiguação serem coerentes entre fontes).
+      2. Varre cada fonte com seus próprios filtros; rebaseia o caminho relativo
+         à raiz comum; UNE os candidatos e DEDUPLICA por caminho real (nenhum
+         arquivo entra duas vezes, mesmo que duas fontes o aceitem).
+      3. Roda a renomeação à prova de colisão sobre o conjunto unido, usando os
+         parâmetros de nomeação da fonte PRIMÁRIA (mode/sep globais).
+      4. Agrega pulados/avisos de todas as fontes.
+    """
+    if not sources:
+        raise ValueError("Nenhuma fonte fornecida.")
+
+    roots: list[Path] = []
+    for s in sources:
+        rp = Path(s.root).resolve()
+        if not rp.is_dir():
+            raise NotADirectoryError(f"Pasta raiz não encontrada: {rp}")
+        roots.append(rp)
+
+    # Raiz comum: base dos caminhos relativos no manifesto. Em fonte única é a
+    # própria raiz (comportamento idêntico ao de antes).
+    if len(roots) == 1:
+        common = roots[0]
+    else:
+        try:
+            common = Path(os.path.commonpath([str(r) for r in roots]))
+            if not common.is_dir():
+                common = roots[0]
+        except ValueError:  # drives diferentes no Windows (C: vs D:)
+            common = roots[0]
+
+    primary_cfg = sources[0].cfg
+    all_candidates: list[tuple[Path, PurePath, int]] = []
+    seen_src: set[str] = set()  # dedup por caminho real (case-insensitive no Win)
+    skipped_total: dict[str, int] = {}
+    samples_total: dict[str, list[str]] = {}
+    warnings: list[str] = []
+
+    for s, rp in zip(sources, roots):
+        cands, skipped, samples, warns = _scan(rp, s.cfg)
+        for src, rel_src, size in cands:
+            key = os.path.normcase(str(src))
+            if key in seen_src:
+                continue
+            seen_src.add(key)
+            # rebaseia o relativo para a raiz comum (cai no relativo da fonte se
+            # o arquivo não estiver sob a comum — ex.: cross-drive degradado).
+            try:
+                rel_common = PurePath(src.relative_to(common).as_posix())
+            except ValueError:
+                rel_common = rel_src
+            all_candidates.append((src, rel_common, size))
+        for k, v in skipped.items():
+            skipped_total[k] = skipped_total.get(k, 0) + v
+            bucket = samples_total.setdefault(k, [])
+            for ex in samples.get(k, []):
+                if len(bucket) < 8:
+                    bucket.append(ex)
+        warnings += warns
+
+    planned, collisions, name_warnings = _plan_names(all_candidates, primary_cfg)
     warnings += name_warnings
+
     # FIX-001: pasta inteira engolida pelo .gitignore é fácil de não perceber
     # (o conteúdo nem é varrido) — então vira um aviso de primeira classe.
-    pruned_gi = skipped.get("gitignore (pasta)", 0)
+    pruned_gi = skipped_total.get("gitignore (pasta)", 0)
     if pruned_gi:
-        ex = ", ".join(samples["gitignore (pasta)"][:4])
+        ex = ", ".join(samples_total.get("gitignore (pasta)", [])[:4])
         more = " …" if pruned_gi > 4 else ""
         warnings.append(
             f".gitignore pulou {pruned_gi} pasta(s) INTEIRA(s): {ex}{more} — "
             "o conteúdo delas nem foi varrido. Se você precisa desses arquivos, "
             "desative a leitura do .gitignore (os ignores embutidos continuam ativos)."
         )
-    if cfg.use_gitignore and not HAS_PATHSPEC:
+    if any(s.cfg.use_gitignore for s in sources) and not HAS_PATHSPEC:
         warnings.append(
             "pathspec não instalado: .gitignore ignorado nesta execução "
             "(usando só os ignores embutidos). Instale com: pip install pathspec"
         )
-    # ordena por caminho de origem (leitura natural)
+
     planned.sort(key=lambda f: f.rel.as_posix().lower())
+    descs = [_describe_source(rp, s.cfg) for s, rp in zip(sources, roots)]
     return FlattenPlan(
-        root=root_path,
+        root=common,
         files=planned,
-        skipped=skipped,
-        skipped_samples=samples,
+        skipped=skipped_total,
+        skipped_samples=samples_total,
         collisions=collisions,
         warnings=warnings,
+        sources=descs,
     )
 
 
@@ -500,7 +672,15 @@ def write_manifest(dest: Path, plan: FlattenPlan, cfg: ScanConfig) -> Path:
     """
     lines: list[str] = [C.MANIFEST_SIGNATURE]
     lines.append(f"# Manifesto FlatDrop — {plan.root.name}\n")
-    lines.append(f"- **Origem:** `{plan.root}`")
+    # Origem: uma linha simples para fonte única; lista quando há multi-fonte.
+    if len(plan.sources) <= 1:
+        origem = plan.sources[0] if plan.sources else f"`{plan.root}`"
+        lines.append(f"- **Origem:** {origem}")
+    else:
+        lines.append(f"- **Raiz comum:** `{plan.root}`")
+        lines.append(f"- **Fontes ({len(plan.sources)}):**")
+        for d in plan.sources:
+            lines.append(f"  - {d}")
     lines.append(f"- **Gerado em:** {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     lines.append(f"- **Modo de renomeação:** {cfg.mode} · separador `{cfg.sep}`")
     lines.append(f"- **Arquivos:** {len(plan.files)}")
@@ -556,8 +736,85 @@ def human_size(num: int) -> str:
     return f"{size:.1f} GB"
 
 
+def _windows_downloads() -> Path | None:  # pragma: no cover - só roda no Windows
+    """Local REAL da pasta Downloads no Windows via Known Folder API.
+
+    Necessário porque Downloads é uma 'Known Folder' que o usuário pode ter
+    movido para outro disco (Propriedades → Local), redirecionado por política
+    ou pelo OneDrive. Nesses casos `home/Downloads` não existe e o fallback
+    ingênuo caía na home (bug observado). Usa ctypes (stdlib), sem dependência.
+    """
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        class GUID(ctypes.Structure):
+            _fields_ = [
+                ("Data1", wintypes.DWORD),
+                ("Data2", wintypes.WORD),
+                ("Data3", wintypes.WORD),
+                ("Data4", ctypes.c_ubyte * 8),
+            ]
+
+        # FOLDERID_Downloads = {374DE290-123F-4565-9164-39C4925E467B}
+        folderid = GUID(
+            0x374DE290, 0x123F, 0x4565,
+            (ctypes.c_ubyte * 8)(0x91, 0x64, 0x39, 0xC4, 0x92, 0x5E, 0x46, 0x7B),
+        )
+        ptr = ctypes.c_wchar_p()
+        res = ctypes.windll.shell32.SHGetKnownFolderPath(
+            ctypes.byref(folderid), 0, None, ctypes.byref(ptr)
+        )
+        try:
+            if res != 0 or not ptr.value:
+                return None
+            p = Path(ptr.value)
+        finally:
+            ctypes.windll.ole32.CoTaskMemFree(ptr)
+        return p if p.is_dir() else None
+    except Exception:
+        return None
+
+
+def _xdg_downloads() -> Path | None:
+    """Local da pasta Downloads no Linux/BSD respeitando o XDG user-dirs."""
+    env = os.environ.get("XDG_DOWNLOAD_DIR")
+    if env:
+        p = Path(os.path.expandvars(env))
+        if p.is_dir():
+            return p
+    cfg = Path.home() / ".config" / "user-dirs.dirs"
+    if cfg.is_file():
+        try:
+            for line in cfg.read_text(encoding="utf-8", errors="ignore").splitlines():
+                line = line.strip()
+                if line.startswith("XDG_DOWNLOAD_DIR"):
+                    val = line.split("=", 1)[1].strip().strip('"')
+                    val = val.replace("$HOME", str(Path.home()))
+                    p = Path(val)
+                    if p.is_dir():
+                        return p
+        except OSError:
+            return None
+    return None
+
+
 def default_downloads_dir() -> Path:
-    """Pasta Downloads do usuário (multiplataforma, com fallback)."""
+    """Pasta Downloads do usuário (multiplataforma), resolvendo o local REAL.
+
+    No Windows consulta a Known Folder (pode estar movida de disco); no Linux
+    respeita o XDG; no macOS usa ~/Downloads. Só cai na home como último recurso
+    quando nada disso resolve — antes o fallback disparava cedo demais e a saída
+    ia parar na raiz do perfil em vez do Downloads (bug corrigido).
+    """
+    if sys.platform.startswith("win"):
+        p = _windows_downloads()
+        if p:
+            return p
+    elif sys.platform != "darwin":  # Linux/BSD
+        p = _xdg_downloads()
+        if p:
+            return p
     home = Path.home()
     dl = home / "Downloads"
     return dl if dl.is_dir() else home
