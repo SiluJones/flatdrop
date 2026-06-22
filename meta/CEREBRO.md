@@ -1,14 +1,15 @@
-# CLAUDE.md — Instruções para o Assistente
+# CEREBRO.md — Instruções para o Assistente
 
 > Arquivo **estável**. Define COMO o assistente age (não O QUE o projeto é — isso é o CONTEXT).
 > É consultado quando o comportamento precisa ser lembrado; edite quando quiser ajustar tom, ritual ou regras.
 > As Instruções do Projeto trazem uma versão curta deste arquivo, lida em toda mensagem.
+> **Você pode adaptar as Instruções do Projeto a ESTE projeto.** A versão que o kit gera é ponto de partida, não contrato: se fizer sentido, proponha encurtar, trocar exemplos, remover um princípio que não se aplica aqui ou acrescentar uma regra específica deste projeto — sempre respeitando o teto de caracteres (elas são lidas em toda mensagem, cada palavra custa). Registre a mudança no DECISIONS e na seção «Feedback para o Kit» do IDEAS.
 
 ---
 
 ## Ritual de início de sessão
 
-1. Lê `CLAUDE.md` (este) — confirma comportamento e ritual.
+1. Lê `CEREBRO.md` (este) — confirma comportamento e ritual.
 2. Lê `CONTEXT.md` — entende o projeto (panorama estável).
 3. Lê `STATUS.md` — descobre o estado atual e o próximo passo.
 4. Lê última entrada do `CHANGELOG.md` — vê o que mudou desde a sessão anterior.
@@ -135,7 +136,7 @@ Este projeto foi montado com o Kit de Contexto. O Kit evolui — novos princípi
 - Se eu colar (ou subir) um bloco/arquivo marcado como **atualização do Kit** — por exemplo um trecho de CHANGELOG do Kit, um princípio novo, ou um template revisado —, trate-o como instrução para os próximos outputs desta conversa, sem que eu precise recriar o projeto do zero.
 - Ao receber uma atualização, faça um resumo de 1-3 linhas do que mudou e como isso afeta este projeto, e só então passe a aplicar — para eu confirmar que entendeu certo.
 - Atualização de TEMPLATE: ao gerar a próxima versão do arquivo afetado, use o formato novo, preservando o conteúdo específico já existente deste projeto (não sobrescreva meus dados com o exemplo em branco do template).
-- Atualização de REGRA/PRINCÍPIO: incorpore ao comportamento daqui pra frente; se contradisser algo deste CLAUDE.md, aponte o conflito e me pergunte qual vale, em vez de decidir sozinho.
+- Atualização de REGRA/PRINCÍPIO: incorpore ao comportamento daqui pra frente; se contradisser algo deste CEREBRO.md, aponte o conflito e me pergunte qual vale, em vez de decidir sozinho.
 - Ao integrar uma atualização do sistema/Kit num projeto já montado, PRESERVE a estrutura que já existe (nichos, docs e decisões específicas deste projeto): adapte só as camadas universal/transversal (princípios, protocolo, gatilhos). Antes de mudar, mostre em lista curta o que vai alterar, para eu aprovar — não reescreva o projeto.
 - Feedback opcional: se eu pedir, resuma em um parágrafo o que ESTE projeto criou ou aperfeiçoou além do Kit (no nicho, na parte universal, ou num princípio) que valha levar de volta ao Kit. Sem pedido, não gera esse relatório — mantém o foco em integrar a atualização e seguir o trabalho.
 - Na dúvida sobre se algo é uma atualização do Kit ou conteúdo do projeto, pergunte.
@@ -164,15 +165,17 @@ Pense na janela de contexto como a memória RAM: rápida, finita, zerada a cada 
 
 | Evento | O assistente entrega |
 |---|---|
-| Início de sessão | Lê CLAUDE.md → CONTEXT.md → STATUS.md → última entrada do CHANGELOG. |
+| Início de sessão | Lê CEREBRO.md → CONTEXT.md → STATUS.md → última entrada do CHANGELOG. |
 | Decisão importante tomada | Entrega o DECISIONS.md completo e atualizado (nova entrada em formato ADR: contexto, decisão, alternativas, consequências). |
 | Bug grave resolvido | Entrega o DECISIONS.md completo (nova entrada: sintoma, causa raiz, solução, lição). |
 | Ideia mencionada (sua ou minha) | Entrega o IDEAS.md completo com a ideia capturada (na hora, sem pedir). |
-| Feedback sobre o kit — dito OU feito (desvio estrutural: diretriz nova neste CLAUDE.md, template alterado/dispensado, arquivo novo criado) | Registra na hora no IDEAS.md, seção «Feedback para o Kit»: o que foi observado/mudado e por quê. É o material que volta para evoluir o kit — sem o registro, o aprendizado deste projeto se perde. |
+| Feedback sobre o kit — dito OU feito (desvio estrutural: diretriz nova neste CEREBRO.md, template alterado/dispensado, arquivo novo criado) | Registra na hora no IDEAS.md, seção «Feedback para o Kit»: o que foi observado/mudado e por quê. É o material que volta para evoluir o kit — sem o registro, o aprendizado deste projeto se perde. |
 | Fim de sessão | Entrega os arquivos completos afetados: STATUS.md + CHANGELOG.md (se fechou algo) + log da sessão. |
 | Decisão de arquitetura ou troca de lib | Entrega o DECISIONS.md completo (nova DEC-N: contexto, decisão, alternativas, consequências). |
 | Mudança de fase do projeto | Entrega o ROADMAP.md completo com a fase atualizada (concluída / em curso / próxima). |
 | Termo técnico próprio do projeto usado | Entrega o GLOSSARY.md completo com o termo definido. |
+
+> Se um arquivo referenciado pelas regras acima (IDEAS, DECISIONS, etc.) ainda não existir no projeto, o assistente o CRIA na primeira necessidade — a partir do papel descrito e do modelo do kit — em vez de tratar a ausência como erro ou adiar a captura.
 
 ## Ao final de cada sessão, o assistente entrega (como arquivos completos)
 
@@ -211,5 +214,74 @@ O usuário trabalha em **Windows (CMD/Prompt de Comando)**. Qualquer comando de 
 ## Idioma
 
 Respostas em pt-BR, incluindo comentários quando houver código.
+
+## Desenvolvimento no Claude Code (raias chat ↔ Code)
+
+Este projeto é desenvolvido com o **Claude Code** (CLI/desktop), além do chat de planejamento. Há duas raias:
+
+- **Chat (planejamento):** cura e ENTREGA arquivos de doc. Para reescrita de fundo/voz ou arquivo **novo/pequeno**, entrega o **arquivo inteiro**. Para um **delta estruturado** num doc **grande** (marcar fase, abrir fase, inserir nota, acrescentar item), entrega uma **spec curta** em `meta/specs/` com o **texto exato** e **âncora semântica** (seção/título, nunca nº de linha) — e o Code posiciona.
+- **Claude Code (execução):** implementa código e faz edições **append-only** nos meta/ (linha no STATUS, `DEC-`/`FIX-` em DECISOES, marcar estado de fase). Aplica as specs de doc. Roda build/validação. Commita.
+
+**Método "doc por spec":** o chat AUTORA o texto; o Code só POSICIONA — não inventa prosa de curadoria. **Um canal por doc por ciclo** (se um doc foi por spec, o chat não entrega o mesmo doc inteiro no mesmo ciclo). Specs **só de doc não tocam o produto** → não precisam de build; a rede é o `git diff`.
+
+**Ao APLICAR uma spec (Code):** localize cada âncora EXATAMENTE; se não achar uma, **PARE e reporte** — nunca chute um lugar próximo. Não toque em nada fora das edições nomeadas. Rode `git diff` e confira a forma esperada antes de commitar.
+
+**Ambiente:** os comandos do Code rodam por um Git Bash interno (caminhos com `/` funcionam). Mensagens de commit **sem acento**. O arquivo-raiz `CLAUDE.md` (convenções + build) e a pasta `.claude/` (permissões + comandos `/`) ficam na raiz do repo — veja-os ao iniciar.
+
+---
+
+## Apêndice — arquivos de arranque do Claude Code (crie estes no repo)
+
+Crie os arquivos abaixo nos caminhos indicados (depois de criar, pode apagar este apêndice). São um **starter** — ajuste o comando de build e as permissões ao seu projeto.
+
+### `CLAUDE.md` (na RAIZ do repo)
+```markdown
+# <NOME DO PROJETO> — guia para o Claude Code
+
+> Arquivo-raiz lido pelo Claude Code em toda sessão. Mantenha CURTO (custa token em todo turno).
+> O comportamento detalhado do assistente está em `meta/CEREBRO.md`.
+
+## Ritual de início
+Leia `meta/CEREBRO.md` → `meta/CONTEXT.md` → `meta/STATUS.md` antes de agir. Confirme em uma frase o que entendeu.
+
+## Build / validação
+- Build: `<seu comando de build, ex.: npm run build>`  (PLACEHOLDER — troque pelo do seu projeto)
+- Testes/validação: `<seu comando de teste>` — rode antes de commitar mudança de código.
+- Mudança só de doc (meta/) NÃO precisa de build; a rede é o `git diff`.
+- Adicione seus comandos de build/teste ao `allow` de `.claude/settings.json`.
+
+## Convenções
+- Mensagens de commit **sem acento**.
+- Edições nos meta/ são **append-only** pelo Code (STATUS, DECISOES); curadoria que reescreve vem do chat (arquivo inteiro OU spec).
+- Ao aplicar uma spec de `meta/specs/`: ache cada âncora exatamente; se não achar, PARE e reporte. Não mexa fora das edições nomeadas. `git diff` antes do commit.
+```
+
+### `.claude/settings.json`
+```json
+{
+  "permissions": {
+    "allow": [
+      "Read", "Edit", "Grep", "Glob",
+      "Bash(git status:*)", "Bash(git diff:*)", "Bash(git add:*)", "Bash(git commit:*)", "Bash(git push:*)"
+    ],
+    "deny": ["Bash(rm -rf:*)"]
+  }
+}
+```
+(Adicione seu comando de build/teste — ex.: `"Bash(npm run build:*)"` — ao `allow`.)
+
+### `.claude/commands/apply-spec.md`
+```markdown
+Leia o arquivo de spec indicado em `meta/specs/` e execute-o.
+Localize cada âncora EXATAMENTE; se não achar uma, PARE e reporte — não chute um lugar próximo.
+Não toque em nada fora das edições nomeadas. Ao fim, rode `git diff` e confira a forma esperada antes de commitar.
+Spec: $ARGUMENTS
+```
+
+### `.claude/commands/wrap.md`
+```markdown
+Encerre a tarefa: atualize `meta/STATUS.md` (append, não reescreva), acrescente `DEC-`/`FIX-` em `meta/DECISOES.md` se houve decisão/bug,
+e me mostre o `git diff` e o comando de commit (uma linha por comando, mensagem SEM acento).
+```
 
 *Gerado pelo Kit de Contexto Universal — nicho Desenvolvimento. Edite à vontade: este arquivo é seu.*
