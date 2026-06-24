@@ -48,6 +48,19 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
   (opcional). (Fase 4.)
 - **Drag-and-drop da pasta raiz na janela.** Arrastar a pasta em vez de navegar
   (exigiria tkinterdnd2 — pesar contra o princípio de zero dependências). (Stand-by.)
+- **`.flatdropignore` (ignore próprio da ferramenta).** Um arquivo por projeto, lido como o
+  `.gitignore` (via pathspec) e ANINHADO (lido ao entrar em subpastas), para excluir o que vai
+  para o git mas não para o Projeto do Claude (docs gerados, dados grandes). Com negação (`!`)
+  também LIBERA o que o `.gitignore` bloqueia — resolvendo de uma vez "excluir a mais" e
+  "liberar do gitignore". Ideia do usuário (260615-2). Substitui inflar o config para sempre.
+- **GUI: selecionar tipo na hora (só-ext / exceto-ext).** Os filtros `only_ext`/`exclude_ext` já
+  existem na core/CLI; falta expô-los na interface (ex.: campo "só estes tipos: md"). Pedido do usuário.
+- **GUI: liberar item específico do `.gitignore`** sem desligar a leitura inteira (force-include /
+  campo de exceções), além do toggle on/off que já existe. Conecta com o `.flatdropignore` (negação).
+- **`_TREE.md`: tratamento de conteúdo ignorado.** Preocupação do usuário (260615-2): a árvore NÃO
+  deve listar o interior de pastas ignoradas (node_modules etc.) — isso incharia o arquivo. Padrão
+  profissional (tree --gitignore, repomix): pasta podada vira UMA linha colapsada
+  ("node_modules/ [ignorada]"), sem recursão. O `_TREE` deve seguir isso.
 
 ## Concluídas
 
@@ -76,3 +89,16 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
 - **Mover imagens/áudio/vídeo para a saída.** O Projeto do Claude não os usa como
   texto; ignorá-los é o certo. Se algum dia for preciso incluir, reabrir via um
   toggle explícito. (Confirmado com o usuário em 2026-06-14.)
+
+## Feedback para o Kit
+
+Registro do que ESTE projeto observou/mudou além do kit (material que volta para evoluí-lo).
+
+- **Adotado o modo Claude Code (duas raias).** Chat autora docs/specs; Code implementa e commita.
+  Criados os arquivos de arranque (`CLAUDE.md` raiz, `.claude/`). Ver DEC-012.
+- **`meta/CLAUDE.md` → `meta/CEREBRO.md`.** O arquivo de comportamento foi renomeado pelo kit;
+  confirmado como superconjunto exato do anterior (princípios 1-19, higiene, transferência
+  idênticos; só ACRESCENTOU a nota de adaptar instruções, a seção de raias e o apêndice de
+  arranque). Nada se perdeu — não houve merge a fazer.
+- **Método "doc por spec" exercitado.** Specs em `meta/specs/` com âncora semântica; um canal por
+  doc por ciclo. Funcionou para code (spec-0001) e doc (spec-0002).

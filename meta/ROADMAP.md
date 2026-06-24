@@ -34,6 +34,10 @@ Itens em aberto vêm de `IDEAS.md`; ao concluir, registre em `CHANGELOG.md`.
 - [ ] **C —** Persistir configurações + pastas recentes na GUI.
 - [ ] **D —** Ignores de pasta editáveis na GUI (com núcleo imutável).
 - [ ] Aviso mais visível quando o pathspec está ausente (destaque na GUI).
+- [ ] Acrescentar tipos à allowlist de defaults (spec-0001: Godot, PDF/DOCX/XLSX/ODT/RTF/EPUB, +linguagens).
+- [ ] **E2 —** Expor seleção de tipo na GUI (só-ext / exceto-ext) — filtros já existem na core.
+- [ ] Liberar item específico do `.gitignore` na GUI (force-include), sem desligar a leitura inteira.
+- [ ] **`.flatdropignore`** (ignore próprio, aninhado, com negação para liberar) + `.gitignore` aninhado — sai do stand-by; precisa de design.
 
 ## Fase 3 — Gerador de `.bat` e multi-fonte na GUI
 

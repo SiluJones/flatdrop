@@ -267,3 +267,45 @@ home permanece só como último recurso. Testável de fato só o ramo XDG aqui
 
 **Lição.** "Pasta conhecida" do SO não é um caminho fixo derivável do nome — tem
 de ser perguntada ao sistema, ou o fallback mascara o problema.
+
+---
+
+## DEC-012 — Desenvolvimento em duas raias (chat autora, Claude Code implementa)
+**Data:** 2026-06-22 · **Status:** aceita
+
+**Contexto.** O kit passou a suportar o modo Claude Code. Antes, o chat planejava E
+implementava o código no mesmo turno (via mount). Isso mistura curadoria com execução e
+gasta contexto do chat com detalhe de implementação.
+
+**Decisão.** Adotar duas raias: o **chat** autora documentos (arquivo inteiro para
+novo/pequeno; **spec** em `meta/specs/` com texto exato + âncora semântica para delta em doc
+grande) e specs de código; o **Claude Code** implementa o código, aplica as specs, roda
+`pytest`, faz edições append-only nos meta e commita. "Um canal por doc por ciclo": se um doc
+foi por spec, o chat não o entrega inteiro no mesmo ciclo. Criados os arquivos de arranque na
+raiz (`CLAUDE.md`, `.claude/settings.json`, `.claude/commands/`). O antigo `meta/CLAUDE.md`
+(comportamento) virou `meta/CEREBRO.md` — superconjunto exato do anterior (nada perdido); o
+nome `CLAUDE.md` passou a ser o guia-raiz curto do Code.
+
+**Alternativas.** Seguir implementando tudo no chat (mistura raias, gasta contexto);
+implementar só no chat e usar o Code só para doc (subaproveita o Code em código).
+
+**Consequência.** O chat fica mais enxuto e focado em decisão/arquitetura/curadoria; o código
+é implementado e testado no Code com diff auditável. Custo: disciplina de manter specs com
+âncoras exatas e de não duplicar canal por doc.
+
+## DEC-013 — Expandir a allowlist de tipos (defaults), sem virar pega-tudo
+**Data:** 2026-06-22 · **Status:** aceita
+
+**Contexto.** Faltavam tipos que o Projeto do Claude aceita (PDF/DOCX/XLSX e ainda ODT/RTF/EPUB)
+e os do engine do usuário (Godot: `.gd`, `.gd.uid`…), além de várias linguagens/config comuns.
+
+**Decisão.** Acrescentar um conjunto curado à `DEFAULT_EXTENSIONS` (ver `spec-0001`), incluindo
+os documentos binários aceitos pelo Projeto — mantendo imagens/áudio/vídeo FORA. Defaults
+generosos cobrem o caso comum; o ajuste fino por projeto fica para o `.flatdropignore` (futuro),
+em vez de inflar o config indefinidamente.
+
+**Alternativas.** Só os 5 tipos pedidos (deixaria gaps óbvios de linguagem); só `.flatdropignore`
+e nenhum default novo (todo projeto teria de reconfigurar do zero).
+
+**Consequência.** Mais tipos chegam ao Projeto sem configuração. Ressalva: a estimativa de
+tokens (`bytes/4`) não vale para binários, e binários grandes podem estourar o teto de 30 MB.
