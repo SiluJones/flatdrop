@@ -13,6 +13,15 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
 
 ## Ativas
 
+- **Redesign da UI por seleção (UX, em fases).** Trocar a digitação de tipos por um **modal pop-up**:
+  botão "Tipos…" abre um diálogo (Toplevel modal) com checklist categorizado (Linguagens, Web, Config,
+  Documentos, Godot…), busca, "marcar todos/limpar" por grupo, OK/Cancelar. Subsume "Extensões aceitas"
+  e os filtros "Só estes/Exceto" numa só interface, deixando a tela principal compacta (só um resumo
+  "Tipos: N selecionados"). Pedido do usuário (mais prático, intuitivo, bonito; melhor uso de espaço).
+  Desenhar a estrutura primeiro e aprovar antes de implementar.
+- **Flag CLI `--ext-set a,b,c` (allowlist exata).** Para o gerador de `.bat` reproduzir FIELMENTE uma
+  allowlist customizada no modal (hoje só dá para somar via `--add-ext`; remoções não se expressam).
+  Avaliar junto do redesign da UI.
 - **`_TREE.md` na saída.** Gerar (opcional, ligado por padrão) uma árvore
   indentada da origem na pasta de saída: arquivos copiados limpos, pulados com o
   motivo, pastas podadas fechadas. Resolve o "Claude não acha `page.tsx` porque

@@ -12,6 +12,7 @@ import os
 import subprocess
 import sys
 import threading
+from dataclasses import replace
 from pathlib import Path
 
 import tkinter as tk
@@ -38,6 +39,13 @@ class FlatDropApp(ttk.Frame):
         master.title(f"FlatDrop {core.__import__('flatdrop').__version__}"
                      if False else "FlatDrop — achatar projeto para o Claude")
         master.minsize(720, 620)
+        try:
+            master.state("zoomed")  # abre maximizada (Windows; alguns Linux)
+        except tk.TclError:
+            try:
+                master.attributes("-zoomed", True)  # fallback X11
+            except tk.TclError:
+                pass
         self.grid(row=0, column=0, sticky="nsew")
         master.columnconfigure(0, weight=1)
         master.rowconfigure(0, weight=1)
@@ -197,7 +205,10 @@ class FlatDropApp(ttk.Frame):
             self.dest_var.set(path)
 
     def _choose_also_md(self) -> None:
-        path = filedialog.askdirectory(title="Raiz para incluir todos os .md")
+        root = self.root_var.get().strip()
+        initial = str(Path(root).parent) if root and Path(root).is_dir() else None
+        path = filedialog.askdirectory(
+            title="Raiz para incluir todos os .md", initialdir=initial)
         if path:
             self.also_md_root_var.set(path)
             self.also_md_var.set(True)
@@ -308,6 +319,19 @@ class FlatDropApp(ttk.Frame):
             exclude_ext=_parse_exts(self.exclude_ext_var.get()),
         )
 
+    def _sources(self, primary: core.ScanConfig) -> list[core.Source]:
+        """Fontes de coleta: a raiz primária + (se marcado) TODOS os .md de outra raiz.
+
+        Espelha o que `_build_cli_args` faz para o .bat, para que a execução ao vivo
+        e o .bat gerado produzam o MESMO resultado.
+        """
+        sources = [core.Source(Path(self.root_var.get().strip()), primary)]
+        md_root = self.also_md_root_var.get().strip()
+        if self.also_md_var.get() and md_root:
+            md_cfg = replace(primary, only_ext={"md"}, exclude_ext=set(), only_folders=[])
+            sources.append(core.Source(Path(md_root), md_cfg))
+        return sources
+
     def _dest_path(self) -> Path:
         base = Path(self.dest_var.get() or core.default_downloads_dir())
         name = self.name_var.get().strip() or Path(self.root_var.get()).name or "flatdrop_out"
@@ -357,22 +381,22 @@ class FlatDropApp(ttk.Frame):
     def _on_preview(self) -> None:
         if not self._validate_root():
             return
-        cfg = self._gather_cfg()
-        root = self.root_var.get().strip()
+        primary = self._gather_cfg()
+        sources = self._sources(primary)
         self.status.config(text="Varrendo…")
-        self._run_async(lambda: core.make_plan(root, cfg), self._render_preview)
+        self._run_async(lambda: core.make_plan_sources(sources), self._render_preview)
 
     def _on_execute(self) -> None:
         if not self._validate_root():
             return
-        cfg = self._gather_cfg()
-        root = self.root_var.get().strip()
+        primary = self._gather_cfg()
+        sources = self._sources(primary)
         dest = self._dest_path()
         self.status.config(text="Copiando…")
 
         def work():
-            plan = core.make_plan(root, cfg)
-            res = core.execute_plan(plan, dest, cfg)
+            plan = core.make_plan_sources(sources)
+            res = core.execute_plan(plan, dest, primary)
             return plan, res
 
         self._run_async(work, self._render_execute)

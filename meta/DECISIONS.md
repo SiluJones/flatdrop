@@ -333,3 +333,23 @@ foram reentregues em ASCII (e sem `--add-ext`, redundante após a spec-0001). O 
 
 **Lição.** `.bat` no CMD é sensível a encoding: trate o corpo como ASCII. Acento só na SAÍDA
 (via `chcp`), nunca no texto que o CMD parseia. Geradores de `.bat` devem garantir isso.
+
+---
+
+## FIX-004 — toggle multi-fonte não afetava a execução ao vivo na GUI
+**Data:** 2026-06-24 · **Status:** corrigido (spec-0005)
+
+**Sintoma.** Com "Também incluir todos os .md a partir de:" MARCADO, o `.bat` gerado fazia
+área + todos os `.md` (2 fontes, correto), mas "Pré-visualizar"/"Executar" na própria GUI
+faziam só a coleta normal da raiz (1 fonte).
+
+**Causa raiz.** Omissão da spec-0003: o toggle (`also_md_var`/`also_md_root_var`) foi ligado
+apenas ao `_build_cli_args` (gerador de `.bat`). Os handlers `_on_preview`/`_on_execute`
+continuavam chamando `core.make_plan(root, cfg)` (fonte única), sem montar as fontes.
+
+**Solução.** Helper `_sources(primary)` que espelha o `_build_cli_args` (raiz primária + fonte
+"todos os .md" via `replace(primary, only_ext={'md'}, ...)`); `_on_preview`/`_on_execute` passam
+a usar `core.make_plan_sources(...)`. Assim a execução ao vivo e o `.bat` dão o MESMO resultado.
+
+**Lição.** Ao adicionar uma opção que o gerador de `.bat` serializa, ligar a MESMA opção ao
+caminho de execução ao vivo no mesmo ciclo — senão a GUI e o `.bat` divergem.

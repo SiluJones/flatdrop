@@ -38,6 +38,8 @@ Itens em aberto vêm de `IDEAS.md`; ao concluir, registre em `CHANGELOG.md`.
 - [ ] **E2 —** Expor seleção de tipo na GUI (só-ext / exceto-ext) — filtros já existem na core.
 - [ ] Liberar item específico do `.gitignore` na GUI (force-include), sem desligar a leitura inteira.
 - [ ] **`.flatdropignore`** (ignore próprio, aninhado, com negação para liberar) + `.gitignore` aninhado — sai do stand-by; precisa de design.
+- [ ] **UI/UX (em fases, design primeiro):** seleção de tipo por modal pop-up (checklist + busca);
+      tela principal compacta; abrir maximizada (feito na spec-0005). Avaliar flag CLI `--ext-set`.
 
 ## Fase 3 — Gerador de `.bat` e multi-fonte na GUI
 
