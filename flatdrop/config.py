@@ -45,6 +45,21 @@ DEFAULT_EXTENSIONS: set[str] = {
     "csv", "tsv",
     # Documentação
     "md", "markdown", "mdx", "rst", "adoc", "asciidoc", "txt", "tex",
+    # Documentos que o Projeto do Claude aceita (BINÁRIOS — copiam, mas a
+    # estimativa de tokens não vale para eles; imagens/áudio/vídeo seguem fora).
+    "pdf", "docx", "doc", "xlsx", "rtf", "odt", "epub",
+    # Godot (projeto do usuário) — todos texto, exceto nada relevante de binário.
+    "gd", "uid", "gdshader", "tscn", "tres", "godot", "import",
+    # Linguagens comuns que faltavam (todas texto/código).
+    "jl", "nim", "zig", "sol", "cu", "cuh", "hx", "coffee",
+    "vb", "vbs", "pas", "pp", "f90", "f95", "for",
+    "scm", "rkt", "lisp", "psm1", "psd1",
+    # Infra / config como código.
+    "hcl", "tf", "tfvars", "nix", "cmake", "bicep",
+    # Markup / dados / templates que faltavam.
+    "org", "rmd", "qmd", "bib", "sty", "cls", "plist",
+    "jsonl", "ndjson", "hbs", "handlebars", "ejs", "pug",
+    "liquid", "njk", "mustache", "twig",
 }
 
 # Arquivos SEM extensão (ou dotfiles) que ainda são texto útil.
