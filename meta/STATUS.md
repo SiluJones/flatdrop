@@ -58,9 +58,11 @@ Estado atual do projeto. Atualize ao fim de cada sessão de trabalho.
 ### Modo Claude Code + design em curso (2026-06-22)
 - **Modo Claude Code adotado** (DEC-012): chat autora docs/specs, Code implementa. Arranque criado
   (`CLAUDE.md` raiz, `.claude/`). `meta/CEREBRO.md` substitui o antigo `meta/CLAUDE.md`.
-- **spec-0001 (tipos de arquivo)** pendente de aplicação no Claude Code.
-- **Em design (aguardando decisões):** seleção de tipo na GUI; liberação do `.gitignore` na GUI;
-  gerador de `.bat` na GUI; `.flatdropignore` + `.gitignore` aninhado; `_TREE.md`.
+- **spec-0001 (tipos) e spec-0002 (docs) APLICADAS** e commitadas no Claude Code (26/26 testes).
+- **spec-0003 (GUI: filtros de tipo + gerador de `.bat`)** autorada — pendente de aplicação.
+- **FIX-003:** `.bat` falhava no CMD por não-ASCII — corrigido; os 5 `.bat` do cinzeiro reentregues em ASCII.
+- **Próximas specs (em design):** `.flatdropignore` (ignore próprio, aninhado, com negação para
+  liberar — unifica "excluir a mais" + "liberar do gitignore") + `.gitignore` aninhado; depois `_TREE.md`.
 - **Observação dos consoles (260615/260617):** antes do `CONCLUÍDO` aparecem erros do CMD
   (`'FlatDrop'`/`'m'`/`'Use'` não reconhecidos); o Python roda certo (multi-fonte OK, 86 arquivos).
   Causa provável no conteúdo do `.bat` — a confirmar com o arquivo real. Reforça o valor do gerador de `.bat`.

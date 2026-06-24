@@ -309,3 +309,27 @@ e nenhum default novo (todo projeto teria de reconfigurar do zero).
 
 **Consequência.** Mais tipos chegam ao Projeto sem configuração. Ressalva: a estimativa de
 tokens (`bytes/4`) não vale para binários, e binários grandes podem estourar o teto de 30 MB.
+
+---
+
+## FIX-003 — .bat gerado falhava no CMD por caracteres não-ASCII
+**Data:** 2026-06-24 · **Status:** corrigido
+
+**Sintoma.** Ao rodar os `.bat` do cinzeiro, o CMD imprimia `'FlatDrop'`/`'Use'`/`'m'` "não
+reconhecido" ANTES do `CONCLUÍDO`. O Python rodava certo (multi-fonte OK, 86 arquivos), mas a
+saída vinha poluída.
+
+**Causa raiz.** Os `.bat` tinham caracteres não-ASCII no corpo (travessão "—" e acentos nos
+comentários `rem`) e `chcp 65001`. Trocar o code page para UTF-8 no meio do batch faz o CMD
+**desalinhar a leitura por bytes** das linhas seguintes (os multibyte deslocam o offset): o `rem`
+é lido cortado ("em"/"m") e o resto da linha vira comando. Confirmado com `cat -A`: as linhas que
+erravam eram exatamente as que tinham "—"/"só". O Python rodava porque a linha `python ...` é
+ASCII e o CMD re-sincronizava até ela.
+
+**Solução.** Corpo do `.bat` em **ASCII puro** (sem "—", sem acentos nos comentários), mantendo
+`chcp 65001` só para a SAÍDA do Python (impressa, não parseada pelo CMD). Os 5 `.bat` do cinzeiro
+foram reentregues em ASCII (e sem `--add-ext`, redundante após a spec-0001). O **gerador de `.bat`**
+(spec-0003) emite sempre ASCII e avisa se um caminho tiver acento (frágil no CMD).
+
+**Lição.** `.bat` no CMD é sensível a encoding: trate o corpo como ASCII. Acento só na SAÍDA
+(via `chcp`), nunca no texto que o CMD parseia. Geradores de `.bat` devem garantir isso.

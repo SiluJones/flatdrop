@@ -21,6 +21,15 @@ from . import config as C
 from . import core
 
 
+def _parse_exts(text: str) -> set[str]:
+    """Converte 'md, py .json' -> {'md','py','json'} (tolerante a vírgula/espaço/ponto)."""
+    return {
+        e.strip().lstrip(".").lower()
+        for e in text.replace("\n", ",").replace(" ", ",").split(",")
+        if e.strip()
+    }
+
+
 class FlatDropApp(ttk.Frame):
     """Janela principal do FlatDrop."""
 
@@ -43,6 +52,10 @@ class FlatDropApp(ttk.Frame):
         self.skip_sensitive_var = tk.BooleanVar(value=True)
         self.clear_var = tk.BooleanVar(value=True)
         self.manifest_var = tk.BooleanVar(value=True)
+        self.only_ext_var = tk.StringVar()
+        self.exclude_ext_var = tk.StringVar()
+        self.also_md_var = tk.BooleanVar(value=False)
+        self.also_md_root_var = tk.StringVar()
         self._name_edited = False  # usuário mexeu no nome manualmente?
         self._last_dest: Path | None = None
         self._busy = False
@@ -128,6 +141,25 @@ class FlatDropApp(ttk.Frame):
         ttk.Button(extf, text="Restaurar padrão", command=self._reset_ext).grid(row=0, column=1, padx=(6, 0), sticky="n")
         r += 1
 
+        # Filtros de tipo desta execucao + multi-fonte (opcional)
+        ff = ttk.LabelFrame(self, text="Filtros e multi-fonte (opcional)", padding=8)
+        ff.grid(row=r, column=0, columnspan=3, sticky="ew", pady=(8, 0))
+        ff.columnconfigure(1, weight=1)
+        ff.columnconfigure(3, weight=1)
+        ttk.Label(ff, text="Só estes tipos:").grid(row=0, column=0, sticky="w")
+        ttk.Entry(ff, textvariable=self.only_ext_var).grid(row=0, column=1, sticky="ew", padx=6)
+        ttk.Label(ff, text="Exceto estes:").grid(row=0, column=2, sticky="w", padx=(12, 0))
+        ttk.Entry(ff, textvariable=self.exclude_ext_var).grid(row=0, column=3, sticky="ew", padx=6)
+        ttk.Label(
+            ff, foreground="#888",
+            text="ex.: md  ·  vazio = usa a allowlist acima; 'Só estes' a ignora; 'Exceto' a subtrai.",
+        ).grid(row=1, column=0, columnspan=4, sticky="w", pady=(2, 6))
+        ttk.Checkbutton(ff, text="Também incluir todos os .md a partir de:",
+                        variable=self.also_md_var).grid(row=2, column=0, columnspan=2, sticky="w")
+        ttk.Entry(ff, textvariable=self.also_md_root_var).grid(row=2, column=2, sticky="ew", padx=6)
+        ttk.Button(ff, text="Procurar…", command=self._choose_also_md).grid(row=2, column=3, sticky="e")
+        r += 1
+
         # Botões de ação
         actions = ttk.Frame(self)
         actions.grid(row=r, column=0, columnspan=3, sticky="ew", pady=(12, 6))
@@ -137,8 +169,10 @@ class FlatDropApp(ttk.Frame):
         self.btn_exec.grid(row=0, column=1, padx=6)
         self.btn_open = ttk.Button(actions, text="Abrir pasta", command=self._open_dest, state="disabled")
         self.btn_open.grid(row=0, column=2, padx=6)
+        self.btn_genbat = ttk.Button(actions, text="Gerar .bat…", command=self._generate_bat)
+        self.btn_genbat.grid(row=0, column=3, padx=6)
         self.status = ttk.Label(actions, text="", foreground="#06c")
-        self.status.grid(row=0, column=3, padx=12, sticky="w")
+        self.status.grid(row=0, column=4, padx=12, sticky="w")
         r += 1
 
         # Saída / log
@@ -162,6 +196,92 @@ class FlatDropApp(ttk.Frame):
         if path:
             self.dest_var.set(path)
 
+    def _choose_also_md(self) -> None:
+        path = filedialog.askdirectory(title="Raiz para incluir todos os .md")
+        if path:
+            self.also_md_root_var.set(path)
+            self.also_md_var.set(True)
+
+    def _build_cli_args(self) -> list[str]:
+        """Serializa a configuração atual da tela em argumentos da CLI (para o .bat)."""
+        args: list[str] = ["--root", self.root_var.get().strip()]
+        dest = self.dest_var.get().strip()
+        if dest and Path(dest) != core.default_downloads_dir():
+            args += ["--dest", dest]
+        name = self.name_var.get().strip()
+        if name:
+            args += ["--name", name]
+        if self.mode_var.get() != "collisions":
+            args += ["--mode", self.mode_var.get()]
+        sep = self.sep_var.get()
+        if sep and sep != C.DEFAULT_SEP:
+            args += ["--sep", sep]
+        only = _parse_exts(self.only_ext_var.get())
+        if only:
+            args += ["--only-ext", ",".join(sorted(only))]
+        exc = _parse_exts(self.exclude_ext_var.get())
+        if exc:
+            args += ["--exclude-ext", ",".join(sorted(exc))]
+        # extensões ADICIONADAS à allowlist (delta sobre o default) -> --add-ext.
+        # (Remoções da allowlist não são serializadas; para tirar tipos use 'Exceto estes'.)
+        cur = _parse_exts(self.ext_text.get("1.0", "end"))
+        added = sorted(cur - set(C.DEFAULT_EXTENSIONS))
+        if added and not only:  # only-ext já ignora a allowlist
+            args += ["--add-ext", ",".join(added)]
+        if not self.gitignore_var.get():
+            args += ["--no-gitignore"]
+        if not self.skip_sensitive_var.get():
+            args += ["--include-sensitive"]
+        if not self.manifest_var.get():
+            args += ["--no-manifest"]
+        if not self.clear_var.get():
+            args += ["--no-clear"]
+        if self.also_md_var.get() and self.also_md_root_var.get().strip():
+            args += ["--also-md-from", self.also_md_root_var.get().strip()]
+        return args
+
+    def _generate_bat(self) -> None:
+        """Gera um .bat ASCII que reproduz a configuração atual (chama a CLI)."""
+        if not self._validate_root():
+            return
+        run_py = Path(__file__).resolve().parent.parent / "run.py"
+        args = self._build_cli_args()
+        # Caminhos com acento são frágeis no CMD (.bat). Avisa, mas gera se o usuário quiser.
+        paths = [self.root_var.get(), self.dest_var.get(),
+                 self.also_md_root_var.get(), str(run_py)]
+        if any(p and not p.isascii() for p in paths):
+            if not messagebox.askyesno(
+                "FlatDrop",
+                "Algum caminho tem acentos. Em .bat no CMD isso pode falhar "
+                "(recomendo caminhos sem acento). Gerar mesmo assim?"):
+                return
+        # Linha de comando: valores entre aspas; flags sem aspas.
+        parts = ["python", '"%FLATDROP%"']
+        for a in args:
+            parts.append(a if a.startswith("--") else '"' + a + '"')
+        cmdline = " ".join(parts)
+        name = self.name_var.get().strip() or Path(self.root_var.get()).name or "flatdrop"
+        path = filedialog.asksaveasfilename(
+            title="Salvar .bat", defaultextension=".bat",
+            initialfile=name + ".bat", filetypes=[("Arquivo .bat", "*.bat")])
+        if not path:
+            return
+        lines = [
+            "@echo off",
+            "chcp 65001 >nul",
+            "rem Gerado pelo FlatDrop. Corpo em ASCII (CMD + chcp nao lida com acento no .bat).",
+            "rem Ajuste o caminho do run.py abaixo se mudar de maquina.",
+            'set "FLATDROP=' + str(run_py) + '"',
+            "",
+            cmdline,
+            "",
+            "echo.",
+            "pause",
+        ]
+        content = "\r\n".join(lines) + "\r\n"
+        Path(path).write_text(content, encoding="utf-8", newline="")
+        messagebox.showinfo("FlatDrop", "'.bat' gerado em:\n" + path)
+
     def _reset_ext(self) -> None:
         self.ext_text.delete("1.0", "end")
         self.ext_text.insert("1.0", ", ".join(sorted(C.DEFAULT_EXTENSIONS)))
@@ -184,6 +304,8 @@ class FlatDropApp(ttk.Frame):
             extensions=exts or set(C.DEFAULT_EXTENSIONS),
             clear_dest=self.clear_var.get(),
             write_manifest=self.manifest_var.get(),
+            only_ext=(_parse_exts(self.only_ext_var.get()) or None),
+            exclude_ext=_parse_exts(self.exclude_ext_var.get()),
         )
 
     def _dest_path(self) -> Path:

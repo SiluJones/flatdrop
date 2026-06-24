@@ -102,3 +102,7 @@ Registro do que ESTE projeto observou/mudou além do kit (material que volta par
   arranque). Nada se perdeu — não houve merge a fazer.
 - **Método "doc por spec" exercitado.** Specs em `meta/specs/` com âncora semântica; um canal por
   doc por ciclo. Funcionou para code (spec-0001) e doc (spec-0002).
+- **`.bat` no CMD exige ASCII (FIX-003).** Encoding de `.bat` é armadilha: corpo ASCII, acento só na
+  saída via `chcp`. O gerador de `.bat` passou a garantir isso.
+- **Ideia (robustez):** tornar a SAÍDA da CLI ASCII-safe (`->` em vez de `↳`, `*` em vez de `•`) para
+  dispensar `chcp 65001` nos `.bat` e evitar de vez problemas de code page. Baixo custo; avaliar.
