@@ -65,9 +65,7 @@ Estado atual do projeto. Atualize ao fim de cada sessão de trabalho.
 - **FIX-003:** `.bat` falhava no CMD por não-ASCII — corrigido; os 5 `.bat` do cinzeiro reentregues em ASCII.
 - **Próximas specs (em design):** `.flatdropignore` (ignore próprio, aninhado, com negação para
   liberar — unifica "excluir a mais" + "liberar do gitignore") + `.gitignore` aninhado; depois `_TREE.md`.
-- **Redesign da UI (UX) em design — aguardando aprovação do usuário:** filtros e "Extensões aceitas"
-  por SELEÇÃO num modal pop-up (checklist categorizado + busca), tela principal mais compacta. Em fases;
-  estrutura desenhada primeiro, sem código até aprovar.
+- **spec-0007 (GUI: modal de tipos + tela compacta + .bat pasta-pai) APLICADA** — commit f09de95; 26/26 testes.
 
 ## Riscos / pontos de atenção
 
