@@ -343,3 +343,53 @@ def test_downloads_fallback_to_home_when_no_downloads(tmp_path, monkeypatch):
     monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
     # não há ~/Downloads nem user-dirs.dirs -> cai na home
     assert default_downloads_dir() == tmp_path
+
+
+def test_flatdropignore_excludes_extra(tmp_path):
+    """`.flatdropignore` exclui o que vai para o git mas nao para o Projeto."""
+    root = tmp_path / "proj"
+    root.mkdir()
+    _tree(root, {
+        ".flatdropignore": "notas-internas.md\n",
+        "notas-internas.md": "x",
+        "leiame.md": "y",
+    })
+    plan = make_plan(root, ScanConfig(mode="collisions"))
+    targets = {f.rel.as_posix() for f in plan.files}
+    assert "leiame.md" in targets
+    assert "notas-internas.md" not in targets
+    assert plan.skipped["flatdropignore"] >= 1
+
+
+def test_flatdropignore_negation_reincludes_gitignored(tmp_path):
+    """`!pasta/` no .flatdropignore libera o que o .gitignore bloqueia (ate pasta podada)."""
+    root = tmp_path / "proj"
+    root.mkdir()
+    _tree(root, {
+        ".gitignore": "logs/\n",
+        ".flatdropignore": "!logs/\n",
+        "logs/2026-06-11.md": "a",
+        "leiame.md": "b",
+    })
+    plan = make_plan(root, ScanConfig(mode="collisions"))
+    targets = {f.rel.as_posix() for f in plan.files}
+    assert "logs/2026-06-11.md" in targets   # liberado de volta pelo !logs/
+    assert "leiame.md" in targets
+
+
+def test_nested_gitignore_scope(tmp_path):
+    """`.gitignore` em subpasta vale so para aquela subarvore (aninhado)."""
+    root = tmp_path / "proj"
+    root.mkdir()
+    _tree(root, {
+        "Area/.gitignore": "rascunho.md\n",
+        "Area/rascunho.md": "r",
+        "Area/final.md": "f",
+        "outro/rascunho.md": "x",
+    })
+    plan = make_plan(root, ScanConfig(mode="collisions"))
+    targets = {f.rel.as_posix() for f in plan.files}
+    assert "Area/final.md" in targets
+    assert "Area/rascunho.md" not in targets   # gitignore aninhado pegou
+    assert "outro/rascunho.md" in targets      # fora do escopo da subpasta -> mantido
+    assert plan.skipped["gitignore"] >= 1

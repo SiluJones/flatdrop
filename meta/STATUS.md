@@ -55,17 +55,15 @@ Estado atual do projeto. Atualize ao fim de cada sessão de trabalho.
   Downloads resolve no(s) PC(s) onde a pasta estava caindo na home; (c) os 5
   `.bat` rodam (ajustar `--add-ext` quando houver arquivos de dev de fato).
 
-### Modo Claude Code + design em curso (2026-06-22)
-- **Modo Claude Code adotado** (DEC-012): chat autora docs/specs, Code implementa. Arranque criado
-  (`CLAUDE.md` raiz, `.claude/`). `meta/CEREBRO.md` substitui o antigo `meta/CLAUDE.md`.
-- **spec-0001 (tipos) e spec-0002 (docs) APLICADAS** e commitadas no Claude Code (26/26 testes).
-- **spec-0003 (GUI: filtros + gerador de `.bat`) e spec-0004 (docs) APLICADAS** (commit e56aa81; 26/26).
-- **spec-0005 (GUI: multi-fonte ao vivo + Procurar na pasta-pai + abrir maximizada)** autorada — pendente.
-- **FIX-004:** o toggle multi-fonte não afetava a execução ao vivo na GUI — corrigido na spec-0005.
-- **FIX-003:** `.bat` falhava no CMD por não-ASCII — corrigido; os 5 `.bat` do cinzeiro reentregues em ASCII.
-- **Próximas specs (em design):** `.flatdropignore` (ignore próprio, aninhado, com negação para
-  liberar — unifica "excluir a mais" + "liberar do gitignore") + `.gitignore` aninhado; depois `_TREE.md`.
-- **spec-0007 (GUI: modal de tipos + tela compacta + .bat pasta-pai) APLICADA** — commit f09de95; 26/26 testes.
+### Modo Claude Code + features em curso
+- **Modo Claude Code** (DEC-012): chat autora docs/specs, Code implementa. Arranque em `CLAUDE.md` raiz + `.claude/`.
+- **Aplicado (v0.2.x, não lançado):** tipos de arquivo (DEC-013); GUI com filtros, gerador de `.bat`,
+  multi-fonte ao vivo, modal de seleção de tipos e tela compacta (UI-1), abrir maximizada; launcher
+  `flatdrop-ui.bat`. Bugs resolvidos: FIX-003 (`.bat` ASCII), FIX-004 (multi-fonte ao vivo).
+- **Autorado, pendente de aplicar:** `.flatdropignore` + `.gitignore` aninhado (spec-0008, com 3 testes — DEC-014).
+- **Próximas:** `_TREE.md` (pastas ignoradas em uma linha, sem recursão); UI-2 (polimento de layout) e
+  UI-3 (presets/lembrar seleção); documentar `.flatdropignore` no README/CONTEXT; avaliar saída ASCII da
+  CLI e um botão "Gerar atalho da UI" que crie o launcher sozinho.
 
 ## Riscos / pontos de atenção
 

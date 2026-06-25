@@ -13,6 +13,10 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
 
 ## Ativas
 
+- **Atalho da UI + UI-2/UI-3.** UI-1 (modal de tipos) feita. Entregue o launcher `flatdrop-ui.bat` (abre a
+  UI sem console, copiável). Futuro: um botão **"Gerar atalho da UI"** na própria GUI, que cria o launcher
+  calculando o caminho do `run.py` sozinho (talvez um `.lnk` em vez de `.bat`). Depois: UI-2 (polimento de
+  layout) e UI-3 (presets "só docs"/"só código", lembrar última seleção).
 - **Redesign da UI por seleção (UX, em fases).** Trocar a digitação de tipos por um **modal pop-up**:
   botão "Tipos…" abre um diálogo (Toplevel modal) com checklist categorizado (Linguagens, Web, Config,
   Documentos, Godot…), busca, "marcar todos/limpar" por grupo, OK/Cancelar. Subsume "Extensões aceitas"
@@ -115,3 +119,6 @@ Registro do que ESTE projeto observou/mudou além do kit (material que volta par
   saída via `chcp`. O gerador de `.bat` passou a garantir isso.
 - **Ideia (robustez):** tornar a SAÍDA da CLI ASCII-safe (`->` em vez de `↳`, `*` em vez de `•`) para
   dispensar `chcp 65001` nos `.bat` e evitar de vez problemas de code page. Baixo custo; avaliar.
+- **Verificar lógica sutil no sandbox antes de virar spec.** O `.flatdropignore` (negação + aninhamento)
+  foi testado com o pathspec real ANTES de escrever a spec — pegou uma expectativa minha errada e deu
+  confiança no algoritmo. Vale como prática para qualquer regra não-óbvia.

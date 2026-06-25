@@ -94,6 +94,7 @@ DEFAULT_FILE_IGNORES: set[str] = {
     "package-lock.json", "yarn.lock", "pnpm-lock.yaml", "npm-shrinkwrap.json",
     "poetry.lock", "pipfile.lock", "cargo.lock", "composer.lock", "gemfile.lock",
     ".ds_store", "thumbs.db", "desktop.ini",
+    ".flatdropignore",  # arquivo de controle do FlatDrop — nao vai para o upload
 }
 
 # Sufixos pulados por padrão (minificados, mapas, compilados).

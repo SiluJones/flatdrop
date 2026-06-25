@@ -270,25 +270,108 @@ def _folder_matches(rel: PurePath, cfg: ScanConfig) -> bool:
     return False
 
 
-def _build_gitignore_spec(root: Path, cfg: ScanConfig):
-    """Lê .gitignore da raiz e devolve um matcher pathspec (ou None)."""
-    if not (cfg.use_gitignore and HAS_PATHSPEC):
-        return None
-    gi = root / ".gitignore"
-    if not gi.is_file():
-        return None
+def _read_ignore_lines(path: Path) -> list[str]:
     try:
-        lines = gi.read_text(encoding="utf-8", errors="ignore").splitlines()
+        return path.read_text(encoding="utf-8", errors="ignore").splitlines()
     except OSError:
+        return []
+
+
+def _rebase_ignore(line: str, base: str) -> list[str]:
+    """Reescreve um padrão de ignore de um arquivo em ``base`` (rel posix, sem barra
+    final) para casar contra caminhos relativos à RAIZ. Devolve [] p/ vazio/comentário.
+
+    - âncora (`/inicio` ou com `/` no meio): casa só dentro de ``base``;
+    - sem âncora (ex.: ``*.log``): casa direto em ``base`` E em qualquer profundidade abaixo.
+    """
+    s = line.strip()
+    if not s or s.startswith("#"):
+        return []
+    neg = ""
+    if s.startswith("!"):
+        neg, s = "!", s[1:]
+    if not base:  # arquivo na raiz: sem rebase
+        return [neg + s]
+    trailing = ""
+    if s.endswith("/"):
+        trailing, s = "/", s[:-1]
+    anchored = s.startswith("/") or ("/" in s)
+    if s.startswith("/"):
+        s = s[1:]
+    if anchored:
+        return [f"{neg}{base}/{s}{trailing}"]
+    return [f"{neg}{base}/{s}{trailing}", f"{neg}{base}/**/{s}{trailing}"]
+
+
+def _rebase_all(lines: list[str], base: str) -> list[str]:
+    out: list[str] = []
+    for ln in lines:
+        out += _rebase_ignore(ln, base)
+    return out
+
+
+def _collect_ignore_lines(root: Path, cfg: ScanConfig) -> tuple[list[str], list[str]]:
+    """Junta as linhas (rebaseadas) de todos os .gitignore e .flatdropignore da árvore.
+
+    Devolve (gitignore_lines, flatdropignore_lines), cada um em ordem raso->fundo.
+    """
+    gi_by: list[tuple[int, list[str]]] = []
+    fd_by: list[tuple[int, list[str]]] = []
+    for dirpath, dirnames, filenames in os.walk(root, followlinks=False):
+        cur = Path(dirpath)
+        rel = cur.relative_to(root).as_posix()
+        base = "" if rel == "." else rel
+        depth = 0 if base == "" else base.count("/") + 1
+        # não desce nos ignores embutidos (evita varrer node_modules atrás de ignores)
+        dirnames[:] = [d for d in dirnames if d not in cfg.dir_ignores]
+        if cfg.use_gitignore and ".gitignore" in filenames:
+            gi_by.append((depth, _rebase_all(_read_ignore_lines(cur / ".gitignore"), base)))
+        if ".flatdropignore" in filenames:
+            fd_by.append((depth, _rebase_all(_read_ignore_lines(cur / ".flatdropignore"), base)))
+    gi_lines: list[str] = []
+    for _, lines in sorted(gi_by, key=lambda t: t[0]):
+        gi_lines += lines
+    fd_lines: list[str] = []
+    for _, lines in sorted(fd_by, key=lambda t: t[0]):
+        fd_lines += lines
+    return gi_lines, fd_lines
+
+
+def _make_spec(lines: list[str]):
+    if not lines:
         return None
     # "gitignore" é o factory novo; "gitwildmatch" o antigo (depreciado).
-    # Tenta o novo primeiro p/ evitar warning; cai no antigo em versões velhas.
     for factory in ("gitignore", "gitwildmatch"):
         try:
             return pathspec.PathSpec.from_lines(factory, lines)
-        except Exception:  # nome de factory não registrado nesta versão
+        except Exception:
             continue
     return None
+
+
+def _build_ignore_specs(root: Path, cfg: ScanConfig):
+    """(full, gi, fd): ``full`` = decisão (gitignore + flatdropignore, este por último
+    p/ ter a palavra final); ``gi``/``fd`` = só p/ atribuir o motivo e detectar liberação."""
+    if not HAS_PATHSPEC:
+        return None, None, None
+    gi_lines, fd_lines = _collect_ignore_lines(root, cfg)
+    if not gi_lines and not fd_lines:
+        return None, None, None
+    return _make_spec(gi_lines + fd_lines), _make_spec(gi_lines), _make_spec(fd_lines)
+
+
+def _ignore_status(rel: str, full, gi, fd) -> tuple[bool, str, bool]:
+    """(ignored, source, liberated). source ∈ {'gitignore','flatdropignore',''}.
+    liberated = o .gitignore pegaria, mas o .flatdropignore liberou (negação)."""
+    if full is None:
+        return False, "", False
+    if full.match_file(rel):
+        if fd is not None and fd.match_file(rel):
+            return True, "flatdropignore", False
+        return True, "gitignore", False
+    if gi is not None and gi.match_file(rel):
+        return False, "", True
+    return False, "", False
 
 
 # --------------------------------------------------------------------------- #
@@ -300,11 +383,13 @@ def _scan(root: Path, cfg: ScanConfig) -> tuple[list[tuple[Path, PurePath, int]]
     Devolve (candidatos, skipped_counts, skipped_samples, warnings).
     candidato = (src_abs, rel_posix, size_bytes).
     """
-    spec = _build_gitignore_spec(root, cfg)
+    full_spec, gi_spec, fd_spec = _build_ignore_specs(root, cfg)
     candidates: list[tuple[Path, PurePath, int]] = []
     skipped: dict[str, int] = {
         "gitignore": 0,
         "gitignore (pasta)": 0,
+        "flatdropignore": 0,
+        "flatdropignore (pasta)": 0,
         "tipo": 0,
         "sensível": 0,
         "filtro (pasta)": 0,
@@ -334,8 +419,9 @@ def _scan(root: Path, cfg: ScanConfig) -> tuple[list[tuple[Path, PurePath, int]]
             if d in cfg.dir_ignores:
                 note("ignore_padrão (pasta)", rel_sub + "/")
                 continue
-            if spec is not None and spec.match_file(rel_sub + "/"):
-                note("gitignore (pasta)", rel_sub + "/")
+            ign, src, _ = _ignore_status(rel_sub + "/", full_spec, gi_spec, fd_spec)
+            if ign:
+                note(f"{src} (pasta)", rel_sub + "/")
                 continue
             kept.append(d)
         dirnames[:] = kept
@@ -349,8 +435,9 @@ def _scan(root: Path, cfg: ScanConfig) -> tuple[list[tuple[Path, PurePath, int]]
             if low in cfg.file_ignores or low.endswith(cfg.suffix_ignores):
                 note("ignore_padrão", rel_str)
                 continue
-            if spec is not None and spec.match_file(rel_str):
-                note("gitignore", rel_str)
+            ign, src, _ = _ignore_status(rel_str, full_spec, gi_spec, fd_spec)
+            if ign:
+                note(src, rel_str)
                 continue
             # 2) sensíveis
             if not cfg.include_sensitive and is_sensitive(fn):

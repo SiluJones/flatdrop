@@ -35,11 +35,12 @@ Itens em aberto vêm de `IDEAS.md`; ao concluir, registre em `CHANGELOG.md`.
 - [ ] **D —** Ignores de pasta editáveis na GUI (com núcleo imutável).
 - [ ] Aviso mais visível quando o pathspec está ausente (destaque na GUI).
 - [x] Acrescentar tipos à allowlist de defaults (spec-0001 aplicada: Godot, PDF/DOCX/XLSX/ODT/RTF/EPUB, +linguagens).
-- [ ] **E2 —** Expor seleção de tipo na GUI (só-ext / exceto-ext) — filtros já existem na core.
-- [ ] Liberar item específico do `.gitignore` na GUI (force-include), sem desligar a leitura inteira.
-- [ ] **`.flatdropignore`** (ignore próprio, aninhado, com negação para liberar) + `.gitignore` aninhado — sai do stand-by; precisa de design.
-- [ ] **UI/UX (em fases, design primeiro):** seleção de tipo por modal pop-up (checklist + busca);
-      tela principal compacta; abrir maximizada (feito na spec-0005). Avaliar flag CLI `--ext-set`.
+- [x] **E2 —** Seleção de tipo na GUI por modal (UI-1 aplicada).
+- [x] Liberar do `.gitignore` — resolvido pelo `.flatdropignore` (negação `!`), spec-0008.
+- [x] **`.flatdropignore`** (aninhado + negação) + `.gitignore` aninhado — spec-0008 autorada, com testes (DEC-014).
+- [~] **UI/UX (em fases):** UI-1 (modal de tipos + tela compacta + maximizada) feita; UI-2 (polimento de
+      layout) e UI-3 (presets/lembrar seleção) na fila. (Não precisou de `--ext-set`: o `.bat` reproduz a
+      seleção com `--add-ext`/`--exclude-ext`.)
 
 ## Fase 3 — Gerador de `.bat` e multi-fonte na GUI
 

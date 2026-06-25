@@ -353,3 +353,28 @@ a usar `core.make_plan_sources(...)`. Assim a execução ao vivo e o `.bat` dão
 
 **Lição.** Ao adicionar uma opção que o gerador de `.bat` serializa, ligar a MESMA opção ao
 caminho de execução ao vivo no mesmo ciclo — senão a GUI e o `.bat` divergem.
+
+---
+
+## DEC-014 — `.flatdropignore` (ignore próprio) + `.gitignore` aninhado
+**Data:** 2026-06-24 · **Status:** aceita
+
+**Contexto.** Faltava (a) respeitar `.gitignore` de subpastas (só o da raiz era lido) e (b) um jeito de
+excluir o que vai para o git mas não para o Projeto, e de LIBERAR o que o `.gitignore` bloqueia — sem
+desligar o `.gitignore` inteiro nem inflar o config.
+
+**Decisão.** Um arquivo `.flatdropignore` por projeto, lido como o `.gitignore` e ANINHADO, com negação
+`!` para re-incluir (até pasta inteira que seria podada). Tudo é unido num único matcher por "última regra
+vence": todos os `.gitignore` (raso→fundo), depois todos os `.flatdropignore` (raso→fundo) — então o
+**`.flatdropignore` tem sempre a palavra final** sobre o `.gitignore`, em qualquer profundidade. Padrões de
+subpasta são reescritos para casar relativo à raiz. Três specs: `full` (decisão) + `gi`/`fd` (para atribuir
+o motivo do skip e detectar liberação). A lógica foi VERIFICADA com o pathspec real antes de implementar.
+O próprio `.flatdropignore` entra no ignore de arquivos (não vai para o upload).
+
+**Alternativas.** Só campos avulsos na GUI (não cobre o aninhado nem "liberar do gitignore" de forma
+declarativa); seguir só com `--no-gitignore` (tudo-ou-nada); inflar o config para sempre (não escala).
+
+**Consequência.** Controle fino e declarativo por projeto, versionável, que também simplifica a config dos
+`.bat`. Semântica deliberada: o `.flatdropignore` sobrepõe o `.gitignore` (≠ git puro, onde o mais fundo
+vence) — bate com a intenção "`!` libera o que o gitignore bloqueia". Custo: uma passada extra na árvore
+para coletar os arquivos de ignore (aceitável; fundível numa passada depois).
