@@ -95,7 +95,7 @@ Cada arquivo tem um papel e um comportamento temporal distinto. **Respeite o pap
 | `LOG-TEMPLATE.md` | Referência fixa | Modelo do log de sessão. Referência fixa — nunca substituído pelo conteúdo preenchido. |
 | `ROADMAP.md` | Plano em fases | OPCIONAL — plano deliberado de evolução em fases. Use quando o projeto tem direção de médio/longo prazo. |
 | `GLOSSARY.md` | Estável | OPCIONAL — termos próprios do projeto. Use quando há jargão que se repete entre sessões. |
-| `HISTORICO.md` | Cresce (histórico) | OPCIONAL — conhecimento consolidado de fases antigas (guias, análises que não cabem no CONTEXT enxuto). Lido sob demanda. |
+| `HISTORY.md` | Cresce (histórico) | OPCIONAL — conhecimento consolidado de fases antigas (guias, análises que não cabem no CONTEXT enxuto). Lido sob demanda. |
 | `logs/AAAA-MM-DD.md` | Histórico | Ao final de cada sessão (formato em LOG-TEMPLATE). |
 
 ## Regras de higiene (impedem inchaço e duplicação)
@@ -215,12 +215,23 @@ O usuário trabalha em **Windows (CMD/Prompt de Comando)**. Qualquer comando de 
 
 Respostas em pt-BR, incluindo comentários quando houver código.
 
+## Recomendação de configuração (fim de sessão)
+
+No fim de cada sessão, junto do resumo e de qualquer dúvida, avalie o que a **próxima etapa** exige e recomende a configuração de forma **completa e explícita**. Os controles dependem de ONDE se trabalha:
+- **No chat (claude.ai):** **modelo** (recomende pela capacidade — o mais capaz vs. um mais leve —, não pelo nome/versão, que muda), **esforço** (Baixo→Máximo) e **pensamento** (ligado/desligado): três controles independentes.
+- **No Claude Code (CLI/desktop):** **modelo** + **nível de esforço** (`/effort` baixo→máximo, ou `xhigh`/`ultracode` onde houver). **Não há toggle de pensamento** no Code — ele é acoplado ao esforço; para um turno difícil pontual, use `ultrathink` no prompt. Nunca recomende "ligar o pensamento" no Code.
+- **Nunca afirme saber a configuração atual** — ela não é legível de forma confiável. Recomende pela TAREFA e pela config que o usuário declarou.
+- Próxima etapa **pesada** + config provável fraca → **pare e peça o aumento, nomeando os níveis exatos**.
+- Etapa atual **leve** mas config **alta** → **não pare no meio**; termine e, no fim, sinalize "pode baixar para X na próxima".
+- É um **default recomendado**, não proibição — cabe sob a válvula de desvio registrado.
+
 ## Desenvolvimento no Claude Code (raias chat ↔ Code)
 
 Este projeto é desenvolvido com o **Claude Code** (CLI/desktop), além do chat de planejamento. Há duas raias:
 
 - **Chat (planejamento):** cura e ENTREGA arquivos de doc. Para reescrita de fundo/voz ou arquivo **novo/pequeno**, entrega o **arquivo inteiro**. Para um **delta estruturado** num doc **grande** (marcar fase, abrir fase, inserir nota, acrescentar item), entrega uma **spec curta** em `meta/specs/` com o **texto exato** e **âncora semântica** (seção/título, nunca nº de linha) — e o Code posiciona.
-- **Claude Code (execução):** implementa código e faz edições **append-only** nos meta/ (linha no STATUS, `DEC-`/`FIX-` em DECISOES, marcar estado de fase). Aplica as specs de doc. Roda build/validação. Commita.
+- **Claude Code (execução):** implementa código e faz edições **append-only** nos meta/ (linha no STATUS, `DEC-`/`FIX-` em DECISIONS, marcar estado de fase). Aplica as specs de doc. Roda build/validação. Commita.
+- **Nomes padronizados:** specs em `meta/specs/` seguem `AAMMDD-specNNNN-desc.md` (ex.: `260624-spec0010-kit-update.md`). Numeração sequencial e estável; a data é a de criação. As specs antigas (`spec-0001…0009`, já aplicadas) ficam como estão; o padrão novo vale daqui pra frente. O chat nomeia; o Code aplica.
 
 **Método "doc por spec":** o chat AUTORA o texto; o Code só POSICIONA — não inventa prosa de curadoria. **Um canal por doc por ciclo** (se um doc foi por spec, o chat não entrega o mesmo doc inteiro no mesmo ciclo). Specs **só de doc não tocam o produto** → não precisam de build; a rede é o `git diff`.
 

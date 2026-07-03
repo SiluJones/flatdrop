@@ -122,3 +122,7 @@ Registro do que ESTE projeto observou/mudou além do kit (material que volta par
 - **Verificar lógica sutil no sandbox antes de virar spec.** O `.flatdropignore` (negação + aninhamento)
   foi testado com o pathspec real ANTES de escrever a spec — pegou uma expectativa minha errada e deu
   confiança no algoritmo. Vale como prática para qualquer regra não-óbvia.
+- **Atualização do KCM integrada (DEC-015).** Adotados: seção de config, novo nome de spec
+  (`AAMMDD-specNNNN-desc.md`), `HISTORICO`→`HISTORY`. Omitidos com registro: HUB (projeto solo) e a regra
+  `.gitignore`/README proativa (o repo já tem os dois). Preservado o conteúdo específico do flatdrop —
+  nada de sobrescrever meta/ com template em branco.

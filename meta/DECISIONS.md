@@ -378,3 +378,24 @@ declarativa); seguir só com `--no-gitignore` (tudo-ou-nada); inflar o config pa
 `.bat`. Semântica deliberada: o `.flatdropignore` sobrepõe o `.gitignore` (≠ git puro, onde o mais fundo
 vence) — bate com a intenção "`!` libera o que o gitignore bloqueia". Custo: uma passada extra na árvore
 para coletar os arquivos de ignore (aceitável; fundível numa passada depois).
+
+---
+
+## DEC-015 — Integração da atualização do KCM (HUB omitido)
+**Data:** 2026-06-24 · **Status:** aceita
+
+**Contexto.** O Kit de Contexto (KCM) atualizou: dois princípios já tínhamos (12 higiene, 13 refutar);
+novidades relevantes = seção "Recomendação de configuração", nova convenção de nome de spec
+(`AAMMDD-specNNNN-desc.md`), renome `HISTORICO`→`HISTORY`, e uma seção "Projeto em grupo (HUB)".
+
+**Decisão.** Adotar a padronização do KCM: acrescentar a seção de config ao CEREBRO, adotar o novo nome de
+spec daqui pra frente (specs antigas mantidas), renomear `HISTORICO.md`→`HISTORY.md` (conteúdo preservado),
+e atualizar as Instruções do Projeto. **Omitir a seção HUB** — o flatdrop é solo (sem outras frentes); o
+usuário reconfigurará o HUB desativado numa próxima geração do KCM. Omitir também a regra ".gitignore/README
+proativos" por não se aplicar (o repo já tem os dois, estáveis).
+
+**Alternativas.** Regenerar todos os meta/ pelo template (o KCM manda preservar o conteúdo do projeto — não
+sobrescrever com o template em branco); manter o HUB (não há grupo, seria peso morto).
+
+**Consequência.** Comportamento alinhado ao KCM sem perder o específico do flatdrop. Desvios registrados
+(HUB e .gitignore/README omitidos) conforme a "válvula de desvio registrado".
