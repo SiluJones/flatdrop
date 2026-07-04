@@ -72,6 +72,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--no-gitignore", action="store_false", dest="use_gitignore", help="não ler o .gitignore da raiz")
     p.add_argument("--include-sensitive", action="store_true", help="incluir arquivos sensíveis (.env, chaves)")
     p.add_argument("--no-manifest", action="store_false", dest="write_manifest", help="não gerar _MANIFEST.md")
+    p.add_argument("--tree", action="store_true", dest="write_tree",
+                   help="gerar _TREE.md (arvore da origem: copiados, pulados com motivo, pastas colapsadas)")
+    p.add_argument("--tree-detail", choices=["summary", "full"], default="summary",
+                   help="detalhe dos arquivos pulados no _TREE.md (summary=agregado; full=um por arquivo)")
     p.add_argument("--no-clear", action="store_false", dest="clear_dest", help="não limpar a pasta de destino antes")
     p.add_argument(
         "--also-md-from", metavar="PATH", action="append", default=[],
@@ -95,6 +99,8 @@ def _primary_cfg(args: argparse.Namespace) -> core.ScanConfig:
         use_gitignore=args.use_gitignore,
         include_sensitive=args.include_sensitive,
         write_manifest=args.write_manifest,
+        write_tree=args.write_tree,
+        tree_skipped=args.tree_detail,
         clear_dest=args.clear_dest,
         extensions=extensions,
         only_ext=_ext_set(args.only_ext) if args.only_ext else None,

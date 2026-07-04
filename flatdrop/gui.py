@@ -220,6 +220,7 @@ class FlatDropApp(ttk.Frame):
         self.skip_sensitive_var = tk.BooleanVar(value=True)
         self.clear_var = tk.BooleanVar(value=True)
         self.manifest_var = tk.BooleanVar(value=True)
+        self.tree_var = tk.BooleanVar(value=False)  # _TREE.md desligado por padrao (spec0011)
         self._selected_exts: set[str] = set(C.DEFAULT_EXTENSIONS)  # allowlist atual (editada no modal)
         self.also_md_var = tk.BooleanVar(value=False)
         self.also_md_root_var = tk.StringVar()
@@ -289,6 +290,8 @@ class FlatDropApp(ttk.Frame):
                         variable=self.clear_var).grid(row=2, column=0, sticky="w")
         ttk.Checkbutton(opts, text="Gerar _MANIFEST.md (mapa origem → nome plano)",
                         variable=self.manifest_var).grid(row=3, column=0, sticky="w")
+        ttk.Checkbutton(opts, text="Gerar _TREE.md (árvore: copiados, pulados c/ motivo, pastas colapsadas)",
+                        variable=self.tree_var).grid(row=4, column=0, sticky="w")
         sepf = ttk.Frame(opts)
         sepf.grid(row=0, column=2, rowspan=2, sticky="e")
         ttk.Label(sepf, text="Separador:").grid(row=0, column=0, padx=(12, 4))
@@ -393,6 +396,8 @@ class FlatDropApp(ttk.Frame):
             args += ["--include-sensitive"]
         if not self.manifest_var.get():
             args += ["--no-manifest"]
+        if self.tree_var.get():
+            args += ["--tree"]
         if not self.clear_var.get():
             args += ["--no-clear"]
         if self.also_md_var.get() and self.also_md_root_var.get().strip():
@@ -467,6 +472,7 @@ class FlatDropApp(ttk.Frame):
             extensions=self._selected_exts or set(C.DEFAULT_EXTENSIONS),
             clear_dest=self.clear_var.get(),
             write_manifest=self.manifest_var.get(),
+            write_tree=self.tree_var.get(),
         )
 
     def _sources(self, primary: core.ScanConfig) -> list[core.Source]:

@@ -19,6 +19,12 @@ DEFAULT_SEP = "__"
 MANIFEST_NAME = "_MANIFEST.md"
 MANIFEST_SIGNATURE = "<!-- flatdrop-manifest v1 -->"
 
+# Nome e assinatura da arvore opcional da origem (spec0011). A assinatura NAO
+# marca propriedade da pasta (so o _MANIFEST.md faz isso, via is_our_folder);
+# aqui e apenas um cabecalho de versao do formato do proprio _TREE.md.
+TREE_NAME = "_TREE.md"
+TREE_SIGNATURE = "<!-- flatdrop-tree v1 -->"
+
 # Limite de tamanho do nome de arquivo gerado. O Windows aceita até 255, mas
 # deixamos folga para sufixos de contador e para não estourar caminhos longos.
 MAX_NAME_LEN = 200
@@ -95,6 +101,8 @@ DEFAULT_FILE_IGNORES: set[str] = {
     "poetry.lock", "pipfile.lock", "cargo.lock", "composer.lock", "gemfile.lock",
     ".ds_store", "thumbs.db", "desktop.ini",
     ".flatdropignore",  # arquivo de controle do FlatDrop — nao vai para o upload
+    "_manifest.md",     # o proprio manifesto gerado — nao reentra numa proxima varredura
+    "_tree.md",         # a propria arvore gerada — nao reentra numa proxima varredura
 }
 
 # Sufixos pulados por padrão (minificados, mapas, compilados).

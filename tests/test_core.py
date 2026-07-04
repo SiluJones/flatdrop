@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from flatdrop import config as C
 from flatdrop.core import (
     ScanConfig,
     Source,
@@ -393,3 +394,76 @@ def test_nested_gitignore_scope(tmp_path):
     assert "Area/rascunho.md" not in targets   # gitignore aninhado pegou
     assert "outro/rascunho.md" in targets      # fora do escopo da subpasta -> mantido
     assert plan.skipped["gitignore"] >= 1
+
+
+# --------------------------------------------------------------------------- #
+# _TREE.md (spec0011)
+# --------------------------------------------------------------------------- #
+def test_tree_off_by_default(project, tmp_path):
+    dest = tmp_path / "out" / "proj"
+    cfg = ScanConfig(mode="collisions")
+    res = execute_plan(make_plan(project, cfg), dest, cfg)
+    assert not (res.dest / C.TREE_NAME).exists()
+    assert is_our_folder(res.dest) is True  # só o _MANIFEST.md marca propriedade
+
+
+def test_tree_on_creates_file(project, tmp_path):
+    dest = tmp_path / "out" / "proj"
+    cfg = ScanConfig(mode="collisions", write_tree=True)
+    res = execute_plan(make_plan(project, cfg), dest, cfg)
+    tree_path = res.dest / C.TREE_NAME
+    assert tree_path.is_file()
+    first_line = tree_path.read_text(encoding="utf-8").splitlines()[0]
+    assert first_line == C.TREE_SIGNATURE
+
+
+def test_tree_collapses_ignored_folder(project, tmp_path):
+    dest = tmp_path / "out" / "proj"
+    cfg = ScanConfig(mode="collisions", write_tree=True)
+    res = execute_plan(make_plan(project, cfg), dest, cfg)
+    body = (res.dest / C.TREE_NAME).read_text(encoding="utf-8")
+    assert "node_modules/  [ignorada: embutido]" in body
+    assert not any("node_modules/a" in line for line in body.splitlines())
+
+
+def test_tree_shows_renamed(project, tmp_path):
+    dest = tmp_path / "out" / "proj"
+    cfg = ScanConfig(mode="collisions", write_tree=True)
+    res = execute_plan(make_plan(project, cfg), dest, cfg)
+    body = (res.dest / C.TREE_NAME).read_text(encoding="utf-8")
+    assert "[renomeado:" in body
+
+
+def test_tree_summary_vs_full(project, tmp_path):
+    dest_summary = tmp_path / "out" / "proj-summary"
+    cfg_summary = ScanConfig(mode="collisions", write_tree=True, tree_skipped="summary")
+    res_summary = execute_plan(make_plan(project, cfg_summary), dest_summary, cfg_summary)
+    body_summary = (res_summary.dest / C.TREE_NAME).read_text(encoding="utf-8")
+    assert "pulados:" in body_summary
+    assert ".env  [pulado:" not in body_summary  # summary não abre folha individual
+
+    dest_full = tmp_path / "out" / "proj-full"
+    cfg_full = ScanConfig(mode="collisions", write_tree=True, tree_skipped="full")
+    res_full = execute_plan(make_plan(project, cfg_full), dest_full, cfg_full)
+    body_full = (res_full.dest / C.TREE_NAME).read_text(encoding="utf-8")
+    assert ".env  [pulado: sensivel]" in body_full
+
+
+def test_tree_full_lists_all_skipped_beyond_sample_cap(tmp_path):
+    """skipped_items nao tem o teto de 8 de skipped_samples; o tree full lista tudo."""
+    root = tmp_path / "manyskips"
+    root.mkdir()
+    files = {f"img{i}.png": "x" for i in range(12)}  # tipo não aceito, 12 itens
+    files["leiame.md"] = "ok"
+    _tree(root, files)
+
+    plan = make_plan(root, ScanConfig(mode="collisions"))
+    assert len(plan.skipped_items) == 12          # sem teto
+    assert len(plan.skipped_samples["tipo"]) == 8  # amostra continua limitada a 8
+
+    dest = tmp_path / "out" / "manyskips"
+    cfg = ScanConfig(mode="collisions", write_tree=True, tree_skipped="full")
+    res = execute_plan(make_plan(root, cfg), dest, cfg)
+    body = (res.dest / C.TREE_NAME).read_text(encoding="utf-8")
+    for i in range(12):
+        assert f"img{i}.png  [pulado: tipo]" in body

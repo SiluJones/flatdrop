@@ -56,6 +56,11 @@ class ScanConfig:
     file_ignores: set[str] = field(default_factory=lambda: set(C.DEFAULT_FILE_IGNORES))
     suffix_ignores: tuple[str, ...] = C.DEFAULT_SUFFIX_IGNORES
     write_manifest: bool = True
+    write_tree: bool = False  # gera _TREE.md (arvore da origem); desligado por padrao (spec0011)
+    # Nivel de detalhe dos ARQUIVOS pulados soltos no _TREE.md:
+    #   "summary" -> agregado por pasta ([pulados: tipo x3]); "full" -> folha por arquivo.
+    # Pastas ignoradas sao SEMPRE uma linha colapsada, independente disto.
+    tree_skipped: str = "summary"  # "summary" | "full"
     clear_dest: bool = True  # só limpa pastas que SÃO nossas (ver safe_clear)
 
     # --- Filtros desta execução (todos opcionais; vazio/None = sem filtro) --- #
@@ -116,6 +121,9 @@ class FlattenPlan:
     # Descrições legíveis de cada fonte (vazio/1 item = execução de fonte única).
     # Usado pelo manifesto para registrar de onde veio cada coleta em multi-fonte.
     sources: list[str] = field(default_factory=list)
+    # Lista COMPLETA de (rel_posix, motivo) dos pulados — inclui pastas colapsadas
+    # (rel terminando em "/"). Alimenta o _TREE.md; vazio quando o scan nao a produz.
+    skipped_items: list[tuple[str, str]] = field(default_factory=list)
 
     @property
     def total_bytes(self) -> int:
@@ -377,11 +385,16 @@ def _ignore_status(rel: str, full, gi, fd) -> tuple[bool, str, bool]:
 # --------------------------------------------------------------------------- #
 # Varredura
 # --------------------------------------------------------------------------- #
-def _scan(root: Path, cfg: ScanConfig) -> tuple[list[tuple[Path, PurePath, int]], dict, dict, list]:
+def _scan(
+    root: Path, cfg: ScanConfig
+) -> tuple[list[tuple[Path, PurePath, int]], dict, dict, list, list[tuple[str, str]]]:
     """Percorre a árvore e separa candidatos de pulados.
 
-    Devolve (candidatos, skipped_counts, skipped_samples, warnings).
+    Devolve (candidatos, skipped_counts, skipped_samples, warnings, skipped_items).
     candidato = (src_abs, rel_posix, size_bytes).
+    skipped_items = lista COMPLETA de (rel_posix, motivo) dos pulados — inclui as
+    pastas colapsadas (uma entrada cada, rel terminando em "/"). Alimenta o _TREE.md
+    no modo "full"; independe do teto de 8 amostras de skipped_samples.
     """
     full_spec, gi_spec, fd_spec = _build_ignore_specs(root, cfg)
     candidates: list[tuple[Path, PurePath, int]] = []
@@ -399,10 +412,14 @@ def _scan(root: Path, cfg: ScanConfig) -> tuple[list[tuple[Path, PurePath, int]]
     samples: dict[str, list[str]] = {k: [] for k in skipped}
     warnings: list[str] = []
 
+    skipped_items: list[tuple[str, str]] = []
+
     def note(reason: str, rel: str) -> None:
         skipped[reason] += 1
         if len(samples[reason]) < 8:
             samples[reason].append(rel)
+        # Lista completa (sem teto) para a arvore fiel do _TREE.md modo "full".
+        skipped_items.append((rel, reason))
 
     for dirpath, dirnames, filenames in os.walk(root, followlinks=False):
         cur = Path(dirpath)
@@ -458,7 +475,7 @@ def _scan(root: Path, cfg: ScanConfig) -> tuple[list[tuple[Path, PurePath, int]]
                 size = 0
             candidates.append((cur / fn, rel, size))
 
-    return candidates, skipped, samples, warnings
+    return candidates, skipped, samples, warnings, skipped_items
 
 
 # --------------------------------------------------------------------------- #
@@ -632,8 +649,10 @@ def make_plan_sources(sources: list["Source"]) -> FlattenPlan:
     samples_total: dict[str, list[str]] = {}
     warnings: list[str] = []
 
+    skipped_items_total: list[tuple[str, str]] = []
     for s, rp in zip(sources, roots):
-        cands, skipped, samples, warns = _scan(rp, s.cfg)
+        cands, skipped, samples, warns, skipped_items = _scan(rp, s.cfg)
+        skipped_items_total += skipped_items
         for src, rel_src, size in cands:
             key = os.path.normcase(str(src))
             if key in seen_src:
@@ -684,6 +703,7 @@ def make_plan_sources(sources: list["Source"]) -> FlattenPlan:
         collisions=collisions,
         warnings=warnings,
         sources=descs,
+        skipped_items=skipped_items_total,
     )
 
 
@@ -786,6 +806,136 @@ def write_manifest(dest: Path, plan: FlattenPlan, cfg: ScanConfig) -> Path:
     return mani
 
 
+# Mapa motivo-interno -> rotulo curto ASCII exibido no _TREE.md.
+_TREE_REASON_LABEL = {
+    "gitignore": "gitignore",
+    "gitignore (pasta)": "gitignore",
+    "flatdropignore": "flatdropignore",
+    "flatdropignore (pasta)": "flatdropignore",
+    "ignore_padrão": "embutido",
+    "ignore_padrão (pasta)": "embutido",
+    "tipo": "tipo",
+    "sensível": "sensivel",
+    "filtro (pasta)": "filtro",
+}
+
+
+def _tree_label(reason: str) -> str:
+    """Rotulo ASCII curto do motivo, para a arvore. Desconhecido cai em si mesmo."""
+    return _TREE_REASON_LABEL.get(reason, reason)
+
+
+def _tree_node() -> dict:
+    return {"children": {}, "files": [], "collapsed": None, "skipped": []}
+
+
+def _tree_get_node(root_node: dict, parts: tuple[str, ...]) -> dict:
+    node = root_node
+    for p in parts:
+        node = node["children"].setdefault(p, _tree_node())
+    return node
+
+
+def _tree_render(node: dict, indent: int, mode: str, lines: list[str]) -> None:
+    """Renderiza um nó da árvore em memória (sem tocar disco), ordenado e estável."""
+    entries: list[tuple[str, str, str, object]] = []
+    for name, child in node["children"].items():
+        entries.append((name.lower(), "dir", name, child))
+    for name, target in node["files"]:
+        entries.append((name.lower(), "file", name, target))
+    if mode == "full":
+        for name, label in node["skipped"]:
+            entries.append((name.lower(), "skipped", name, label))
+    entries.sort(key=lambda e: e[0])
+
+    prefix = "  " * indent
+    for _, kind, name, data in entries:
+        if kind == "dir":
+            if data["collapsed"]:
+                lines.append(f"{prefix}{name}/  [ignorada: {data['collapsed']}]")
+            else:
+                lines.append(f"{prefix}{name}/")
+                _tree_render(data, indent + 1, mode, lines)
+        elif kind == "file":
+            if data:
+                lines.append(f"{prefix}{name}  [renomeado: {data}]")
+            else:
+                lines.append(f"{prefix}{name}")
+        else:  # "skipped" — só aparece no modo full (folha por arquivo)
+            lines.append(f"{prefix}{name}  [pulado: {data}]")
+
+    if mode == "summary" and node["skipped"]:
+        counts: dict[str, int] = {}
+        for _, label in node["skipped"]:
+            counts[label] = counts.get(label, 0) + 1
+        agg = ", ".join(f"{label} x{n}" for label, n in sorted(counts.items()))
+        lines.append(f"{prefix}[pulados: {agg}]")
+
+
+def write_tree(dest: Path, plan: FlattenPlan, cfg: ScanConfig) -> Path:
+    """Escreve _TREE.md: arvore indentada da origem (copiados + pulados + pastas
+    colapsadas), com o motivo de cada exclusao. Par visual do .flatdropignore.
+
+    Nao lista o interior de pasta ignorada (colapso em uma linha, sem recursao).
+    O nivel de detalhe dos arquivos pulados soltos segue cfg.tree_skipped
+    ("summary" agrega por pasta; "full" mostra folha a folha).
+
+    A arvore e montada a partir de plan.files (copiados) e plan.skipped_items
+    (pulados, ja em memoria) — nenhuma nova varredura de disco.
+    """
+    folder_items = [(rel, reason) for rel, reason in plan.skipped_items if rel.endswith("/")]
+    file_items = [(rel, reason) for rel, reason in plan.skipped_items if not rel.endswith("/")]
+
+    root_node = _tree_node()
+
+    # Pastas colapsadas: uma entrada cada, sem interior.
+    for rel, reason in folder_items:
+        parts = rel[:-1].split("/")
+        parent = _tree_get_node(root_node, tuple(parts[:-1]))
+        parent["children"][parts[-1]] = {
+            "children": {},
+            "files": [],
+            "collapsed": _tree_label(reason),
+            "skipped": [],
+        }
+
+    # Arquivos copiados (com rename, se houve).
+    for f in plan.files:
+        parts = f.rel.parent.parts if f.rel.parent.as_posix() != "." else ()
+        node = _tree_get_node(root_node, parts)
+        node["files"].append((f.rel.name, f.target if f.renamed else None))
+
+    # Arquivos pulados soltos (fora de pasta colapsada, que nunca é varrida).
+    for rel, reason in file_items:
+        p = PurePath(rel)
+        parts = p.parent.parts if p.parent.as_posix() != "." else ()
+        node = _tree_get_node(root_node, parts)
+        node["skipped"].append((p.name, _tree_label(reason)))
+
+    n_copied = len(plan.files)
+    n_skipped = len(file_items)
+    n_ignored_dirs = len(folder_items)
+
+    lines: list[str] = [C.TREE_SIGNATURE]
+    lines.append(f"# Arvore FlatDrop — {plan.root.name}\n")
+    if len(plan.sources) <= 1:
+        origem = plan.sources[0] if plan.sources else f"`{plan.root}`"
+        lines.append(f"- Origem: {origem}")
+    else:
+        lines.append(f"- Raiz comum: `{plan.root}`")
+    lines.append(f"- Gerado em: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    lines.append(f"- Copiados: {n_copied} · Pulados: {n_skipped} · Pastas ignoradas: {n_ignored_dirs}")
+    lines.append("- Legenda: [copiado] · [renomeado: nome-plano] · [pulado: MOTIVO] · [ignorada: MOTIVO]")
+    lines.append("")
+    lines.append(f"{plan.root.name}/")
+    _tree_render(root_node, 1, cfg.tree_skipped, lines)
+    lines.append("")
+
+    tree = dest / C.TREE_NAME
+    tree.write_text("\n".join(lines), encoding="utf-8")
+    return tree
+
+
 def execute_plan(plan: FlattenPlan, dest: str | os.PathLike, cfg: ScanConfig) -> ExecuteResult:
     """Escreve em disco: resolve destino, (limpa se nosso), copia, gera manifesto."""
     dest_path = Path(dest)
@@ -801,6 +951,11 @@ def execute_plan(plan: FlattenPlan, dest: str | os.PathLike, cfg: ScanConfig) ->
             warnings.append(f"Falha ao copiar {f.rel.as_posix()}: {exc}")
 
     mani_path = write_manifest(dest_path, plan, cfg) if cfg.write_manifest else None
+    if cfg.write_tree:
+        try:
+            write_tree(dest_path, plan, cfg)
+        except OSError as exc:
+            warnings.append(f"Falha ao gravar _TREE.md: {exc}")
     return ExecuteResult(
         dest=dest_path,
         copied=copied,
