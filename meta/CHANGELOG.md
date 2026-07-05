@@ -7,8 +7,33 @@ versionamento conforme [SemVer](https://semver.org/lang/pt-BR/).
 ## [Não lançado]
 
 _Sem mudanças ainda. Itens de produto em aberto: persistência/recentes (Fase 2-C),
-ignores de pasta editáveis na GUI (Fase 2-D), fullpath incluindo a pasta-raiz e
-multi-raiz na GUI, UI-2/UI-3._
+ignores de pasta editáveis na GUI (Fase 2-D), multi-raiz na GUI, formato de nome
+"caminho escrito" (raiz→pastas→stem), UI-2/UI-3._
+
+## [0.3.1] — 2026-07-05
+
+Acabamento do modo fullpath: opção de incluir o nome da pasta-raiz no nome de cada
+arquivo. Recurso pequeno e opt-in que entrou logo após o corte da 0.3.0; a mesma
+sessão ajustou a ordem do sufixo antes de qualquer uso real. Suíte de 41 testes verde.
+
+### Adicionado
+- **`root_in_name` — pasta-raiz no nome (modo fullpath)** (spec0013): flag opcional
+  (desligada por padrão) que, no modo `fullpath` e em **fonte única**, inclui o nome
+  da pasta-raiz do projeto no nome de cada arquivo — inclusive os da raiz
+  (`README.md` → `README__meuapp.md`). A injeção acontece só no **nome planejado**
+  (via `root_prefix` em `_plan_names`); o `rel` de exibição do `_MANIFEST.md` e do
+  `_TREE.md` permanece o caminho real. Ignorada com aviso fora do `fullpath` e em
+  multi-fonte (lá o caminho já parte da raiz comum). Exposta como `--root-in-name`
+  na CLI e como checkbox na GUI (serializada no `.bat`, FIX-004). O limite de nome do
+  Windows segue protegido pelo truncamento com hash já existente.
+
+### Corrigido
+- **Ordem do sufixo do `root_in_name`** (spec0014): o formato passou a ser
+  **stem + caminho da pasta mais interna à mais externa + nome da pasta-raiz por
+  último** (ex.: `app/routes/page.tsx` sob `meuapp` → `page__routes__app__meuapp.tsx`),
+  em vez da raiz logo após o stem que a primeira implementação produzia. Ajuste de
+  uma linha em `_plan_names` (`(*reversed(dir_parts), root_prefix)`), sem tocar
+  `_compose`; o `fullpath` sem a flag permanece idêntico.
 
 ## [0.3.0] — 2026-07-04
 

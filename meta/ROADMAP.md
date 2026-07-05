@@ -3,10 +3,9 @@
 Direção do projeto por fases. Sem datas: a ordem importa mais que o calendário.
 Itens em aberto vêm de `IDEAS.md`; ao concluir, registre em `CHANGELOG.md`.
 
-> **Mudanças nesta revisão (2026-07-04):** o **`_TREE.md` (Fase 2-B) foi entregue**
-> (spec0011 aplicada/commitada, 35 testes verdes) — restam na Fase 2 apenas C/D e o
-> polimento de UI. A release **0.3.0 está pronta para corte** (spec0012 autorada:
-> bump + fechamento do CHANGELOG). O fullpath-com-raiz virou spec0013 (autorada).
+> **Mudanças nesta revisão (2026-07-05):** **spec0014 aplicada** — o `root_in_name`
+> está completo (ordem final: raiz no fim). **spec0015 aplicada** — cortada a
+> **0.3.1** (bump 0.3.0→0.3.1 + registro do root_in_name e do fix no CHANGELOG).
 
 ## Fase 1 — MVP ✅ (concluída em 2026-06-05)
 
@@ -36,7 +35,7 @@ Itens em aberto vêm de `IDEAS.md`; ao concluir, registre em `CHANGELOG.md`.
 - [x] **B — `_TREE.md`** opcional na saída (árvore + pulados + pastas ignoradas colapsadas em UMA linha, sem recursão). Entregue na spec0011 (35 testes; verificado no mount).
 - [ ] **C —** Persistir configurações + pastas recentes na GUI. **← próxima da Fase 2.**
 - [ ] **D —** Ignores de pasta editáveis na GUI (com núcleo imutável). (O `.flatdropignore` já cobre boa parte.)
-- [ ] **Fullpath com pasta-raiz** (spec0013 autorada): flag `root_in_name` para incluir o nome do projeto no nome de cada arquivo, no modo fullpath.
+- [x] **Fullpath com pasta-raiz** (spec0013 aplicada; ordem ajustada pela spec0014): flag `root_in_name` inclui o nome do projeto no nome de cada arquivo, no modo fullpath. Formato final: stem + caminho invertido + raiz no fim.
 - [ ] **Multi-raiz na GUI**: selecionar N pastas de uma vez, prefixando cada uma com o nome da sua raiz (a core já suporta multi-fonte; falta a UI de N raízes).
 - [ ] Aviso mais visível quando o pathspec está ausente (destaque na GUI).
 - [~] **UI/UX (em fases):** UI-1 feita; **UI-2** (polimento de layout) e **UI-3** (presets/lembrar seleção) na fila.
@@ -69,3 +68,8 @@ Itens em aberto vêm de `IDEAS.md`; ao concluir, registre em `CHANGELOG.md`.
 - ~~Cortar **0.3.0**~~ — **spec0012 aplicada** (bump `flatdrop/__init__.py`
   0.2.0->0.3.0 + CHANGELOG fechado com `[0.3.0] — 2026-07-04`, `_TREE.md` incluído,
   nova `[Não lançado]` aberta). 35 testes verdes.
+- ~~Cortar **0.3.1**~~ — **spec0015 aplicada** (`root_in_name` do spec0013 entrou
+  APÓS o corte da 0.3.0, então não constava no `### Adicionado` da `[0.3.0]`): bump
+  `flatdrop/__init__.py` 0.3.0→0.3.1 + nova seção `[0.3.1] — 2026-07-05` com o
+  root_in_name (Adicionado) e o fix de ordem (Corrigido); `[0.3.0]` intacta. 41
+  testes verdes.

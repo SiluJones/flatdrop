@@ -3,28 +3,28 @@
 Estado atual do projeto. Atualize ao fim de cada sessão de trabalho (rolante: o
 resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
 
-> **Mudanças nesta revisão (2026-07-04, sessão da tarde):** a spec0011 (`_TREE.md`)
-> foi **aplicada e commitada** pelo Code (commit `304440a`, 27→35 testes verdes); o
-> `_TREE.md` foi verificado no mount e saiu correto (pastas ignoradas colapsadas em
-> uma linha, renomeados marcados). Autoradas **duas specs novas, aguardando o Code**:
-> `260704-spec0012-release-0.3.0.md` (corte da 0.3.0) e
-> `260704-spec0013-fullpath-root.md` (incluir o nome da pasta-raiz no modo fullpath).
-> Capturado no IDEAS o refinamento da nota 0714 (KCM ensina o Claude a ler o
-> `_TREE.md` e gerar um `.flatdropignore` versionado).
->
-> **Atualização (mesma revisão):** **spec0012 aplicada** — `__version__` bumpado
-> para `0.3.0`, CHANGELOG fechado (`[0.3.0] — 2026-07-04`, `_TREE.md` incluído,
-> nova `[Não lançado]` aberta). 35 testes seguem verdes. Resta a spec0013 na fila.
+> **Mudanças nesta revisão (2026-07-05):** **spec0014 aplicada e commitada**
+> (`5acf16f`, nota 0952) — a ordem do `root_in_name` agora é a correta (stem +
+> caminho invertido + raiz no fim, `page__routes__app__meuapp.tsx`); asserção extra
+> trava "raiz é o último token"; 41 testes verdes. **spec0015 aplicada** — bump
+> `0.3.0→0.3.1` e CHANGELOG com a seção `[0.3.1]` (root_in_name + fix de ordem);
+> resolve o descompasso de versão.
 
-- **Versão:** 0.3.0 no `__init__.py`. **spec0012 aplicada** (bump + fechamento do
-  CHANGELOG).
-- **Data:** 2026-07-04
-- **Fase:** F1 (MVP) OK · F2 (robustez/conveniência): item B (`_TREE.md`) OK agora;
+> **Descompasso de versão — RESOLVIDO (spec0015):** a 0.3.0 foi cortada (spec0012)
+> ANTES da spec0013 entrar, então o `root_in_name` ficou no código sem constar no
+> `### Adicionado` da `[0.3.0]`. A **spec0015 (aplicada)** cortou a **0.3.1**: bump
+> `0.3.0→0.3.1`, nova seção `[0.3.1]` com o `root_in_name` (Adicionado) e o fix de
+> ordem (Corrigido), sem reescrever a `[0.3.0]`.
+
+- **Versão:** 0.3.1 no `__init__.py`. **spec0015 (corte da 0.3.1) aplicada** —
+  CHANGELOG registra root_in_name (spec0013) + fix de ordem (spec0014).
+- **Data:** 2026-07-05
+- **Fase:** F1 (MVP) OK · F2 (robustez/conveniência): item B (`_TREE.md`) OK;
   restam C/D e polimento de UI · F3 (gerador de `.bat` + multi-fonte na GUI) OK —
   ver `ROADMAP.md`.
 - **Situação geral:** em uso real. Fluxo do monorepo `cinzeiro` coberto de ponta a
-  ponta (GUI, CLI e `.bat`). Modo Claude Code em operação (specs 0001–0011 aplicadas
-  e commitadas; 0012–0013 na fila do Code).
+  ponta (GUI, CLI e `.bat`). Modo Claude Code em operação (specs 0001–0015 aplicadas
+  e commitadas).
 
 ## O que funciona (além do MVP)
 
@@ -39,6 +39,13 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
   (`node_modules/ [ignorada: embutido]` nunca expande). Desligado por padrão
   (checkbox na GUI + `--tree` na CLI, serializado no `.bat`). Detalhe dos pulados
   soltos via `--tree-detail summary|full` (default `summary`).
+- **Fullpath com nome da pasta-raiz (spec0013, ajuste na 0014):** flag `root_in_name`
+  — no modo fullpath e em fonte única, inclui o nome do projeto no nome de cada
+  arquivo (inclusive os da raiz). Só no NOME planejado; o `rel` do manifesto/tree
+  fica real. Ignorada com aviso fora do fullpath e em multi-fonte. CLI
+  `--root-in-name`; checkbox na GUI serializada no `.bat`. **Formato final (spec0014):
+  stem + caminho da mais interna à mais externa + raiz no fim**
+  (`app/routes/page.tsx` sob `meuapp` → `page__routes__app__meuapp.tsx`).
 - **Gerador de `.bat` na GUI:** botão "Gerar .bat…" serializa a config da tela num
   `.bat` ASCII (reproduz a seleção do modal via `--add-ext`/`--exclude-ext`); abre
   a janela de salvar na pasta-pai da raiz.
@@ -58,44 +65,40 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
 
 ## Qualidade / testes
 
-- **35 testes pytest passando** (`python -m pytest -q` a partir da raiz):
-  32 em `test_core.py` (MVP + FIX-001 + filtros/multi-fonte/Downloads + 3 do
-  `.flatdropignore` + 8 do `_TREE.md`) + 3 em `test_cli.py`.
+- **41 testes pytest passando** (`python -m pytest -q` a partir da raiz):
+  test_core.py (MVP + FIX-001 + filtros/multi-fonte/Downloads + `.flatdropignore` +
+  `_TREE.md` + `root_in_name`) + 3 em test_cli.py. A spec0014 (aplicada) ajustou as
+  asserções de ordem do `root_in_name`, mantendo o total.
 - A GUI **não** é coberta pela suíte (tkinter fora do CI) -> smoke manual no Windows.
 
 ## Em aberto (produto)
 
-- **Aplicar a spec0013 (fullpath com pasta-raiz) — AUTORADA, AGUARDANDO O CODE.**
-  Flag `root_in_name`: no modo fullpath e em fonte única, injeta o nome da
-  pasta-raiz como a pasta mais externa do sufixo (arquivos da raiz passam a levar o
-  nome do projeto). Injeção só no nome (via `root_prefix` em `_plan_names`); o `rel`
-  do manifesto/tree continua real. Ignorada com aviso fora do fullpath e em
-  multi-fonte. Limite do Windows protegido pelo truncamento com hash. CLI
-  `--root-in-name`; checkbox na GUI serializada no `.bat`. +~6 testes (35->~41).
 - **C — Persistir configurações + pastas recentes** na GUI (`settings.py` com JSON
   em `%APPDATA%`/`~/.config`; Combobox de raízes recentes).
 - **D — Ignores de pasta editáveis na GUI** com núcleo imutável (`.git`/`node_modules`/…).
   (O `.flatdropignore` já cobre boa parte de forma declarativa.)
 - **Multi-raiz na GUI** (selecionar N pastas, prefixar cada uma com sua raiz) —
   ideia da nota `.txt`; tarefa própria, mexe na UI de seleção.
+- **Formato "caminho escrito"** (`raiz__pastas__stem.ext`) como seletor de formato do
+  nome — ideia futura no IDEAS; útil para empilhar por raiz, não para o Claude achar
+  por nome.
 - **UI-2** (polimento de layout) e **UI-3** (presets "só docs"/"só código", lembrar
   última seleção) — melhorias de UX em fila.
-- **Doc:** documentar o `.flatdropignore` no `README.md` de usuário (CONTEXT já
-  cobre). Considerar o trecho de **KCM** que ensina o Claude a ler o `_TREE.md` e
-  ditar um `.flatdropignore` versionado (ideia da nota 0714).
-- **Robustez (avaliar):** saída da CLI ASCII-safe (`->`/`*` em vez de `↳`/`•`) para
-  dispensar `chcp` nos `.bat`; botão "Gerar atalho da UI" que crie o launcher sozinho.
+- **Doc:** documentar o `.flatdropignore` no `README.md` de usuário. Considerar o
+  trecho de **KCM** que ensina o Claude a ler o `_TREE.md` e ditar um
+  `.flatdropignore` versionado (ideia da nota 0714).
+- **Robustez (avaliar):** saída da CLI ASCII-safe (`->`/`*` em vez de `↳`/`•`);
+  botão "Gerar atalho da UI" que crie o launcher sozinho.
 
 ## Riscos / pontos de atenção
 
-- **Nenhum bug aberto.**
-- O `_TREE.md` deste projeto mostrou `Pulados: 0` (não há `.flatdropignore` nem
-  arquivos pulados por tipo aqui) — a diferença visual `summary`x`full` e as linhas
-  `[pulado: …]` só aparecem "ao vivo" num projeto com `.env`/`.flatdropignore`.
-  Está coberto por testes; é esperado.
+- **Nenhum bug aberto.** (O comportamento de ordem do root_in_name não é bug de
+  código — é ajuste de formato pedido; endereçado pela spec0014.)
+- O `_TREE.md` deste projeto mostra `Pulados: 0` (sem `.flatdropignore` nem arquivos
+  pulados por tipo aqui) — a diferença `summary`x`full` e as linhas `[pulado: …]` só
+  aparecem "ao vivo" num projeto com `.env`/`.flatdropignore`. Coberto por testes.
 - O fix do Downloads e a GUI só foram exercidos por estrutura/lógica aqui (sem
   Windows no ambiente do chat); a validação final é o smoke manual no PC.
-- A estimativa de tokens segue grosseira (`bytes/4`) e não vale para binários
-  (PDF/DOCX/XLSX) — não confie no número quando houver muitos binários.
+- A estimativa de tokens segue grosseira (`bytes/4`) e não vale para binários.
 - `.flatdropignore` faz uma passada extra na árvore para coletar os ignores
   (aceitável; fundível numa passada depois, se virar gargalo).
