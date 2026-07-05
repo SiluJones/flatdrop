@@ -10,6 +10,14 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
 > `0.3.0→0.3.1` e CHANGELOG com a seção `[0.3.1]` (root_in_name + fix de ordem);
 > resolve o descompasso de versão.
 
+> **Bug de infra de teste (FIX-005) — RESOLVIDO (spec0016 aplicada, `84be20e`):**
+> `pytest` puro na raiz falhava na coleta com `ModuleNotFoundError: No module named
+> 'flatdrop'` (só `python -m pytest` funcionava). Causa: nada punha a raiz do repo
+> no `sys.path` na coleta e não havia `conftest.py`. Correção: `conftest.py` de 3
+> linhas na raiz (espelha o `run.py`). Confirmado: `pytest -q` e
+> `python -m pytest -q` verdes (41 testes), da raiz e de dentro de `tests/`. Sem
+> mudança em `flatdrop/` nem `tests/`. Não era regressão da 0.3.1.
+
 > **Descompasso de versão — RESOLVIDO (spec0015):** a 0.3.0 foi cortada (spec0012)
 > ANTES da spec0013 entrar, então o `root_in_name` ficou no código sem constar no
 > `### Adicionado` da `[0.3.0]`. A **spec0015 (aplicada)** cortou a **0.3.1**: bump
@@ -23,8 +31,8 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
   restam C/D e polimento de UI · F3 (gerador de `.bat` + multi-fonte na GUI) OK —
   ver `ROADMAP.md`.
 - **Situação geral:** em uso real. Fluxo do monorepo `cinzeiro` coberto de ponta a
-  ponta (GUI, CLI e `.bat`). Modo Claude Code em operação (specs 0001–0015 aplicadas
-  e commitadas).
+  ponta (GUI, CLI e `.bat`). Modo Claude Code em operação (specs 0001–0016 aplicadas
+  e commitadas — spec0016 é só `conftest.py` de teste, `84be20e`).
 
 ## O que funciona (além do MVP)
 
@@ -65,10 +73,11 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
 
 ## Qualidade / testes
 
-- **41 testes pytest passando** (`python -m pytest -q` a partir da raiz):
-  test_core.py (MVP + FIX-001 + filtros/multi-fonte/Downloads + `.flatdropignore` +
-  `_TREE.md` + `root_in_name`) + 3 em test_cli.py. A spec0014 (aplicada) ajustou as
-  asserções de ordem do `root_in_name`, mantendo o total.
+- **41 testes pytest passando**, tanto `pytest -q` (puro) quanto `python -m pytest -q`,
+  a partir da raiz (spec0016 — `conftest.py` — corrigiu o puro; FIX-005): test_core.py
+  (MVP + FIX-001 + filtros/multi-fonte/Downloads + `.flatdropignore` + `_TREE.md` +
+  `root_in_name`) + 3 em test_cli.py. A spec0014 (aplicada) ajustou as asserções de
+  ordem do `root_in_name`, mantendo o total.
 - A GUI **não** é coberta pela suíte (tkinter fora do CI) -> smoke manual no Windows.
 
 ## Em aberto (produto)
@@ -92,8 +101,9 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
 
 ## Riscos / pontos de atenção
 
-- **Nenhum bug aberto.** (O comportamento de ordem do root_in_name não é bug de
-  código — é ajuste de formato pedido; endereçado pela spec0014.)
+- **Nenhum bug aberto.** (FIX-005 resolvido pela spec0016 — `conftest.py` na raiz.
+  O comportamento de ordem do root_in_name não era bug — foi ajuste de formato
+  pedido, endereçado pela spec0014.)
 - O `_TREE.md` deste projeto mostra `Pulados: 0` (sem `.flatdropignore` nem arquivos
   pulados por tipo aqui) — a diferença `summary`x`full` e as linhas `[pulado: …]` só
   aparecem "ao vivo" num projeto com `.env`/`.flatdropignore`. Coberto por testes.

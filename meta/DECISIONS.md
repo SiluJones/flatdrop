@@ -356,6 +356,37 @@ caminho de execução ao vivo no mesmo ciclo — senão a GUI e o `.bat` diverge
 
 ---
 
+## FIX-005 — `pytest` puro falhava ao coletar (`ModuleNotFoundError: flatdrop`)
+**Data:** 2026-07-05 · **Status:** corrigido (spec0016)
+
+**Sintoma.** No Windows, rodando `pytest` (puro) a partir da raiz do repo, a coleta era
+interrompida com 2 erros: `tests/test_cli.py` e `tests/test_core.py` falhavam em
+`from flatdrop import ...` com `ModuleNotFoundError: No module named 'flatdrop'`
+(0 testes coletados). `python -m pytest` funcionava (41 verdes).
+
+**Causa raiz.** Estrutura aninhada (raiz `FlatDrop\flatdrop\`, pacote `flatdrop\` dentro,
+`tests\` ao lado). Os testes importam `flatdrop` como pacote de topo, mas nada inseria a
+raiz do repo no `sys.path` durante a coleta, e o projeto não tinha `conftest.py`/
+`pyproject.toml`/`pytest.ini`/`setup.*`. O `run.py` já fazia esse ajuste para a aplicação
+(`sys.path.insert`), mas não havia equivalente para os testes. O `python -m pytest`
+mascarava o problema porque o `-m` adiciona o diretório atual ao `sys.path`; o `pytest`
+puro não faz isso. Ou seja: bug latente desde sempre, revelado só ao trocar a forma de
+invocar.
+
+**Solução.** `conftest.py` na raiz do repo com `sys.path.insert(0, Path(__file__).resolve().parent)`.
+O pytest importa o `conftest.py` da rootdir antes de coletar, inserindo a raiz no path —
+então `from flatdrop import ...` resolve com `pytest` puro, sem `python -m`, sem PYTHONPATH
+e sem instalar o pacote. Espelha o que o `run.py` já faz. Alternativas mais invasivas
+(`pyproject.toml` com `pythonpath`, `pip install -e .`) foram descartadas por exigirem
+config de packaging/passo de ambiente, contra o princípio de zero-setup do repo.
+
+**Lição.** Fixar a forma de rodar os testes na infra, não na memória de quem invoca: se o
+comando documentado é `pytest -q`, garantir que `pytest` puro funcione (via `conftest.py`
+na rootdir), em vez de depender de `python -m pytest`. Diferenças entre ambientes (o do
+Code usava `-m`; o do usuário, puro) escondem esse tipo de defeito.
+
+---
+
 ## DEC-014 — `.flatdropignore` (ignore próprio) + `.gitignore` aninhado
 **Data:** 2026-06-24 · **Status:** aceita
 

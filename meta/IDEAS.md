@@ -5,50 +5,62 @@ virarem item de `ROADMAP.md`, serem implementados ou descartados. Ideia adotada
 vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
 "Descartadas" com o motivo. Nunca se perde nada — muda de status.
 
-> **Mudanças nesta revisão (2026-06-14):** os filtros de seleção (por tipo, por
-> pasta) e o multi-fonte "docs do repo + conteúdo de área num manifesto" saíram
-> de "Ativas" para **Concluídas** (entregues na 0.2.0). Capturadas as ideias
-> novas dos arquivos `ideia-260612`/`260613`: gerador de `.bat` pela interface,
-> e single-file com os mesmos filtros.
+> **Mudanças nesta revisão (2026-07-05):** **spec0014 aplicada** — a ordem do
+> `root_in_name` ficou correta (stem + caminho invertido + raiz no fim). Autorada a
+> **spec0015** (corte da 0.3.1), que registra o `root_in_name` e o fix de ordem no
+> CHANGELOG e bumpa a versão. Sem ideia nova nesta sessão; a lista abaixo é estável.
 
 ## Ativas
 
-- **Atalho da UI + UI-2/UI-3.** UI-1 (modal de tipos) feita. Entregue o launcher `flatdrop-ui.bat` (abre a
-  UI sem console, copiável). Futuro: um botão **"Gerar atalho da UI"** na própria GUI, que cria o launcher
-  calculando o caminho do `run.py` sozinho (talvez um `.lnk` em vez de `.bat`). Depois: UI-2 (polimento de
-  layout) e UI-3 (presets "só docs"/"só código", lembrar última seleção).
-- **Redesign da UI por seleção (UX, em fases).** Trocar a digitação de tipos por um **modal pop-up**:
-  botão "Tipos…" abre um diálogo (Toplevel modal) com checklist categorizado (Linguagens, Web, Config,
-  Documentos, Godot…), busca, "marcar todos/limpar" por grupo, OK/Cancelar. Subsume "Extensões aceitas"
-  e os filtros "Só estes/Exceto" numa só interface, deixando a tela principal compacta (só um resumo
-  "Tipos: N selecionados"). Pedido do usuário (mais prático, intuitivo, bonito; melhor uso de espaço).
-  Desenhar a estrutura primeiro e aprovar antes de implementar.
-- **Flag CLI `--ext-set a,b,c` (allowlist exata).** Para o gerador de `.bat` reproduzir FIELMENTE uma
-  allowlist customizada no modal (hoje só dá para somar via `--add-ext`; remoções não se expressam).
-  Avaliar junto do redesign da UI.
-- **`_TREE.md` na saída.** Gerar (opcional, ligado por padrão) uma árvore
-  indentada da origem na pasta de saída: arquivos copiados limpos, pulados com o
-  motivo, pastas podadas fechadas. Resolve o "Claude não acha `page.tsx` porque
-  virou `page__users.tsx`" e dá visão do que nem subiu. Sem duplicar o manifesto
-  (que mapeia nome→origem); o tree cobre estrutura e exclusões. (Fase 2 — item B.)
+- **Formato de nome "caminho escrito" (`raiz__pastas__stem.ext`).** Um seletor de
+  formato do nome, alternativo ao `root_in_name` atual. Em vez de stem na frente,
+  escreveria o caminho na ordem natural de leitura com o **stem no fim**:
+  `app/routes/page.tsx` (raiz `meuapp`) → `meuapp__app__routes__page.tsx`. O usuário
+  reconhece que **não** ajuda o Claude a achar por nome (o stem deixa de liderar a
+  ordenação alfabética), mas agrupa todos os arquivos de um projeto por raiz — útil
+  para empilhar vários projetos numa mesma pasta/pilha mental. Implementação seria
+  barata (a mecânica de nomeação já existe), mas fica em **espera**: só entra se o
+  usuário quiser o seletor de formatos. Coexistiria com o `root_in_name`
+  (stem-primeiro) como dois estilos opt-in. (Ideia do usuário, 2026-07-04.)
+- **Selecionar várias pastas de uma vez na GUI (multi-raiz).** Irmã do multi-fonte
+  que já existe na core (`make_plan_sources`/`Source`): escolher N pastas na
+  interface, prefixar cada arquivo com o nome da sua pasta-raiz e só cair na
+  desambiguação atual se ainda colidir; a pasta de saída no Downloads vira uma
+  genérica com numerador quando já existir uma de mesmo nome. A core já suporta
+  multi-fonte; falta a UI de N raízes. (Ideia do usuário, nota `.txt` de 2026-07-03.)
+- **Editor visual de `.flatdropignore` na GUI (aba/painel).** Marcar visualmente o
+  que excluir/re-incluir e a ferramenta grava o `.flatdropignore` por você — sem
+  decorar a sintaxe. Evolução do item "Ignores de pasta editáveis na GUI" (D).
+  Hoje o `.flatdropignore` é criado à mão; a ferramenta só o LÊ. (Ideia do usuário.)
+- **Instrução de KCM: "Claude lê o `_TREE.md` e dita o `.flatdropignore`" (refinada
+  pela nota 0714).** Não é código do FlatDrop — é conteúdo de KCM, portável para
+  todo Projeto que usa FlatDrop. O autor sobe o `_TREE.md`; o Claude vê o que
+  sobrou/faltou (com o motivo de cada exclusão) e devolve o conteúdo do
+  `.flatdropignore` pronto para salvar na raiz e rodar de novo. O tree é o
+  diagnóstico; o `.flatdropignore` é a receita. Três ganhos: (1) o `.flatdropignore`
+  fica **versionado** no repo (parte do projeto, não config solta); (2) o KCM torna
+  o comportamento **portável** sem reensinar a cada projeto; (3) fecha o ciclo
+  `_TREE -> flatdropignore -> mount melhor`. **Refino técnico importante:** o fluxo
+  serve sobretudo para **liberar o que o `.gitignore` esconde** (via `!padrão`), pois
+  arquivos que nem estão no Git não aparecem no mount para o Claude os enxergar; o
+  `_TREE.md` mostra o que foi podado por `[ignorada: gitignore]` e o Claude sugere a
+  reinclusão. Próximo passo prático: rascunhar o trecho de KCM + um exemplo no
+  README. Habilitado pela spec0011. (Ideia do usuário, notas 0704-0714.)
+- **Botão "Gerar atalho da UI" na GUI.** UI-1 e o launcher `flatdrop-ui.bat` já
+  existem; falta um botão que gere o launcher calculando o caminho do `run.py`
+  sozinho (sem hardcode) — talvez um `.lnk` em vez de `.bat`.
+- **UI-2 (polimento de layout) e UI-3 (presets/lembrar seleção).** UI-2: ordem das
+  seções, 2 colunas nas opções, tema. UI-3: presets "só docs"/"só código", lembrar
+  a última seleção do modal.
+- **Saída da CLI ASCII-safe.** Trocar `↳`/`•`/`—` da saída por `->`/`*`/`-` para
+  dispensar `chcp 65001` nos `.bat` e evitar de vez problemas de code page. Baixo custo.
 - **Pastas recentes + persistir configurações.** Lembrar últimas raízes, destino,
-  modo, separador, toggles e extensões entre execuções (JSON em
+  modo, separador, toggles e seleção de tipos entre execuções (JSON em
   `%APPDATA%`/`~/.config`); Combobox de recentes na GUI. (Fase 2 — item C.)
 - **Ignores de pasta editáveis na GUI** com núcleo imutável
   (`.git`/`node_modules`/`__pycache__`/VCS sempre reaplicados), para tirar/pôr
-  pastas como `dist`/`build`/`.venv` caso a caso. (Fase 2 — item D.)
-- **Gerador de `.bat` pela interface.** Botão "Exportar `.bat`…" que serializa a
-  configuração atual da tela (raiz, modo, filtros, toggles) numa linha de comando
-  e salva o arquivo — fecha o ciclo: configura visual, leva o `.bat`, sem decorar
-  flag. A própria tela de config vira o editor do `.bat` (não precisa de página
-  separada). Depende da CLI (feita) e dos filtros (feitos); expressar multi-fonte
-  no exportador exige um pouco de UI. (Fase 3.)
-- **Multi-fonte também na GUI.** Hoje multi-fonte é só CLI/`.bat` (CLI-first).
-  Expor na GUI (ex.: um toggle "incluir todos os `.md` a partir de [raiz]") casa
-  com o exportador de `.bat`. (Fase 3, junto do exportador.)
-- **`.gitignore` aninhado.** Ler também os `.gitignore` de subpastas, como o git
-  faz. Hoje lê só o da raiz da fonte — o que, no fluxo de área, joga a favor
-  (a raiz da área não herda o `.gitignore` do pai). Útil em monorepos. (Stand-by.)
+  pastas como `dist`/`build`/`.venv` caso a caso. (Fase 2 — item D.) Nota: o
+  `.flatdropignore` já cobre boa parte disso de forma declarativa.
 - **Resync incremental por diff do manifesto.** Comparar com o `_MANIFEST.md`
   anterior e copiar/avisar só o que mudou. Ganha valor com uso frequente. (Stand-by.)
 - **Empacotar como `.exe` (PyInstaller).** Para o PC sem Python: duplo-clique sem
@@ -61,37 +73,59 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
   (opcional). (Fase 4.)
 - **Drag-and-drop da pasta raiz na janela.** Arrastar a pasta em vez de navegar
   (exigiria tkinterdnd2 — pesar contra o princípio de zero dependências). (Stand-by.)
-- **`.flatdropignore` (ignore próprio da ferramenta).** Um arquivo por projeto, lido como o
-  `.gitignore` (via pathspec) e ANINHADO (lido ao entrar em subpastas), para excluir o que vai
-  para o git mas não para o Projeto do Claude (docs gerados, dados grandes). Com negação (`!`)
-  também LIBERA o que o `.gitignore` bloqueia — resolvendo de uma vez "excluir a mais" e
-  "liberar do gitignore". Ideia do usuário (260615-2). Substitui inflar o config para sempre.
-- **GUI: selecionar tipo na hora (só-ext / exceto-ext).** Os filtros `only_ext`/`exclude_ext` já
-  existem na core/CLI; falta expô-los na interface (ex.: campo "só estes tipos: md"). Pedido do usuário.
-- **GUI: liberar item específico do `.gitignore`** sem desligar a leitura inteira (force-include /
-  campo de exceções), além do toggle on/off que já existe. Conecta com o `.flatdropignore` (negação).
-- **`_TREE.md`: tratamento de conteúdo ignorado.** Preocupação do usuário (260615-2): a árvore NÃO
-  deve listar o interior de pastas ignoradas (node_modules etc.) — isso incharia o arquivo. Padrão
-  profissional (tree --gitignore, repomix): pasta podada vira UMA linha colapsada
-  ("node_modules/ [ignorada]"), sem recursão. O `_TREE` deve seguir isso.
 
 ## Concluídas
 
-- **Selecionar por tipo na execução** ("quero só os `.md`", "tudo menos `.md`").
-  Entregue na 0.2.0 como `--only-ext` / `--exclude-ext` / `--add-ext`.
-- **Selecionar por pasta** ("só desta pasta e filhos", "pastas que começam com
-  X"). Entregue como `--only-folder` + `--folder-match` (e raiz da fonte para o
-  caso "só esta pasta").
-- **Combinar "todos os `.md` do repo" + "conteúdo de uma área" num só manifesto.**
-  Entregue via multi-fonte (`make_plan_sources`/`Source`) e o atalho
-  `--also-md-from`. Resolve o impasse dos "dois manifestos" sem dois passos.
-- **`.bat` para ativar em pastas de trabalho.** Entregues os 5 do cinzeiro em
-  `bat/cinzeiro/` (um só-`.md`, um por área).
-- **CLI sem GUI.** Entregue (`flatdrop/cli.py`); era item da Fase 3, antecipado
-  porque destravava os `.bat`.
+- **Fullpath com nome da pasta-raiz (spec0013 + ajuste de ordem na spec0014).** Flag
+  `root_in_name`: no modo fullpath e em fonte única, inclui o nome do projeto no
+  nome de cada arquivo (inclusive os da raiz: `README.md` → `README__meuapp.md`).
+  Injeção só no NOME planejado (via `root_prefix` em `_plan_names`); o `rel` do
+  manifesto/tree fica real. Ignorada com aviso fora do fullpath e em multi-fonte.
+  Limite do Windows protegido pelo truncamento com hash. CLI `--root-in-name`;
+  checkbox na GUI serializada no `.bat`. A **spec0013** deixou a raiz no meio do
+  sufixo (efeito da implementação); a **spec0014** corrigiu para stem + caminho
+  invertido + raiz no fim (`page__routes__app__meuapp.tsx`). (Ideia do usuário, nota
+  `.txt` de 2026-07-03.)
+- **`_TREE.md` opcional na saída (spec0011).** Árvore indentada da origem ao lado do
+  `_MANIFEST.md`: copiados (renomeados marcados), pulados com o motivo, e pastas
+  ignoradas colapsadas em UMA linha, sem recursão (`node_modules/ [ignorada:
+  embutido]`). Desligado por padrão (checkbox GUI + `--tree` CLI, serializado no
+  `.bat`). Detalhe dos pulados soltos via `--tree-detail summary|full`. O `_scan`
+  passou a devolver a lista completa de pulados (`skipped_items`, sem o teto de 8).
+  Verificado no mount (saiu correto). +8 testes (27->35). É o par visual do
+  `.flatdropignore` e habilita o fluxo de KCM acima. (Fase 2 — item B.)
+- **Redesign da UI por seleção (UI-1).** Modal "Escolher tipos…" (checklist
+  categorizado + busca + marcar/limpar por grupo + adicionar custom); tela
+  principal compacta. Subsumiu a caixa de extensões e os campos "Só estes/Exceto".
+  (spec-0007.)
+- **`.flatdropignore` + `.gitignore` aninhado.** Ignore próprio por projeto,
+  aninhado, com negação `!` que libera o que o `.gitignore` bloqueia (até pasta
+  podada). Lê os `.gitignore` de subpastas. (DEC-014, spec-0008.)
+- **GUI: selecionar tipo na hora** (só-ext/exceto-ext) — feito pelo modal (UI-1).
+- **GUI: liberar do `.gitignore`** — resolvido de forma declarativa pela negação
+  `!` do `.flatdropignore` (spec-0008), em vez de um campo avulso na GUI.
+- **Gerador de `.bat` pela interface.** Botão "Gerar .bat…" serializa a config da
+  tela num `.bat` ASCII; reproduz a seleção do modal via `--add-ext`/`--exclude-ext`.
+  (spec-0003, refinado na 0007. FIX-003 garantiu o ASCII.)
+- **Multi-fonte também na GUI.** Toggle "incluir todos os `.md` a partir de [raiz]"
+  ao vivo (Pré-visualizar/Executar), não só no `.bat`. (spec-0005; FIX-004.)
+- **Launcher da UI.** `bat/flatdrop-ui.bat` abre a interface sem console (`pythonw`),
+  copiável.
+- **Expandir a allowlist de tipos** (Godot, PDF/DOCX/XLSX/ODT/RTF/EPUB, +linguagens).
+  (DEC-013, spec-0001.)
+- **Abrir a GUI maximizada.** (spec-0005.)
+- **Selecionar por tipo na execução** (`--only-ext`/`--exclude-ext`/`--add-ext`) — 0.2.0.
+- **Selecionar por pasta** (`--only-folder` + `--folder-match`) — 0.2.0.
+- **Combinar "todos os `.md` do repo" + "conteúdo de uma área" num só manifesto**
+  (multi-fonte `make_plan_sources`/`Source` + `--also-md-from`) — 0.2.0.
+- **`.bat` para ativar em pastas de trabalho** (os 5 do cinzeiro) — 0.2.0.
+- **CLI sem GUI** (`flatdrop/cli.py`) — 0.2.0 (antecipada da Fase 3).
 
 ## Descartadas
 
+- **Flag CLI `--ext-set a,b,c` (allowlist exata).** Não foi preciso: o gerador de
+  `.bat` reproduz qualquer seleção do modal com `--add-ext` (adições) +
+  `--exclude-ext` (remoções), já que o `cli.py` reseta `exclude_ext` na fonte de `.md`.
 - **Ser só single-file (sem o modo pasta).** O fluxo é de arquivos individuais no
   Projeto, com atualização granular. Single-file é complemento. (Ver DEC-001.)
 - **Mover os arquivos em vez de copiar.** Destruiria a origem. (Ver DEC-002.)
@@ -100,8 +134,8 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
 - **Upload automático para o Claude.** Não há API pública para os arquivos de
   Projeto; arrastar continua manual (e é só uma etapa).
 - **Mover imagens/áudio/vídeo para a saída.** O Projeto do Claude não os usa como
-  texto; ignorá-los é o certo. Se algum dia for preciso incluir, reabrir via um
-  toggle explícito. (Confirmado com o usuário em 2026-06-14.)
+  texto; ignorá-los é o certo. Reabrir via toggle explícito se algum dia precisar.
+  (Confirmado com o usuário em 2026-06-14.)
 
 ## Feedback para o Kit
 
@@ -109,20 +143,19 @@ Registro do que ESTE projeto observou/mudou além do kit (material que volta par
 
 - **Adotado o modo Claude Code (duas raias).** Chat autora docs/specs; Code implementa e commita.
   Criados os arquivos de arranque (`CLAUDE.md` raiz, `.claude/`). Ver DEC-012.
-- **`meta/CLAUDE.md` → `meta/CEREBRO.md`.** O arquivo de comportamento foi renomeado pelo kit;
-  confirmado como superconjunto exato do anterior (princípios 1-19, higiene, transferência
-  idênticos; só ACRESCENTOU a nota de adaptar instruções, a seção de raias e o apêndice de
-  arranque). Nada se perdeu — não houve merge a fazer.
-- **Método "doc por spec" exercitado.** Specs em `meta/specs/` com âncora semântica; um canal por
-  doc por ciclo. Funcionou para code (spec-0001) e doc (spec-0002).
+- **`meta/CLAUDE.md` → `meta/CEREBRO.md`.** Confirmado como superconjunto exato do anterior
+  (nada perdido) — não houve merge a fazer.
+- **Método "doc por spec" exercitado** em muitos ciclos (specs 0001–0010): âncora semântica,
+  um canal por doc por ciclo, "PARE e reporte" se a âncora falhar. Funcionou bem.
 - **`.bat` no CMD exige ASCII (FIX-003).** Encoding de `.bat` é armadilha: corpo ASCII, acento só na
   saída via `chcp`. O gerador de `.bat` passou a garantir isso.
-- **Ideia (robustez):** tornar a SAÍDA da CLI ASCII-safe (`->` em vez de `↳`, `*` em vez de `•`) para
-  dispensar `chcp 65001` nos `.bat` e evitar de vez problemas de code page. Baixo custo; avaliar.
-- **Verificar lógica sutil no sandbox antes de virar spec.** O `.flatdropignore` (negação + aninhamento)
-  foi testado com o pathspec real ANTES de escrever a spec — pegou uma expectativa minha errada e deu
-  confiança no algoritmo. Vale como prática para qualquer regra não-óbvia.
+- **Verificar lógica sutil no sandbox antes de virar spec.** O `.flatdropignore` (negação +
+  aninhamento) foi testado com o pathspec real ANTES de escrever a spec — pegou uma expectativa
+  errada e deu confiança no algoritmo. Vale como prática para qualquer regra não-óbvia.
 - **Atualização do KCM integrada (DEC-015).** Adotados: seção de config, novo nome de spec
-  (`AAMMDD-specNNNN-desc.md`), `HISTORICO`→`HISTORY`. Omitidos com registro: HUB (projeto solo) e a regra
-  `.gitignore`/README proativa (o repo já tem os dois). Preservado o conteúdo específico do flatdrop —
-  nada de sobrescrever meta/ com template em branco.
+  (`AAMMDD-specNNNN-desc.md`), `HISTORICO`→`HISTORY`. Omitidos com registro: HUB (projeto solo) e a
+  regra `.gitignore`/README proativa (o repo já tem os dois). Preservado o conteúdo específico do
+  flatdrop — nada de sobrescrever meta/ com template em branco.
+- **Higiene em transferência.** Ao transferir conversa, regenerar os meta/ completos e detalhados
+  (não resumir), reclassificar IDEAS (implementadas → Concluídas) e limpar o STATUS. Um "prompt de
+  início" com ordem de leitura + estado exato faz a nova conversa continuar sem perda.
