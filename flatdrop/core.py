@@ -45,6 +45,11 @@ class ScanConfig:
     # "all"         -> todo arquivo ganha sufixo (pasta-pai, estendido se colidir)
     # "fullpath"    -> todo arquivo carrega o caminho completo desde a raiz
     mode: str = "collisions"
+    # Só no modo "fullpath" e em FONTE ÚNICA: inclui o nome da pasta-raiz como a
+    # pasta mais externa do sufixo (arquivos da raiz passam a levar o nome do
+    # projeto). Ignorado nos outros modos e em multi-fonte (spec0013). O limite de
+    # nome (MAX_NAME_LEN) segue protegido pelo truncamento com hash já existente.
+    root_in_name: bool = False
     sep: str = C.DEFAULT_SEP
     use_gitignore: bool = True
     include_sensitive: bool = False
@@ -482,7 +487,9 @@ def _scan(
 # Renomeação à prova de colisão (o coração)
 # --------------------------------------------------------------------------- #
 def _plan_names(
-    candidates: list[tuple[Path, PurePath, int]], cfg: ScanConfig
+    candidates: list[tuple[Path, PurePath, int]],
+    cfg: ScanConfig,
+    root_prefix: str | None = None,
 ) -> tuple[list[PlannedFile], int, list[str]]:
     """Atribui um nome final único a cada candidato segundo o modo escolhido.
 
@@ -505,6 +512,10 @@ def _plan_names(
     for src, rel, _size in candidates:
         stem, ext = split_name(rel.name)
         dir_parts = rel.parent.parts if rel.parent.as_posix() != "." else ()
+        # spec0013: raiz entra como a pasta mais EXTERNA (prefixo), só no NOME —
+        # o rel de exibição (manifesto/tree) permanece o real, sem a raiz.
+        if root_prefix:
+            dir_parts = (root_prefix, *dir_parts)
         meta.append((stem, ext, dir_parts))
 
     ks = [0] * n
@@ -673,7 +684,25 @@ def make_plan_sources(sources: list["Source"]) -> FlattenPlan:
                     bucket.append(ex)
         warnings += warns
 
-    planned, collisions, name_warnings = _plan_names(all_candidates, primary_cfg)
+    # spec0013: incluir o nome da pasta-raiz no sufixo (só fullpath + fonte única).
+    root_prefix: str | None = None
+    if primary_cfg.root_in_name:
+        if primary_cfg.mode != "fullpath":
+            warnings.append(
+                "Opção 'incluir pasta-raiz no nome' só vale no modo fullpath — "
+                "ignorada neste modo."
+            )
+        elif len(sources) > 1:
+            warnings.append(
+                "Opção 'incluir pasta-raiz no nome' foi ignorada: com múltiplas "
+                "fontes o caminho já parte da raiz comum. (Multi-raiz é tarefa futura.)"
+            )
+        elif common.name:
+            root_prefix = common.name
+
+    planned, collisions, name_warnings = _plan_names(
+        all_candidates, primary_cfg, root_prefix=root_prefix
+    )
     warnings += name_warnings
 
     # FIX-001: pasta inteira engolida pelo .gitignore é fácil de não perceber

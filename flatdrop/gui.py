@@ -221,6 +221,7 @@ class FlatDropApp(ttk.Frame):
         self.clear_var = tk.BooleanVar(value=True)
         self.manifest_var = tk.BooleanVar(value=True)
         self.tree_var = tk.BooleanVar(value=False)  # _TREE.md desligado por padrao (spec0011)
+        self.root_in_name_var = tk.BooleanVar(value=False)  # incluir pasta-raiz (spec0013)
         self._selected_exts: set[str] = set(C.DEFAULT_EXTENSIONS)  # allowlist atual (editada no modal)
         self.also_md_var = tk.BooleanVar(value=False)
         self.also_md_root_var = tk.StringVar()
@@ -277,6 +278,8 @@ class FlatDropApp(ttk.Frame):
                         variable=self.mode_var, value="all").grid(sticky="w")
         ttk.Radiobutton(modes, text="Caminho completo — todo arquivo carrega o caminho inteiro desde a raiz",
                         variable=self.mode_var, value="fullpath").grid(sticky="w")
+        ttk.Checkbutton(modes, text="Incluir o nome da pasta-raiz (só no modo fullpath)",
+                        variable=self.root_in_name_var).grid(sticky="w")
         r += 1
 
         # Opções
@@ -398,6 +401,8 @@ class FlatDropApp(ttk.Frame):
             args += ["--no-manifest"]
         if self.tree_var.get():
             args += ["--tree"]
+        if self.root_in_name_var.get():
+            args += ["--root-in-name"]
         if not self.clear_var.get():
             args += ["--no-clear"]
         if self.also_md_var.get() and self.also_md_root_var.get().strip():
@@ -473,6 +478,7 @@ class FlatDropApp(ttk.Frame):
             clear_dest=self.clear_var.get(),
             write_manifest=self.manifest_var.get(),
             write_tree=self.tree_var.get(),
+            root_in_name=self.root_in_name_var.get(),
         )
 
     def _sources(self, primary: core.ScanConfig) -> list[core.Source]:

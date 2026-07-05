@@ -57,6 +57,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="modo de renomeação (padrão: collisions)",
     )
     p.add_argument("--sep", default=C.DEFAULT_SEP, help=f"separador de sufixo (padrão: {C.DEFAULT_SEP})")
+    p.add_argument("--root-in-name", action="store_true", dest="root_in_name",
+                   help="no modo fullpath, inclui o nome da pasta-raiz no nome de cada arquivo")
     p.add_argument("--only-ext", metavar="LISTA", help="só estas extensões (ex.: md ou md,txt)")
     p.add_argument("--exclude-ext", metavar="LISTA", help="exceto estas extensões (ex.: md)")
     p.add_argument(
@@ -96,6 +98,7 @@ def _primary_cfg(args: argparse.Namespace) -> core.ScanConfig:
     return core.ScanConfig(
         mode=args.mode,
         sep=args.sep or C.DEFAULT_SEP,
+        root_in_name=args.root_in_name,
         use_gitignore=args.use_gitignore,
         include_sensitive=args.include_sensitive,
         write_manifest=args.write_manifest,

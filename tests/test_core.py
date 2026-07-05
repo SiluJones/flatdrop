@@ -1,6 +1,6 @@
 """Testes da lógica central. Rode com: pytest -q  (a partir da raiz do repo)."""
 
-from pathlib import Path
+from pathlib import Path, PurePath
 
 import pytest
 
@@ -8,6 +8,7 @@ from flatdrop import config as C
 from flatdrop.core import (
     ScanConfig,
     Source,
+    _plan_names,
     default_downloads_dir,
     execute_plan,
     is_our_folder,
@@ -115,6 +116,76 @@ def test_collision_group_uses_uniform_depth(project):
         "index__pages__users.tsx",
         "index__src__users.tsx",
     }
+
+
+# --------------------------------------------------------------------------- #
+# root_in_name: inclui o nome da pasta-raiz no sufixo, só no fullpath (spec0013)
+# --------------------------------------------------------------------------- #
+def test_root_in_name_fullpath_includes_root_folder(project):
+    root_name = project.name  # "proj"
+    plan = make_plan(project, ScanConfig(mode="fullpath", root_in_name=True))
+    by_rel = {f.rel.as_posix(): f for f in plan.files}
+    # arquivo da própria raiz: a raiz vira a única "pasta" do sufixo
+    assert by_rel["README.md"].target == f"README__{root_name}.md"
+    # arquivo em subpasta: a raiz entra como a pasta mais EXTERNA do sufixo
+    # (logo após o stem; note que isto não é o mesmo que "terminar com" a raiz —
+    # ver observação no relatório da spec0013 sobre a ordem outer->inner).
+    page = by_rel["app/users/page.tsx"]
+    assert page.target.split(C.DEFAULT_SEP)[1] == root_name
+
+
+def test_root_in_name_keeps_display_rel_real(project):
+    root_name = project.name
+    plan = make_plan(project, ScanConfig(mode="fullpath", root_in_name=True))
+    # o rel de exibição (manifesto/_TREE.md) NÃO leva a raiz injetada
+    for f in plan.files:
+        assert not f.rel.as_posix().startswith(root_name + "/")
+    by_rel = {f.rel.as_posix(): f for f in plan.files}
+    assert by_rel["README.md"].rel.as_posix() == "README.md"
+
+
+def test_root_in_name_ignored_outside_fullpath(project):
+    plan_off = make_plan(project, ScanConfig(mode="collisions"))
+    plan_on = make_plan(project, ScanConfig(mode="collisions", root_in_name=True))
+    names_off = {f.rel.as_posix(): f.target for f in plan_off.files}
+    names_on = {f.rel.as_posix(): f.target for f in plan_on.files}
+    assert names_off == names_on
+    assert any("fullpath" in w for w in plan_on.warnings)
+
+
+def test_root_in_name_ignored_in_multisource(tmp_path):
+    root = tmp_path / "p"
+    _tree(root, {"a/one.md": "1", "b/one.md": "2"})
+    cfg_on = ScanConfig(mode="fullpath", root_in_name=True, only_ext={"md"}, use_gitignore=False)
+    cfg_off = ScanConfig(mode="fullpath", root_in_name=False, only_ext={"md"}, use_gitignore=False)
+    plan_on = make_plan_sources([Source(root / "a", cfg_on), Source(root / "b", cfg_on)])
+    plan_off = make_plan_sources([Source(root / "a", cfg_off), Source(root / "b", cfg_off)])
+    names_on = sorted(f.target for f in plan_on.files)
+    names_off = sorted(f.target for f in plan_off.files)
+    assert names_on == names_off  # a raiz NÃO foi injetada
+    assert any("múltiplas" in w for w in plan_on.warnings)
+
+
+def test_root_in_name_preserves_uniqueness(tmp_path):
+    root = tmp_path / "proj"
+    _tree(root, {"a/one.py": "1", "b/one.py": "2"})
+    plan = make_plan(root, ScanConfig(mode="fullpath", root_in_name=True))
+    targets = [f.target.lower() for f in plan.files]
+    assert len(targets) == len(set(targets))
+
+
+def test_root_in_name_respects_max_name_len():
+    # Vai direto em _plan_names com candidatos sintéticos (sem tocar disco), pois
+    # o que importa aqui é só o NOME final ultrapassar MAX_NAME_LEN — criar de
+    # verdade uma árvore tão funda esbarraria no limite de caminho do Windows.
+    long_root = "raiz-" + "x" * 60
+    deep_parts = "/".join(f"pasta-{i:02d}-bem-longa" for i in range(8))
+    rel = PurePath(f"{deep_parts}/arquivo.txt")
+    candidates = [(Path("fake") / rel, rel, 1)]
+    planned, _collisions, _warnings = _plan_names(
+        candidates, ScanConfig(mode="fullpath", root_in_name=True), root_prefix=long_root
+    )
+    assert len(planned[0].target) <= C.MAX_NAME_LEN
 
 
 def test_execute_writes_manifest_and_marks_folder(project, tmp_path):
