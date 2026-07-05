@@ -6,8 +6,71 @@ versionamento conforme [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Não lançado]
 
-Candidatos da Fase 2 ainda abertos em `ROADMAP.md`: `_TREE.md` (B), pastas
-recentes/persistência (C), ignores de pasta editáveis (D).
+_Sem mudanças ainda. Itens de produto em aberto: persistência/recentes (Fase 2-C),
+ignores de pasta editáveis na GUI (Fase 2-D), fullpath incluindo a pasta-raiz e
+multi-raiz na GUI, UI-2/UI-3._
+
+## [0.3.0] — 2026-07-04
+
+CLI completa, coleta multi-fonte com manifesto único, expansão de tipos aceitos,
+seleção de tipos por modal na GUI, gerador de `.bat`, `.flatdropignore` (+ `.gitignore`
+aninhado), `_TREE.md` opcional, adoção do modo Claude Code (duas raias) e integração
+do KCM. Duas correções de peso (FIX-003 ASCII no `.bat`, FIX-004 multi-fonte ao vivo).
+Suíte de 35 testes verde. A separação core×gui seguiu pagando: CLI e GUI compartilham
+a mesma lógica sem duplicação.
+
+### Adicionado
+- **Allowlist de tipos expandida** (DEC-013, spec-0001): documentos que o Projeto
+  do Claude aceita (`pdf`, `docx`, `doc`, `xlsx`, `rtf`, `odt`, `epub`); Godot
+  (`gd`, `uid` para `.gd.uid`, `gdshader`, `tscn`, `tres`, `godot`, `import`); e um
+  conjunto curado de linguagens/config (Julia, Nim, Zig, Solidity, CUDA, Terraform/
+  HCL, Nix, templates, etc.). Imagens/áudio/vídeo seguem fora.
+- **GUI — seleção de tipos por modal (UI-1, spec-0007):** botão "Escolher tipos…"
+  abre um `TypePickerDialog` (checklist categorizado — Godot, Linguagens, Web,
+  Config, Documentos, Templates, Outros — com busca, marcar/limpar por grupo,
+  adicionar tipo custom). A tela principal ficou compacta (só o resumo "Tipos: N de
+  M"); a caixa de extensões e os campos "Só estes/Exceto" saíram (o modal os subsume).
+- **GUI — gerador de `.bat`** (spec-0003, refinado na 0007): botão "Gerar .bat…"
+  serializa a config da tela (`_build_cli_args`) num `.bat` ASCII e salva (abre na
+  pasta-pai da raiz). Reproduz a seleção do modal via `--add-ext` (adições) +
+  `--exclude-ext` (remoções). Avisa em caminho com acento.
+- **GUI — multi-fonte ao vivo** (spec-0005): toggle "Também incluir todos os `.md`
+  a partir de [raiz]" passou a valer no Pré-visualizar/Executar (helper `_sources`
+  + `make_plan_sources`), não só no `.bat` gerado. "Procurar…" do multi-fonte abre
+  na pasta-pai da raiz. A janela abre **maximizada**.
+- **`.flatdropignore` + `.gitignore` aninhado** (DEC-014, spec-0008): lê os
+  `.gitignore` de subpastas (aninhado) e adiciona um `.flatdropignore` por projeto
+  (sintaxe do gitignore, aninhado) que exclui a mais e, com `!`, **libera** o que o
+  `.gitignore` bloqueia — até pasta que seria podada. Modelo de "última regra vence"
+  com rebasing dos padrões de subpasta; o `.flatdropignore` tem a palavra final
+  sobre o `.gitignore`. Atribui o motivo do skip (`gitignore`/`flatdropignore`).
+  Verificado com o pathspec real antes de implementar. +3 testes.
+- **Launcher `bat/flatdrop-ui.bat`:** abre a UI sem janela de console (`pythonw`),
+  copiável para qualquer lugar (acesso rápido à interface).
+- **Modo Claude Code** (DEC-012): arranque `CLAUDE.md` (raiz) + `.claude/`
+  (`settings.json`, `commands/apply-spec.md`, `commands/wrap.md`); specs em
+  `meta/specs/`. `meta/CLAUDE.md` (comportamento) → `meta/CEREBRO.md`.
+- **Integração da atualização do KCM** (DEC-015, spec0010): seção "Recomendação de
+  configuração" no CEREBRO, convenção nova de nome de spec `AAMMDD-specNNNN-desc.md`,
+  `HISTORICO.md` → `HISTORY.md`. HUB omitido (projeto solo).
+- **`_TREE.md` opcional na saída** (spec0011, Fase 2-B): árvore indentada da origem
+  ao lado do `_MANIFEST.md` — arquivos copiados (renomeados marcados com o nome
+  plano), pulados com o motivo, e **pastas ignoradas colapsadas em UMA linha, sem
+  recursão** (padrão `tree --gitignore`/repomix; `node_modules/ [ignorada: embutido]`
+  nunca expande). Desligado por padrão: checkbox na GUI + `--tree` na CLI (serializado
+  no `.bat`, FIX-004). Detalhe dos pulados soltos via `--tree-detail summary|full`
+  (default `summary`); o `_scan` passou a devolver a lista completa de pulados
+  (`skipped_items`, sem o teto de 8 amostras). +8 testes (27 → 35).
+
+### Corrigido
+- **FIX-003 — `.bat` falhava no CMD por caracteres não-ASCII.** Travessão/acentos no
+  corpo do `.bat` + `chcp 65001` desalinhavam a leitura do CMD (fragmentos viravam
+  comando: `'FlatDrop'`/`'m'`/`'Use'`). Corpo dos `.bat` passou a ser ASCII puro
+  (`chcp` só para a saída do Python); os 5 `.bat` do cinzeiro reentregues em ASCII
+  e sem `--add-ext` redundante; o gerador emite sempre ASCII.
+- **FIX-004 — toggle multi-fonte não afetava a execução ao vivo na GUI.** O toggle
+  só estava ligado ao gerador de `.bat`; `_on_preview`/`_on_execute` chamavam
+  `make_plan` (fonte única). Corrigido com o helper `_sources` + `make_plan_sources`.
 
 ## [0.2.0] — 2026-06-14
 
@@ -34,7 +97,7 @@ a aposta: a CLI não duplicou regra de negócio).
 - **5 `.bat` do cinzeiro** em `bat/cinzeiro/`: `00-todos-md.bat` (só os `.md` do
   grupo) e `story/art/game/ost-pack.bat` (não-`.md` da área + todos os `.md`).
 - **Testes**: `tests/test_cli.py` (3) e novos casos no core (filtros, multi-fonte,
-  Downloads). Total: 26 testes passando.
+  Downloads).
 
 ### Corrigido
 - **FIX-001 — poda de pastas era silenciosa.** Pasta inteira engolida pelo
@@ -42,13 +105,11 @@ a aposta: a CLI não duplicou regra de negócio).
   rastro na pré-visualização. Agora é contabilizada (`gitignore (pasta)` /
   `ignore_padrão (pasta)`), com amostras, e o `.gitignore` que engole pastas vira
   aviso de primeira classe. A GUI passou a exibir as amostras de pulados por
-  motivo (antes só mostrava contadores). Caso real: pastas renomeadas para `logs`
-  no monorepo `cinzeiro` casavam `logs/` do `.gitignore` e "sumiam".
+  motivo. Caso real: pastas renomeadas para `logs` no monorepo `cinzeiro`.
 - **FIX-002 — Downloads caía na raiz do perfil.** `default_downloads_dir` agora
   resolve o local REAL: no Windows via Known Folder (`SHGetKnownFolderPath`,
-  ctypes, sem dependência nova) — cobre o caso da pasta movida/redirecionada de
-  disco; no Linux via `XDG_DOWNLOAD_DIR`/`user-dirs.dirs`. A home só é usada como
-  último recurso (antes o fallback disparava cedo demais).
+  ctypes, sem dependência nova); no Linux via `XDG_DOWNLOAD_DIR`/`user-dirs.dirs`.
+  A home só é usada como último recurso.
 
 ## [0.1.0] — 2026-06-05
 

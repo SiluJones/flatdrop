@@ -3,10 +3,10 @@
 Direção do projeto por fases. Sem datas: a ordem importa mais que o calendário.
 Itens em aberto vêm de `IDEAS.md`; ao concluir, registre em `CHANGELOG.md`.
 
-> **Mudanças nesta revisão (2026-06-14):** Fase 2 entrou **em curso** — testes em
-> projeto real feitos; CLI, multi-fonte e filtros entregues (antecipando a CLI
-> que era da Fase 3, porque destravava os `.bat`). Restam B/C/D na Fase 2. O
-> gerador de `.bat` pela interface entrou como Fase 3.
+> **Mudanças nesta revisão (2026-07-04):** o **`_TREE.md` (Fase 2-B) foi entregue**
+> (spec0011 aplicada/commitada, 35 testes verdes) — restam na Fase 2 apenas C/D e o
+> polimento de UI. A release **0.3.0 está pronta para corte** (spec0012 autorada:
+> bump + fechamento do CHANGELOG). O fullpath-com-raiz virou spec0013 (autorada).
 
 ## Fase 1 — MVP ✅ (concluída em 2026-06-05)
 
@@ -20,49 +20,52 @@ Itens em aberto vêm de `IDEAS.md`; ao concluir, registre em `CHANGELOG.md`.
 - [x] GUI tkinter completa.
 - [x] 13 testes passando.
 
-## Fase 2 — Robustez e conveniência (em curso)
+## Fase 2 — Robustez e conveniência (quase concluída)
 
 - [x] Testar em projeto real (monorepo `cinzeiro`) — funciona; daí o FIX-001.
 - [x] **CLI** sem GUI (antecipada da Fase 3) reaproveitando a core.
-- [x] **Multi-fonte com manifesto único** + `--also-md-from` (docs do repo +
-      conteúdo de área numa saída só).
-- [x] **Filtros de seleção**: `--only-ext`/`--exclude-ext`/`--add-ext` e
-      `--only-folder`/`--folder-match`.
-- [x] **5 `.bat` do cinzeiro** (só-`.md` e por área).
+- [x] **Multi-fonte com manifesto único** + `--also-md-from`.
+- [x] **Filtros de seleção**: `--only-ext`/`--exclude-ext`/`--add-ext` e `--only-folder`/`--folder-match`.
+- [x] **5 `.bat` do cinzeiro** (só-`.md` e por área) + launcher `flatdrop-ui.bat`.
 - [x] **FIX-001** (poda de pasta visível) e **FIX-002** (Downloads real).
-- [ ] **B —** `_TREE.md` opcional na saída (árvore + pulados + pastas podadas).
-- [ ] **C —** Persistir configurações + pastas recentes na GUI.
-- [ ] **D —** Ignores de pasta editáveis na GUI (com núcleo imutável).
+- [x] Acrescentar tipos à allowlist (spec-0001: Godot, PDF/DOCX/XLSX/ODT/RTF/EPUB, +linguagens).
+- [x] **E2 —** Seleção de tipo na GUI por modal (UI-1).
+- [x] Liberar do `.gitignore` — resolvido pela negação `!` do `.flatdropignore` (spec-0008).
+- [x] **`.flatdropignore`** (aninhado + negação) + `.gitignore` aninhado (DEC-014, spec-0008).
+- [x] **FIX-003** (`.bat` ASCII) e **FIX-004** (multi-fonte ao vivo na GUI).
+- [x] **B — `_TREE.md`** opcional na saída (árvore + pulados + pastas ignoradas colapsadas em UMA linha, sem recursão). Entregue na spec0011 (35 testes; verificado no mount).
+- [ ] **C —** Persistir configurações + pastas recentes na GUI. **← próxima da Fase 2.**
+- [ ] **D —** Ignores de pasta editáveis na GUI (com núcleo imutável). (O `.flatdropignore` já cobre boa parte.)
+- [ ] **Fullpath com pasta-raiz** (spec0013 autorada): flag `root_in_name` para incluir o nome do projeto no nome de cada arquivo, no modo fullpath.
+- [ ] **Multi-raiz na GUI**: selecionar N pastas de uma vez, prefixando cada uma com o nome da sua raiz (a core já suporta multi-fonte; falta a UI de N raízes).
 - [ ] Aviso mais visível quando o pathspec está ausente (destaque na GUI).
-- [x] Acrescentar tipos à allowlist de defaults (spec-0001 aplicada: Godot, PDF/DOCX/XLSX/ODT/RTF/EPUB, +linguagens).
-- [x] **E2 —** Seleção de tipo na GUI por modal (UI-1 aplicada).
-- [x] Liberar do `.gitignore` — resolvido pelo `.flatdropignore` (negação `!`), spec-0008.
-- [x] **`.flatdropignore`** (aninhado + negação) + `.gitignore` aninhado — spec-0008 autorada, com testes (DEC-014).
-- [~] **UI/UX (em fases):** UI-1 (modal de tipos + tela compacta + maximizada) feita; UI-2 (polimento de
-      layout) e UI-3 (presets/lembrar seleção) na fila. (Não precisou de `--ext-set`: o `.bat` reproduz a
-      seleção com `--add-ext`/`--exclude-ext`.)
+- [~] **UI/UX (em fases):** UI-1 feita; **UI-2** (polimento de layout) e **UI-3** (presets/lembrar seleção) na fila.
 
-## Fase 3 — Gerador de `.bat` e multi-fonte na GUI
+## Fase 3 — Gerador de `.bat` e multi-fonte na GUI ✅ (concluída em 2026-06-24)
 
-- [ ] Botão "Exportar `.bat`…" na GUI: serializa a config da tela em linha de
-      comando e salva o arquivo (a tela de config vira o editor do `.bat`).
-- [ ] Expor multi-fonte na GUI (ex.: toggle "incluir todos os `.md` a partir de
-      [raiz]"), em conjunto com o exportador.
+- [x] Botão "Gerar .bat…" na GUI: serializa a config da tela em linha de comando e salva o arquivo (a tela vira o editor do `.bat`), sempre ASCII.
+- [x] Expor multi-fonte na GUI (toggle "incluir todos os `.md` a partir de [raiz]"), ao vivo.
 
 ## Fase 4 — Distribuição e modo arquivo-único
 
 - [ ] Empacotar como `.exe` com PyInstaller (duplo-clique sem Python).
-- [ ] Modo single-file (estilo Repomix) **com os mesmos filtros** (ex.: fundir só
-      os `.md`), como complemento ao modo pasta.
+- [ ] Modo single-file (estilo Repomix) **com os mesmos filtros** (ex.: fundir só os `.md`).
 - [ ] Contagem de tokens mais fiel (tokenizador real, opcional).
 
 ## Stand-by (sem fase definida)
 
-- `.gitignore` aninhado (ler os de subpastas).
 - Resync incremental por diff do manifesto.
 - Drag-and-drop da pasta raiz na janela.
+- Saída da CLI ASCII-safe (dispensa `chcp` nos `.bat`).
+- Botão "Gerar atalho da UI" (cria o launcher calculando o caminho sozinho).
 
 ## Fora de escopo (decidido)
 
 - **Upload automático para o Claude.** Não há API pública para os arquivos de
   Projeto; arrastar permanece manual. (Ver DEC-001 e "Descartadas" em `IDEAS.md`.)
+
+## Release pendente
+
+- ~~Cortar **0.3.0**~~ — **spec0012 aplicada** (bump `flatdrop/__init__.py`
+  0.2.0->0.3.0 + CHANGELOG fechado com `[0.3.0] — 2026-07-04`, `_TREE.md` incluído,
+  nova `[Não lançado]` aberta). 35 testes verdes.
