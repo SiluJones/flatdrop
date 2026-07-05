@@ -5,13 +5,45 @@ virarem item de `ROADMAP.md`, serem implementados ou descartados. Ideia adotada
 vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
 "Descartadas" com o motivo. Nunca se perde nada — muda de status.
 
-> **Mudanças nesta revisão (2026-07-05):** **spec0014 aplicada** — a ordem do
-> `root_in_name` ficou correta (stem + caminho invertido + raiz no fim). Autorada a
-> **spec0015** (corte da 0.3.1), que registra o `root_in_name` e o fix de ordem no
-> CHANGELOG e bumpa a versão. Sem ideia nova nesta sessão; a lista abaixo é estável.
+> **Mudanças nesta revisão (2026-07-05, transferência de conversa):** ciclo de
+> release fechado — specs 0011–0016 todas aplicadas, `pytest` puro corrigido
+> (FIX-005), versão 0.3.1, 41 testes. Sem ideia nova; as ideias foram **repriorizadas**
+> para a próxima conversa: (1) trecho de KCM (ler `_TREE.md` → gerar
+> `.flatdropignore`) e (2) editor de `.flatdropignore` na GUI (= Fase 2-D) sobem ao
+> topo das Ativas; o item C (persistência) vem depois delas. A lista abaixo reflete
+> essa ordem.
 
 ## Ativas
 
+> **Próximas duas tarefas (ordem definida na transferência de 2026-07-05):** os dois
+> primeiros itens abaixo são o foco imediato da próxima conversa; o restante segue
+> por prioridade aproximada.
+
+- **[PRÓXIMA 1] Trecho de KCM: "Claude lê o `_TREE.md` e dita o `.flatdropignore`"
+  (refinada pela nota 0714).** Não é código do FlatDrop — é conteúdo de KCM, portável
+  para todo Projeto que usa FlatDrop. O autor sobe o `_TREE.md`; o Claude vê o que
+  sobrou/faltou (com o motivo de cada exclusão) e devolve o conteúdo do
+  `.flatdropignore` pronto para salvar na raiz e rodar de novo. O tree é o
+  diagnóstico; o `.flatdropignore` é a receita. Três ganhos: (1) o `.flatdropignore`
+  fica **versionado** no repo (parte do projeto, não config solta); (2) o KCM torna
+  o comportamento **portável** sem reensinar a cada projeto; (3) fecha o ciclo
+  `_TREE -> flatdropignore -> mount melhor`. **Refino técnico importante:** o fluxo
+  serve sobretudo para **liberar o que o `.gitignore` esconde** (via `!padrão`), pois
+  arquivos que nem estão no Git não aparecem no mount para o Claude os enxergar; o
+  `_TREE.md` mostra o que foi podado por `[ignorada: gitignore]` e o Claude sugere a
+  reinclusão. Entregável: um bloco de KCM + um exemplo no README. Habilitado pela
+  spec0011. (Ideia do usuário, notas 0704-0714.)
+- **[PRÓXIMA 2] Editor visual de `.flatdropignore` na GUI (= Fase 2-D).** Marcar
+  visualmente o que excluir/re-incluir e a ferramenta grava o `.flatdropignore` por
+  você — sem decorar a sintaxe. Como o usuário descreveu: uma **árvore navegável das
+  pastas/arquivos percorridos da raiz, com checkbox por item**, sinalizando o que já
+  é **ignorado pelo git**, prática/intuitiva/manipulável. Hoje o `.flatdropignore` é
+  criado à mão; a ferramenta só o LÊ. **Feature de UI não-trivial:** precisa de árvore
+  com estado tri-state (incluído / excluído / liberado via `!`), leitura do que o
+  `.gitignore` já pega para sinalizar, e geração dos padrões do `.flatdropignore` a
+  partir das marcações. Provavelmente pede uma **spec de investigação/design antes**
+  da spec de implementação (o próprio usuário reconhece que exige pesquisa/estudo).
+  Consolida o antigo item D "ignores de pasta editáveis na GUI". (Ideia do usuário.)
 - **Formato de nome "caminho escrito" (`raiz__pastas__stem.ext`).** Um seletor de
   formato do nome, alternativo ao `root_in_name` atual. Em vez de stem na frente,
   escreveria o caminho na ordem natural de leitura com o **stem no fim**:
@@ -28,24 +60,6 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
   desambiguação atual se ainda colidir; a pasta de saída no Downloads vira uma
   genérica com numerador quando já existir uma de mesmo nome. A core já suporta
   multi-fonte; falta a UI de N raízes. (Ideia do usuário, nota `.txt` de 2026-07-03.)
-- **Editor visual de `.flatdropignore` na GUI (aba/painel).** Marcar visualmente o
-  que excluir/re-incluir e a ferramenta grava o `.flatdropignore` por você — sem
-  decorar a sintaxe. Evolução do item "Ignores de pasta editáveis na GUI" (D).
-  Hoje o `.flatdropignore` é criado à mão; a ferramenta só o LÊ. (Ideia do usuário.)
-- **Instrução de KCM: "Claude lê o `_TREE.md` e dita o `.flatdropignore`" (refinada
-  pela nota 0714).** Não é código do FlatDrop — é conteúdo de KCM, portável para
-  todo Projeto que usa FlatDrop. O autor sobe o `_TREE.md`; o Claude vê o que
-  sobrou/faltou (com o motivo de cada exclusão) e devolve o conteúdo do
-  `.flatdropignore` pronto para salvar na raiz e rodar de novo. O tree é o
-  diagnóstico; o `.flatdropignore` é a receita. Três ganhos: (1) o `.flatdropignore`
-  fica **versionado** no repo (parte do projeto, não config solta); (2) o KCM torna
-  o comportamento **portável** sem reensinar a cada projeto; (3) fecha o ciclo
-  `_TREE -> flatdropignore -> mount melhor`. **Refino técnico importante:** o fluxo
-  serve sobretudo para **liberar o que o `.gitignore` esconde** (via `!padrão`), pois
-  arquivos que nem estão no Git não aparecem no mount para o Claude os enxergar; o
-  `_TREE.md` mostra o que foi podado por `[ignorada: gitignore]` e o Claude sugere a
-  reinclusão. Próximo passo prático: rascunhar o trecho de KCM + um exemplo no
-  README. Habilitado pela spec0011. (Ideia do usuário, notas 0704-0714.)
 - **Botão "Gerar atalho da UI" na GUI.** UI-1 e o launcher `flatdrop-ui.bat` já
   existem; falta um botão que gere o launcher calculando o caminho do `run.py`
   sozinho (sem hardcode) — talvez um `.lnk` em vez de `.bat`.
@@ -59,8 +73,9 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
   `%APPDATA%`/`~/.config`); Combobox de recentes na GUI. (Fase 2 — item C.)
 - **Ignores de pasta editáveis na GUI** com núcleo imutável
   (`.git`/`node_modules`/`__pycache__`/VCS sempre reaplicados), para tirar/pôr
-  pastas como `dist`/`build`/`.venv` caso a caso. (Fase 2 — item D.) Nota: o
-  `.flatdropignore` já cobre boa parte disso de forma declarativa.
+  pastas como `dist`/`build`/`.venv` caso a caso. (Fase 2 — item D.) **Consolidado
+  na "[PRÓXIMA 2] Editor visual de `.flatdropignore`" no topo** — o editor cobre isto
+  de forma declarativa e visual. O `.flatdropignore` já cobre boa parte hoje.
 - **Resync incremental por diff do manifesto.** Comparar com o `_MANIFEST.md`
   anterior e copiar/avisar só o que mudou. Ganha valor com uso frequente. (Stand-by.)
 - **Empacotar como `.exe` (PyInstaller).** Para o PC sem Python: duplo-clique sem
@@ -159,3 +174,10 @@ Registro do que ESTE projeto observou/mudou além do kit (material que volta par
 - **Higiene em transferência.** Ao transferir conversa, regenerar os meta/ completos e detalhados
   (não resumir), reclassificar IDEAS (implementadas → Concluídas) e limpar o STATUS. Um "prompt de
   início" com ordem de leitura + estado exato faz a nova conversa continuar sem perda.
+- **Descompasso de versão por corte cedo (2026-07-05).** Cortar a 0.3.0 antes de a spec seguinte
+  (root_in_name) entrar deixou código à frente do CHANGELOG; resolvido com um patch de acerto (0.3.1).
+  Lição: datar a versão só quando o lote de specs do ciclo estiver todo aplicado, ou assumir o patch.
+- **Diferença de ambiente esconde bug de teste (FIX-005).** O Code rodava `python -m pytest` (resolvia
+  o path); o usuário roda `pytest` puro (não resolvia). Fixar a forma de rodar na infra (`conftest.py`
+  na rootdir), não na memória de quem invoca. Vale como recomendação para o Kit em projetos com pacote
+  aninhado.

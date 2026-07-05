@@ -133,3 +133,39 @@ Atualizado e integrado na DEC-015 (HUB omitido — projeto solo).
 **CEREBRO.md.** O arquivo de comportamento do assistente (antes `meta/CLAUDE.md`).
 Regras completas, higiene, transferência. Não confundir com o `CLAUDE.md` da RAIZ
 (guia curto do Claude Code).
+
+*Termos da 0.3.x (`_TREE.md`, root_in_name, teste):*
+
+**`_TREE.md`.** Segundo arquivo opcional na saída (ao lado do `_MANIFEST.md`): árvore
+indentada da origem com arquivos copiados (renomeados marcados), pulados com o motivo,
+e **pastas ignoradas colapsadas em UMA linha, sem recursão** (`node_modules/ [ignorada:
+embutido]`). 1ª linha = assinatura `<!-- flatdrop-tree v1 -->` (NÃO marca propriedade
+da pasta — só o `_MANIFEST.md` faz isso). Desligado por padrão (`--tree` / checkbox).
+É o par visual do `.flatdropignore`: mostra o porquê de cada exclusão. (spec0011.)
+
+**`tree_skipped` / `--tree-detail`.** Nível de detalhe dos ARQUIVOS pulados soltos no
+`_TREE.md`: `summary` (default — agregado por pasta, ex.: `[pulados: tipo x3]`) ou
+`full` (uma folha por arquivo pulado). Pastas ignoradas são sempre uma linha
+colapsada, independente disto.
+
+**`skipped_items`.** 5ª saída do `_scan` (desde a spec0011): a lista COMPLETA de
+`(rel, motivo)` dos pulados (inclui pastas colapsadas, com `rel` terminando em `/`),
+sem o teto de 8 amostras do `skipped_samples`. Alimenta o `_TREE.md` no modo `full`.
+
+**`root_in_name` / `--root-in-name`.** Flag opcional que, **só no modo fullpath e em
+fonte única**, inclui o nome da pasta-raiz no nome de cada arquivo (inclusive os da
+raiz). Formato: stem + caminho da pasta mais interna à mais externa + raiz por último
+(`app/routes/page.tsx` sob `meuapp` → `page__routes__app__meuapp.tsx`). A raiz entra
+só no **nome planejado** (via `root_prefix` em `_plan_names`, com `(*reversed(dir_parts),
+root_prefix)`), nunca no `rel` de exibição. Ignorada com aviso fora do fullpath e em
+multi-fonte. (spec0013 + fix de ordem spec0014.)
+
+**Formato "caminho escrito".** Ideia futura (em espera): um seletor de formato de nome
+alternativo ao `root_in_name`, escrevendo o caminho na ordem de leitura com o **stem no
+fim** (`meuapp__app__routes__page.tsx`). Agrupa por raiz; não ajuda o Claude a achar por
+nome. Não implementado.
+
+**`conftest.py` (raiz).** Arquivo que o pytest importa da rootdir antes de coletar; põe
+a raiz do repo no `sys.path` para `from flatdrop import ...` resolver com `pytest` puro
+(sem `python -m pytest`). Espelha o ajuste que o `run.py` faz para a aplicação. (FIX-005,
+spec0016.)

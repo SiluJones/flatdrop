@@ -6,9 +6,18 @@ versionamento conforme [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Não lançado]
 
-_Sem mudanças ainda. Itens de produto em aberto: persistência/recentes (Fase 2-C),
-ignores de pasta editáveis na GUI (Fase 2-D), multi-raiz na GUI, formato de nome
-"caminho escrito" (raiz→pastas→stem), UI-2/UI-3._
+### Corrigido
+- **FIX-005 — `pytest` puro falhava ao coletar (`ModuleNotFoundError: flatdrop`)**
+  (spec0016): adicionado `conftest.py` na raiz do repo com
+  `sys.path.insert(0, Path(__file__).resolve().parent)`. O pytest o importa antes de
+  coletar, inserindo a raiz no `sys.path` — então `from flatdrop import ...` resolve
+  com `pytest` puro, sem depender de `python -m pytest`. Espelha o que o `run.py` já
+  faz para a aplicação. Sem mudança de código de produção. Entra no próximo corte de
+  patch.
+
+_Itens de produto em aberto: trecho de KCM (ler `_TREE.md` → gerar `.flatdropignore`),
+editor de `.flatdropignore` na GUI (Fase 2-D), persistência/recentes (Fase 2-C),
+multi-raiz na GUI, formato de nome "caminho escrito" (raiz→pastas→stem), UI-2/UI-3._
 
 ## [0.3.1] — 2026-07-05
 
