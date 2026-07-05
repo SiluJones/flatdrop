@@ -127,11 +127,12 @@ def test_root_in_name_fullpath_includes_root_folder(project):
     by_rel = {f.rel.as_posix(): f for f in plan.files}
     # arquivo da própria raiz: a raiz vira a única "pasta" do sufixo
     assert by_rel["README.md"].target == f"README__{root_name}.md"
-    # arquivo em subpasta: a raiz entra como a pasta mais EXTERNA do sufixo
-    # (logo após o stem; note que isto não é o mesmo que "terminar com" a raiz —
-    # ver observação no relatório da spec0013 sobre a ordem outer->inner).
+    # arquivo em subpasta (spec0014): pastas invertidas (interna -> externa) e a
+    # raiz por ÚLTIMO — stem + "users__app__proj".
     page = by_rel["app/users/page.tsx"]
-    assert page.target.split(C.DEFAULT_SEP)[1] == root_name
+    assert page.target == f"page__users__app__{root_name}.tsx"
+    # a raiz é sempre o último token do sufixo (trava contra regressão de ordem)
+    assert page.target.rsplit(".", 1)[0].endswith(f"{C.DEFAULT_SEP}{root_name}")
 
 
 def test_root_in_name_keeps_display_rel_real(project):

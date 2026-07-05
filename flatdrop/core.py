@@ -512,10 +512,14 @@ def _plan_names(
     for src, rel, _size in candidates:
         stem, ext = split_name(rel.name)
         dir_parts = rel.parent.parts if rel.parent.as_posix() != "." else ()
-        # spec0013: raiz entra como a pasta mais EXTERNA (prefixo), só no NOME —
-        # o rel de exibição (manifesto/tree) permanece o real, sem a raiz.
+        # spec0013/0014: com root_in_name, o sufixo de caminho é montado só no NOME
+        # (o rel de exibição do manifesto/tree permanece o real, sem a raiz).
+        # Ordem do sufixo (spec0014): pastas da mais INTERNA para a mais externa,
+        # com o nome da pasta-raiz por ÚLTIMO. Ex.: app/routes/page.tsx (raiz meuapp)
+        # -> stem "page" + "routes__app__meuapp". O _compose junta dir_parts na
+        # ordem dada, então a inversão é feita aqui e o _compose fica intocado.
         if root_prefix:
-            dir_parts = (root_prefix, *dir_parts)
+            dir_parts = (*reversed(dir_parts), root_prefix)
         meta.append((stem, ext, dir_parts))
 
     ks = [0] * n
