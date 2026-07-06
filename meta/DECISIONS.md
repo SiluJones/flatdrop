@@ -430,3 +430,25 @@ sobrescrever com o template em branco); manter o HUB (não há grupo, seria peso
 
 **Consequência.** Comportamento alinhado ao KCM sem perder o específico do flatdrop. Desvios registrados
 (HUB e .gitignore/README omitidos) conforme a "válvula de desvio registrado".
+
+---
+
+## DEC-016 — Editor de `.flatdropignore` (spec0017): 3 decisões fechadas
+**Data:** 2026-07-06 · **Status:** aceita
+
+**Contexto.** A `spec0017` (design/investigação, Fase 2-D) fechou o desenho do editor visual do
+`.flatdropignore` e deixou três decisões em aberto para o usuário, necessárias antes de escrever a
+spec0018 de implementação.
+
+**Decisão.** (1) **Interação (§4):** Opção B — checkbox binário "quero no Projeto"; a ferramenta
+deriva sozinha `!padrão` (liberar) ou `padrão` (excluir) a partir do `base_in` do git, expondo o
+resultado como badge e com pré-visualização do texto do `.flatdropignore` antes de salvar. (2)
+**Round-trip (§6):** opção (i) — bloco gerenciado entre marcadores (`# >>> flatdrop-editor` … `# <<<`),
+preservando linhas manuais fora dele; a árvore é pré-marcada pelo estado atual via `fd`/`_ignore_status`.
+(3) **Spike (§11):** sim — antes da spec0018, um spike de UI descartável (não commitado) valida no
+Windows real o hit-testing do clique na coluna do glifo no `ttk.Treeview`, o lazy load e o comportamento
+`!dir/` vs `!dir/**` na árvore real.
+
+**Consequência.** A spec0018 (implementação) parte dessas 3 decisões já fechadas: `walk_annotated` +
+`build_flatdropignore` no core (testáveis por pytest) + o modal em `gui.py`, entrando só depois do spike
+de UI validar as armadilhas do §7/§9.

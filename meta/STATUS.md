@@ -78,6 +78,9 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
    **Feature de UI não-trivial** — provavelmente pede uma spec de investigação/design
    (estado tri-state, leitura do que o git já pega, geração dos padrões) antes da spec
    de implementação. **SEGUNDA tarefa; o usuário reconhece que exige pesquisa/estudo.**
+   **Atualização (2026-07-06):** `spec0017` fechou o desenho e as 3 decisões (ver
+   DEC-016) — checkbox binário (Opção B), bloco gerenciado no round-trip, e um spike de
+   UI descartável antes da `spec0018` de implementação. Próximo passo: o spike.
 3. **C — Persistir configurações + pastas recentes** na GUI (`settings.py`, JSON em
    `%APPDATA%`/`~/.config`; Combobox de recentes). **Depois das duas acima.**
 4. **Multi-raiz na GUI** (selecionar N pastas, prefixar cada uma com sua raiz).
