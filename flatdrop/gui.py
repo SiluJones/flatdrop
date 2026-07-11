@@ -191,6 +191,186 @@ class TypePickerDialog(tk.Toplevel):
         self.destroy()
 
 
+_GLYPH = {True: "☑", False: "☐", None: "▣"}  # checked / unchecked / partial
+
+
+class FlatDropIgnoreEditor(tk.Toplevel):
+    """Editor visual do .flatdropignore (Opcao B): marca-se 'quero no Projeto'; a
+    ferramenta deriva `!`/exclusao. Le a arvore via core.annotate_children (lazy) e
+    grava via core.build_flatdropignore (bloco gerenciado). Ver DEC-016 / spec0018."""
+
+    def __init__(self, master, root_dir: str, cfg, on_saved=None):
+        super().__init__(master)
+        self.title("Editar .flatdropignore")
+        self.geometry("820x560")
+        self.root_dir = Path(root_dir)
+        self.cfg = cfg
+        self.on_saved = on_saved
+        self.probes = core._ignore_probes(self.root_dir, cfg)
+        self.st: dict[str, dict] = {}
+        self.folder_override: dict[str, bool] = {}
+        self._build()
+        self._populate("", "")
+        self.transient(master)
+        self.grab_set()
+
+    # ----- construcao ----- #
+    def _build(self):
+        self.tree = ttk.Treeview(self, columns=("chk",), selectmode="browse")
+        self.tree.heading("#0", text="Arquivo / pasta")
+        self.tree.heading("chk", text="No Projeto")
+        self.tree.column("chk", width=90, anchor="center", stretch=False)
+        vsb = ttk.Scrollbar(self, orient="vertical", command=self.tree.yview)
+        self.tree.configure(yscrollcommand=vsb.set)
+        self.tree.grid(row=0, column=0, sticky="nsew")
+        vsb.grid(row=0, column=1, sticky="ns")
+        bar = ttk.Frame(self, padding=6)
+        bar.grid(row=1, column=0, columnspan=2, sticky="ew")
+        ttk.Button(bar, text="Salvar .flatdropignore", command=self._save).pack(side="right")
+        ttk.Button(bar, text="Cancelar", command=self.destroy).pack(side="right", padx=6)
+        self.info = ttk.Label(bar, text="", foreground="#888")
+        self.info.pack(side="left")
+        self.rowconfigure(0, weight=1)
+        self.columnconfigure(0, weight=1)
+        self.tree.tag_configure("in", foreground="#137333")
+        self.tree.tag_configure("out", foreground="#9aa0a6")
+        self.tree.tag_configure("freed", foreground="#1a73e8")
+        self.tree.bind("<Button-1>", self._on_click)
+        self.tree.bind("<<TreeviewOpen>>", self._on_open)
+        self.tree.bind("<space>", lambda e: (self._toggle(self.tree.focus()), "break")[1])
+
+    # ----- populacao / lazy ----- #
+    def _populate(self, parent_iid, rel_dir):
+        inherited = self._nearest_override(rel_dir)
+        for rel, is_dir, base_in, src, allowed, sens in core.annotate_children(
+                self.root_dir, self.cfg, rel_dir, self.probes):
+            want = inherited if inherited is not None else base_in
+            note = ""
+            if not is_dir and not allowed:
+                note = "  (nao vem: tipo)"
+            elif not is_dir and sens:
+                note = "  (barrado: sensivel)"
+            name = rel.rsplit("/", 1)[-1] + note
+            iid = self.tree.insert(parent_iid, "end", text=name, values=(_GLYPH[want],))
+            self.st[iid] = dict(path=rel, is_dir=is_dir, base_in=base_in,
+                                allowed=allowed, sens=sens, loaded=not is_dir, want=want)
+            self._style(iid, want)
+            if is_dir:
+                self.tree.insert(iid, "end", text="(carregando...)")
+
+    def _on_open(self, _e):
+        iid = self.tree.focus()
+        s = self.st.get(iid)
+        if not s or s["loaded"]:
+            return
+        for c in self.tree.get_children(iid):
+            self.tree.delete(c)
+        self._populate(iid, s["path"])
+        s["loaded"] = True
+        self._refresh_chain(iid)
+
+    def _nearest_override(self, rel_dir):
+        cur = rel_dir
+        while cur:
+            if cur in self.folder_override:
+                return self.folder_override[cur]
+            cur = cur.rsplit("/", 1)[0] if "/" in cur else ""
+        return self.folder_override.get("", None)
+
+    # ----- toggle ----- #
+    def _on_click(self, e):
+        region = self.tree.identify("region", e.x, e.y)
+        col = self.tree.identify_column(e.x)
+        row = self.tree.identify_row(e.y)
+        if row and region == "cell" and col == "#1":
+            self._toggle(row)
+            return "break"
+
+    def _toggle(self, iid):
+        if not iid or iid not in self.st:
+            return
+        s = self.st[iid]
+        new = not self._eff_want(iid)
+        if s["is_dir"]:
+            self.folder_override[s["path"]] = new
+            self._set_sub(iid, new)
+        s["want"] = new
+        self._set_glyph(iid, new)
+        self._refresh_chain(iid)
+
+    def _set_sub(self, iid, val):
+        for c in self.tree.get_children(iid):
+            cs = self.st.get(c)
+            if not cs:
+                continue
+            cs["want"] = val
+            if cs["is_dir"]:
+                self.folder_override[cs["path"]] = val
+                self._set_sub(c, val)
+            self._set_glyph(c, val)
+
+    def _eff_want(self, iid):
+        s = self.st[iid]
+        if s["is_dir"] and s["loaded"]:
+            st = self._folder_state(iid)
+            return st in (True, None)
+        return bool(s["want"])
+
+    def _folder_state(self, iid):
+        vals = []
+        for c in self.tree.get_children(iid):
+            cs = self.st.get(c)
+            if not cs:
+                continue
+            vals.append(self._folder_state(c) if cs["is_dir"] and cs["loaded"] else cs["want"])
+        if not vals:
+            return self.st[iid]["want"]
+        if all(v is True for v in vals):
+            return True
+        if all(v is False for v in vals):
+            return False
+        return None
+
+    def _refresh_chain(self, iid):
+        cur = self.tree.parent(iid)
+        while cur:
+            self._set_glyph(cur, self._folder_state(cur))
+            cur = self.tree.parent(cur)
+
+    def _set_glyph(self, iid, state):
+        self.tree.set(iid, "chk", _GLYPH[state])
+        self._style(iid, state)
+
+    def _style(self, iid, state):
+        s = self.st[iid]
+        goes = state in (True, None)
+        tag = "freed" if (goes and not s["base_in"]) else ("in" if goes else "out")
+        self.tree.item(iid, tags=(tag,))
+
+    # ----- salvar ----- #
+    def _collect_wants(self):
+        # forca carregar as pastas com override para resolver as folhas
+        for iid, s in list(self.st.items()):
+            if s["is_dir"] and not s["loaded"] and s["path"] in self.folder_override:
+                self.tree.focus(iid)
+                self._on_open(None)
+        wants = {}
+        for s in self.st.values():
+            if not s["is_dir"]:
+                wants[s["path"]] = bool(s["want"])
+        return wants
+
+    def _save(self):
+        wants = self._collect_wants()
+        target = self.root_dir / ".flatdropignore"
+        existing = target.read_text(encoding="utf-8") if target.exists() else None
+        text = core.build_flatdropignore(self.root_dir, self.cfg, wants, existing_text=existing)
+        target.write_text(text, encoding="utf-8")
+        if self.on_saved:
+            self.on_saved(target)
+        self.destroy()
+
+
 class FlatDropApp(ttk.Frame):
     """Janela principal do FlatDrop."""
 
@@ -312,6 +492,14 @@ class FlatDropApp(ttk.Frame):
         self.types_summary.grid(row=0, column=0, sticky="w")
         ttk.Button(typef, text="Escolher tipos…", command=self._choose_types).grid(row=0, column=1, sticky="e")
         self._update_types_summary()
+        r += 1
+
+        # Editor visual do .flatdropignore
+        ignf = ttk.LabelFrame(self, text="Ignore (.flatdropignore)", padding=8)
+        ignf.grid(row=r, column=0, columnspan=3, sticky="ew", pady=(8, 0))
+        ignf.columnconfigure(0, weight=1)
+        ttk.Label(ignf, text="Editar visualmente o que vai ao Projeto (gera o arquivo na raiz).").grid(row=0, column=0, sticky="w")
+        ttk.Button(ignf, text="Editar .flatdropignore…", command=self._edit_ignore).grid(row=0, column=1, sticky="e")
         r += 1
 
         # Multi-fonte (opcional)
@@ -464,6 +652,17 @@ class FlatDropApp(ttk.Frame):
     def _on_types_chosen(self, selected: set[str]) -> None:
         self._selected_exts = selected
         self._update_types_summary()
+
+    def _edit_ignore(self) -> None:
+        root = self.root_var.get().strip()
+        if not self._validate_root():
+            return
+        FlatDropIgnoreEditor(self.winfo_toplevel(), root, self._gather_cfg(),
+                             on_saved=self._on_ignore_saved)
+
+    def _on_ignore_saved(self, path) -> None:
+        self._write(f"[.flatdropignore gravado] {path}\n")
+        self.status.config(text=".flatdropignore atualizado")
 
     # ------------------------------------------------------------------ #
     # Coleta de configuração

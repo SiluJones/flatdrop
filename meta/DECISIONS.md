@@ -452,3 +452,19 @@ Windows real o hit-testing do clique na coluna do glifo no `ttk.Treeview`, o laz
 **Consequência.** A spec0018 (implementação) parte dessas 3 decisões já fechadas: `walk_annotated` +
 `build_flatdropignore` no core (testáveis por pytest) + o modal em `gui.py`, entrando só depois do spike
 de UI validar as armadilhas do §7/§9.
+
+## DEC-017 — Assimetria do gitignore no gerador do `.flatdropignore` (spec0018)
+**Data:** 2026-07-11 · **Status:** aceita
+
+**Contexto.** A verificação em sandbox da spec0018 expôs uma assimetria do gitignore que a spec0017 §5
+subestimava: quando a pasta-pai está excluída (`dir/`), **`!dir/arquivo` NÃO reinclui** o arquivo —
+o git não reinclui uma folha se o diretório-pai está excluído.
+
+**Decisão.** O `build_flatdropignore` implementa a assimetria: para **liberar** itens de uma pasta que
+o git esconde, reinclui a **pasta** (`!dir/`, que já traz tudo em qualquer profundidade — `!dir/**` é
+desnecessário) e depois **re-exclui por folha** (`dir/arquivo`) os indesejados sob ela; para **excluir**
+do lado versionado (base incluída), sai **por folha** (`caminho`), em qualquer profundidade. Coberto por
+`test_editor_liberate_only_one` / `test_editor_exclude_keeps_sibling` contra o `make_plan` real.
+
+**Consequência.** Armadilha canônica registrada: não "otimizar" o gerador para `dir/` + `!dir/arquivo`
+no futuro — não funciona. A geração passa por pasta liberada, não por folha reincluída.

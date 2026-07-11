@@ -11,15 +11,16 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
 > o Claude a ler o `_TREE.md` e ditar um `.flatdropignore`; (2) editor de
 > `.flatdropignore` na GUI (= Fase 2-D).** O item C fica para depois dessas duas.
 
-- **Versão:** 0.3.1 no `__init__.py`. `[Não lançado]` no CHANGELOG só tem o FIX-005
-  (conftest) a registrar num próximo corte de patch, se/quando houver mais itens.
-- **Data:** 2026-07-05
+- **Versão:** 0.4.0 no `__init__.py` (editor visual de `.flatdropignore`, spec0018;
+  FIX-005 do conftest foi junto no corte). `[Não lançado]` no CHANGELOG só tem itens
+  de produto em aberto.
+- **Data:** 2026-07-11
 - **Fase:** F1 (MVP) OK · F2 (robustez/conveniência): quase toda feita — em aberto C
   (persistência), D (editor de ignores = editor de `.flatdropignore`), multi-raiz na
   GUI, UI-2/UI-3 · F3 (gerador de `.bat` + multi-fonte na GUI) OK · F4 (distribuição
   + single-file) não iniciada — ver `ROADMAP.md`.
 - **Situação geral:** em uso real e estável. Fluxo do monorepo `cinzeiro` coberto de
-  ponta a ponta (GUI, CLI e `.bat`). Modo Claude Code em operação; specs 0001–0016
+  ponta a ponta (GUI, CLI e `.bat`). Modo Claude Code em operação; specs 0001–0018
   aplicadas e commitadas.
 
 ## O que funciona (além do MVP)
@@ -45,8 +46,8 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
   [raiz]" vale no Pré-visualizar/Executar (FIX-004).
 - **`.flatdropignore` + `.gitignore` aninhado (DEC-014):** ignore próprio por
   projeto, aninhado, com `!` para liberar o que o `.gitignore` bloqueia. Palavra
-  final sobre o `.gitignore`. **Hoje é criado à mão; a ferramenta só o LÊ** (o
-  editor visual é a Fase 2-D, próxima tarefa).
+  final sobre o `.gitignore`. **Criável à mão ou pelo editor visual da GUI** (Fase 2-D,
+  entregue na 0.4.0 — spec0018).
 - **Allowlist expandida (DEC-013):** documentos aceitos pelo Projeto, Godot e várias
   linguagens/config. Imagens/áudio/vídeo fora.
 - **Multi-fonte com manifesto único** (`make_plan_sources`) + `--also-md-from`.
@@ -57,10 +58,10 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
 
 ## Qualidade / testes
 
-- **41 testes pytest passando.** Rodar da raiz: **`pytest -q`** (o `conftest.py` na
+- **44 testes pytest passando.** Rodar da raiz: **`pytest -q`** (o `conftest.py` na
   raiz resolve o import — FIX-005) ou `python -m pytest -q`.
 - test_core.py (MVP + FIX-001 + filtros/multi-fonte/Downloads + `.flatdropignore` +
-  `_TREE.md` + `root_in_name`) + 3 em test_cli.py.
+  `_TREE.md` + `root_in_name` + editor/spec0018) + 3 em test_cli.py.
 - A GUI **não** é coberta pela suíte (tkinter fora do CI) → smoke manual no Windows.
 
 ## Em aberto (produto) — backlog curto, na ordem sugerida
@@ -71,18 +72,14 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
    `.flatdropignore` pronto — sobretudo para **liberar via `!` o que o `.gitignore`
    esconde**. Entregável: um bloco de KCM + exemplo no README. Rápido; destrava o
    fluxo que o `_TREE.md` já habilita. **PRIMEIRA tarefa da próxima conversa.**
-2. **Editor de `.flatdropignore` na GUI (= Fase 2-D).** Interface para gerar o
-   `.flatdropignore` sem decorar sintaxe: árvore navegável das pastas/arquivos da
-   raiz, com checkbox por item, sinalizando o que o `.gitignore` já ignora, e
-   manipulável (incluir/excluir/liberar). Grava o `.flatdropignore` na raiz.
-   **Feature de UI não-trivial** — provavelmente pede uma spec de investigação/design
-   (estado tri-state, leitura do que o git já pega, geração dos padrões) antes da spec
-   de implementação. **SEGUNDA tarefa; o usuário reconhece que exige pesquisa/estudo.**
-   **Atualização (2026-07-06):** `spec0017` fechou o desenho e as 3 decisões (ver
-   DEC-016) — checkbox binário (Opção B), bloco gerenciado no round-trip, e um spike de
-   UI descartável antes da `spec0018` de implementação. Próximo passo: o spike.
+2. ~~**Editor de `.flatdropignore` na GUI (= Fase 2-D).**~~ **ENTREGUE (0.4.0,
+   spec0018).** Modal `FlatDropIgnoreEditor` (árvore lazy, checkbox binário Opção B,
+   tri-state por pasta, sinaliza o que o `.gitignore` esconde) + `annotate_children` /
+   `build_flatdropignore` no core (gerador respeita a assimetria do gitignore — ver
+   DEC-017). Bloco gerenciado no round-trip. 3 testes novos. Falta só o smoke manual da
+   GUI no Windows (a suíte não cobre tkinter).
 3. **C — Persistir configurações + pastas recentes** na GUI (`settings.py`, JSON em
-   `%APPDATA%`/`~/.config`; Combobox de recentes). **Depois das duas acima.**
+   `%APPDATA%`/`~/.config`; Combobox de recentes). **PRÓXIMA tarefa.**
 4. **Multi-raiz na GUI** (selecionar N pastas, prefixar cada uma com sua raiz).
 5. **UI-2** (polimento de layout) e **UI-3** (presets "só docs"/"só código", lembrar
    última seleção).

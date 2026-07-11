@@ -388,6 +388,141 @@ def _ignore_status(rel: str, full, gi, fd) -> tuple[bool, str, bool]:
 
 
 # --------------------------------------------------------------------------- #
+# Editor de .flatdropignore (spec0018): anotacao da arvore + geracao dos padroes
+# --------------------------------------------------------------------------- #
+FLATDROP_EDITOR_MARK_A = "# >>> flatdrop-editor"
+FLATDROP_EDITOR_MARK_B = "# <<<"
+
+
+def _ignore_probes(root: Path, cfg: ScanConfig):
+    """(base_in, source): dizem, por caminho, se ele iria ao Projeto com os ignores
+    atuais e qual a fonte do ignore. Pastas sao sondadas com barra final (semantica
+    gitignore de diretorio) — sem isso, `dist/` nao casa a string `dist`."""
+    full, gi, fd = _build_ignore_specs(root, cfg)
+
+    def base_in(rel: str, is_dir: bool) -> bool:
+        if full is None:
+            return True
+        return not full.match_file(rel + "/" if is_dir else rel)
+
+    def source(rel: str, is_dir: bool) -> str:
+        if full is None:
+            return ""
+        _ig, src, _lib = _ignore_status((rel + "/") if is_dir else rel, full, gi, fd)
+        return src
+
+    return base_in, source
+
+
+def annotate_children(root, cfg: ScanConfig, rel_dir: str = "", probes=None):
+    """Anota os filhos DIRETOS de ``rel_dir`` (nao recursivo) — para o lazy load da GUI.
+
+    Cada item: ``(rel, is_dir, base_in, source, allowed_type, sensitive)``. Poda o
+    nucleo imutavel (``dir_ignores``/``file_ignores``) e DESCE em pasta gitignored (o
+    editor mostra o que o git esconde para o autor poder liberar via ``!``).
+    """
+    root = Path(root)
+    base_in, source = probes or _ignore_probes(root, cfg)
+    abs_dir = root / rel_dir if rel_dir else root
+    try:
+        entries = sorted(
+            os.scandir(abs_dir),
+            key=lambda e: (not e.is_dir(follow_symlinks=False), e.name.lower()),
+        )
+    except OSError:
+        return
+    for e in entries:
+        is_dir = e.is_dir(follow_symlinks=False)
+        if is_dir and e.name in cfg.dir_ignores:
+            continue
+        if (not is_dir) and e.name in cfg.file_ignores:
+            continue
+        rel = f"{rel_dir}/{e.name}" if rel_dir else e.name
+        if is_dir:
+            yield (rel, True, base_in(rel, True), source(rel, True), True, False)
+        else:
+            yield (rel, False, base_in(rel, False), source(rel, False),
+                   is_allowed_type(e.name, cfg), is_sensitive(e.name))
+
+
+def _walk_leaves(root: Path, cfg: ScanConfig, probes):
+    """(leaves, gi_dirs, base): todas as folhas (arquivos) + pastas gitignored, recursivo
+    — insumo do gerador. ``base`` = {rel: base_in} por folha."""
+    root = Path(root)
+    base_in, source = probes
+    leaves: list[str] = []
+    gi_dirs: list[str] = []
+    base: dict[str, bool] = {}
+    for dp, dns, fns in os.walk(root, followlinks=False):
+        rel_dir = Path(dp).relative_to(root).as_posix()
+        rel_dir = "" if rel_dir == "." else rel_dir
+        dns[:] = sorted(d for d in dns if d not in cfg.dir_ignores)
+        for d in dns:
+            rel = f"{rel_dir}/{d}" if rel_dir else d
+            if not base_in(rel, True) and source(rel, True) == "gitignore":
+                gi_dirs.append(rel)
+        for fn in sorted(fns):
+            if fn in cfg.file_ignores:
+                continue
+            rel = f"{rel_dir}/{fn}" if rel_dir else fn
+            leaves.append(rel)
+            base[rel] = base_in(rel, False)
+    return leaves, sorted(gi_dirs), base
+
+
+def build_flatdropignore(root, cfg: ScanConfig, wants: dict[str, bool],
+                         existing_text: str | None = None) -> str:
+    """Gera o texto do ``.flatdropignore`` (bloco gerenciado) a partir de ``wants``.
+
+    ``wants``: ``{rel_arquivo: bool}`` — inclusao desejada por FOLHA; ausentes seguem o
+    baseline do git. Respeita a assimetria do gitignore (ver spec0018 §0):
+    - LIBERAR: para cada pasta gitignored com alguma folha desejada, ``!dir/`` +
+      re-exclui (``dir/arquivo``) as folhas indesejadas sob ela (senao vazam);
+    - EXCLUIR: folhas versionadas que o autor tirou saem por folha.
+    Preserva linhas fora do bloco gerenciado (round-trip, DEC-016 opcao i).
+    """
+    root = Path(root)
+    probes = _ignore_probes(root, cfg)
+    leaves, gi_dirs, base = _walk_leaves(root, cfg, probes)
+    want_of = lambda rel: wants.get(rel, base.get(rel, True))
+
+    def nearest_gi(rel: str):
+        best = None
+        for g in gi_dirs:
+            if rel.startswith(g + "/") and (best is None or len(g) > len(best)):
+                best = g
+        return best
+
+    liberate: list[str] = []
+    reexclude: list[str] = []
+    exclude: list[str] = []
+    freed: set[str] = set()
+    for g in gi_dirs:
+        under = [l for l in leaves if l.startswith(g + "/")]
+        # so libera se ha algo desejado e a pasta nao esta sob outra ja liberada
+        if any(want_of(l) for l in under) and not any(g.startswith(o + "/") for o in freed):
+            liberate.append(f"!{g}/")
+            freed.add(g)
+            for l in under:
+                if not want_of(l):
+                    reexclude.append(l)
+    for l in leaves:
+        if base.get(l, True) and not want_of(l) and nearest_gi(l) is None:
+            exclude.append(l)
+
+    block = liberate + sorted(set(reexclude)) + sorted(set(exclude))
+    body = "\n".join(block) if block else "# (sem alteracoes)"
+    managed = f"{FLATDROP_EDITOR_MARK_A}\n{body}\n{FLATDROP_EDITOR_MARK_B}"
+    if existing_text and FLATDROP_EDITOR_MARK_A in existing_text and FLATDROP_EDITOR_MARK_B in existing_text:
+        pre = existing_text.split(FLATDROP_EDITOR_MARK_A)[0].rstrip("\n")
+        pos = existing_text.split(FLATDROP_EDITOR_MARK_B, 1)[1].lstrip("\n")
+        return "\n".join(p for p in (pre, managed, pos) if p) + "\n"
+    if existing_text and existing_text.strip():
+        return existing_text.rstrip("\n") + "\n\n" + managed + "\n"
+    return managed + "\n"
+
+
+# --------------------------------------------------------------------------- #
 # Varredura
 # --------------------------------------------------------------------------- #
 def _scan(

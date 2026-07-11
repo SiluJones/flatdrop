@@ -6,18 +6,35 @@ versionamento conforme [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Não lançado]
 
+_Itens de produto em aberto: trecho de KCM (ler `_TREE.md` → gerar `.flatdropignore`),
+persistência/recentes (Fase 2-C), multi-raiz na GUI, formato de nome "caminho escrito"
+(raiz→pastas→stem), UI-2/UI-3._
+
+## [0.4.0] — 2026-07-11
+
+Editor visual de `.flatdropignore` na GUI (Fase 2-D): marca-se "quero no Projeto" e a
+ferramenta deriva os padrões, respeitando a assimetria do gitignore. Fecha o item do
+ROADMAP e a spec0018 / DEC-016. Suíte de 44 testes verde.
+
+### Adicionado
+- **Editor visual de `.flatdropignore` na GUI** (spec0018): modal
+  `FlatDropIgnoreEditor` com árvore navegável (lazy load), checkbox binário por item
+  (Opção B), tri-state por pasta e sinalização do que o `.gitignore` já esconde. No
+  core, `annotate_children` (anota os filhos diretos de um diretório: `base_in`, fonte
+  do ignore, tipo permitido, sensível) e `build_flatdropignore` (gera o **bloco
+  gerenciado** entre marcadores, preservando linhas manuais no round-trip). O gerador
+  respeita a **assimetria do gitignore** (spec0018 §0): para liberar itens de uma
+  pasta escondida usa `!dir/` + re-exclusão por folha das indesejadas; para excluir do
+  lado versionado sai por folha. Botão "Editar .flatdropignore…" na tela principal. 3
+  testes novos exercitam o gerador contra o `make_plan` real (41 → 44).
+
 ### Corrigido
 - **FIX-005 — `pytest` puro falhava ao coletar (`ModuleNotFoundError: flatdrop`)**
   (spec0016): adicionado `conftest.py` na raiz do repo com
   `sys.path.insert(0, Path(__file__).resolve().parent)`. O pytest o importa antes de
   coletar, inserindo a raiz no `sys.path` — então `from flatdrop import ...` resolve
   com `pytest` puro, sem depender de `python -m pytest`. Espelha o que o `run.py` já
-  faz para a aplicação. Sem mudança de código de produção. Entra no próximo corte de
-  patch.
-
-_Itens de produto em aberto: trecho de KCM (ler `_TREE.md` → gerar `.flatdropignore`),
-editor de `.flatdropignore` na GUI (Fase 2-D), persistência/recentes (Fase 2-C),
-multi-raiz na GUI, formato de nome "caminho escrito" (raiz→pastas→stem), UI-2/UI-3._
+  faz para a aplicação. Sem mudança de código de produção.
 
 ## [0.3.1] — 2026-07-05
 

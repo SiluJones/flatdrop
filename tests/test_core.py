@@ -5,6 +5,7 @@ from pathlib import Path, PurePath
 import pytest
 
 from flatdrop import config as C
+from flatdrop import core
 from flatdrop.core import (
     ScanConfig,
     Source,
@@ -539,3 +540,57 @@ def test_tree_full_lists_all_skipped_beyond_sample_cap(tmp_path):
     body = (res.dest / C.TREE_NAME).read_text(encoding="utf-8")
     for i in range(12):
         assert f"img{i}.png  [pulado: tipo]" in body
+
+
+# --------------------------------------------------------------------------- #
+# Editor de .flatdropignore (spec0018)
+# --------------------------------------------------------------------------- #
+def _editor_repo(tmp_path):
+    for p in ("logs/run.md", "logs/skip.md", "logs/deep/c.md",
+              "docs/a.md", "docs/b.md", "docs/keep.md", "README.md", "src/app.py"):
+        f = tmp_path / p
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text("x", encoding="utf-8")
+    (tmp_path / ".gitignore").write_text("logs/\n", encoding="utf-8")  # logs escondido; docs versionado
+    return tmp_path
+
+
+def _copied(root):
+    plan = core.make_plan(str(root), core.ScanConfig(mode="collisions"))
+    return sorted(f.rel.as_posix() for f in plan.files)  # posix p/ portabilidade Windows
+
+
+@pytest.mark.skipif(not core.HAS_PATHSPEC, reason="requer pathspec")
+def test_editor_liberate_only_one(tmp_path):
+    root = _editor_repo(tmp_path)
+    txt = core.build_flatdropignore(str(root), core.ScanConfig(mode="collisions"),
+                                    {"logs/run.md": True})
+    (root / ".flatdropignore").write_text(txt, encoding="utf-8")
+    got = _copied(root)
+    assert "logs/run.md" in got                       # liberado
+    assert "logs/skip.md" not in got                  # re-excluido (nao vazou)
+    assert "logs/deep/c.md" not in got                # re-excluido em profundidade
+    assert "docs/a.md" in got                         # nao tocado -> segue incluido
+
+
+@pytest.mark.skipif(not core.HAS_PATHSPEC, reason="requer pathspec")
+def test_editor_exclude_keeps_sibling(tmp_path):
+    root = _editor_repo(tmp_path)
+    txt = core.build_flatdropignore(str(root), core.ScanConfig(mode="collisions"),
+                                    {"docs/a.md": False, "docs/b.md": False})
+    (root / ".flatdropignore").write_text(txt, encoding="utf-8")
+    got = _copied(root)
+    assert "docs/keep.md" in got
+    assert "docs/a.md" not in got and "docs/b.md" not in got
+
+
+@pytest.mark.skipif(not core.HAS_PATHSPEC, reason="requer pathspec")
+def test_editor_roundtrip_preserves_manual(tmp_path):
+    root = _editor_repo(tmp_path)
+    existing = ("# regra minha\n*.tmp\n\n"
+                + core.FLATDROP_EDITOR_MARK_A + "\nlogs/x\n" + core.FLATDROP_EDITOR_MARK_B + "\n")
+    txt = core.build_flatdropignore(str(root), core.ScanConfig(mode="collisions"),
+                                    {"docs/a.md": False}, existing_text=existing)
+    assert "# regra minha" in txt and "*.tmp" in txt          # linhas manuais preservadas
+    assert txt.count(core.FLATDROP_EDITOR_MARK_A) == 1         # um unico bloco gerenciado
+    assert "docs/a.md" in txt
