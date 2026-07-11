@@ -169,3 +169,16 @@ nome. Não implementado.
 a raiz do repo no `sys.path` para `from flatdrop import ...` resolver com `pytest` puro
 (sem `python -m pytest`). Espelha o ajuste que o `run.py` faz para a aplicação. (FIX-005,
 spec0016.)
+
+**`FLATDROPIGNORE_NAMES` / nomes alternativos.** Constante com os nomes aceitos para o
+arquivo de controle, em ordem de precedência: `.flatdropignore` → `.flatdropignore.txt` →
+`flatdropignore.txt`. Os aliases `.txt` existem porque baixar um dotfile da internet às
+vezes falha. Num mesmo diretório o primeiro encontrado vence; o editor grava no alias
+existente (`core.flatdropignore_path`). Desde a spec0019, o `.flatdropignore` também VAI
+ao mount (allowlist), como o `.gitignore`. (DEC-018.)
+
+**Ancoragem de padrões (armadilha).** Um padrão **multi-segmento** (ex.: `meta/specs/`)
+ancora na **localização do `.flatdropignore`** que o contém (semântica gitignore), enquanto
+um padrão de **um segmento** (`specs/`, `logs/`) casa em **qualquer profundidade**.
+Verificado: um `.flatdropignore` **aninhado** numa subpasta funciona (escopo por subárvore).
+Não é bug — é o comportamento correto do gitignore; documentado para evitar confusão.

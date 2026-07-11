@@ -339,8 +339,10 @@ def _collect_ignore_lines(root: Path, cfg: ScanConfig) -> tuple[list[str], list[
         dirnames[:] = [d for d in dirnames if d not in cfg.dir_ignores]
         if cfg.use_gitignore and ".gitignore" in filenames:
             gi_by.append((depth, _rebase_all(_read_ignore_lines(cur / ".gitignore"), base)))
-        if ".flatdropignore" in filenames:
-            fd_by.append((depth, _rebase_all(_read_ignore_lines(cur / ".flatdropignore"), base)))
+        for _fdname in C.FLATDROPIGNORE_NAMES:
+            if _fdname in filenames:
+                fd_by.append((depth, _rebase_all(_read_ignore_lines(cur / _fdname), base)))
+                break  # precedencia: o primeiro nome encontrado no diretorio vence
     gi_lines: list[str] = []
     for _, lines in sorted(gi_by, key=lambda t: t[0]):
         gi_lines += lines
@@ -520,6 +522,17 @@ def build_flatdropignore(root, cfg: ScanConfig, wants: dict[str, bool],
     if existing_text and existing_text.strip():
         return existing_text.rstrip("\n") + "\n\n" + managed + "\n"
     return managed + "\n"
+
+
+def flatdropignore_path(root) -> Path:
+    """Caminho do arquivo de controle na raiz: o primeiro alias EXISTENTE (por
+    precedencia), ou o nome canonico se nenhum existir. Evita o editor criar um
+    segundo arquivo quando o autor ja usa, ex., flatdropignore.txt (spec0019)."""
+    root = Path(root)
+    for name in C.FLATDROPIGNORE_NAMES:
+        if (root / name).exists():
+            return root / name
+    return root / C.FLATDROPIGNORE_NAMES[0]
 
 
 # --------------------------------------------------------------------------- #

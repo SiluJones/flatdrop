@@ -6,4 +6,4 @@ Pacote dividido em camadas:
 - gui: interface tkinter que apenas amarra a core.
 """
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"

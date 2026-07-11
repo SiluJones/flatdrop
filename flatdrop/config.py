@@ -76,6 +76,7 @@ DEFAULT_EXTENSIONLESS_ALLOW: set[str] = {
     "license", "licence", "readme", "changelog", "authors", "notice",
     "contributing", "codeowners", "vagrantfile",
     ".gitignore", ".gitattributes", ".dockerignore", ".editorconfig",
+    ".flatdropignore",  # controle do FlatDrop — importante no Projeto (spec0019)
     ".npmrc", ".nvmrc", ".prettierrc", ".eslintrc", ".babelrc",
     ".env.example", ".env.sample", ".env.template",
 }
@@ -94,13 +95,20 @@ DEFAULT_DIR_IGNORES: set[str] = {
     ".terraform", ".serverless",
 }
 
+# Nomes aceitos para o arquivo de controle do FlatDrop, em ordem de PRECEDENCIA.
+# Os aliases .txt existem porque baixar um dotfile da internet as vezes falha; num
+# mesmo diretorio, o primeiro nome encontrado vence (spec0019).
+FLATDROPIGNORE_NAMES: tuple[str, ...] = (
+    ".flatdropignore", ".flatdropignore.txt", "flatdropignore.txt",
+)
+
+
 # Arquivos pulados por padrão mesmo quando versionados: ruído de baixo valor
 # para contexto (lockfiles enormes, minificados, source maps).
 DEFAULT_FILE_IGNORES: set[str] = {
     "package-lock.json", "yarn.lock", "pnpm-lock.yaml", "npm-shrinkwrap.json",
     "poetry.lock", "pipfile.lock", "cargo.lock", "composer.lock", "gemfile.lock",
     ".ds_store", "thumbs.db", "desktop.ini",
-    ".flatdropignore",  # arquivo de controle do FlatDrop — nao vai para o upload
     "_manifest.md",     # o proprio manifesto gerado — nao reentra numa proxima varredura
     "_tree.md",         # a propria arvore gerada — nao reentra numa proxima varredura
 }

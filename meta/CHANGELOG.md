@@ -10,6 +10,28 @@ _Itens de produto em aberto: trecho de KCM (ler `_TREE.md` → gerar `.flatdropi
 persistência/recentes (Fase 2-C), multi-raiz na GUI, formato de nome "caminho escrito"
 (raiz→pastas→stem), UI-2/UI-3._
 
+## [0.5.0] — 2026-07-11
+
+O `.flatdropignore` deixa de ser escondido do upload e passa a ir ao Projeto (como o
+`.gitignore` — ambos são contexto importante). Além disso, o arquivo de controle passa a
+aceitar nomes alternativos, para o caso de baixar um dotfile da internet falhar. spec0019
+/ DEC-018. Suíte de 46 testes verde.
+
+### Adicionado
+- **Nomes alternativos para o arquivo de controle** (spec0019): além de
+  `.flatdropignore`, agora valem `.flatdropignore.txt` e `flatdropignore.txt`, nesta
+  ordem de precedência (num mesmo diretório, o primeiro encontrado vence). A leitura em
+  `_collect_ignore_lines` percorre a constante `FLATDROPIGNORE_NAMES`; o editor da GUI
+  grava no alias já existente (novo helper `core.flatdropignore_path`), evitando criar um
+  segundo arquivo. 2 testes novos (44 → 46).
+- **O `.flatdropignore` agora vai ao mount**: saiu de `DEFAULT_FILE_IGNORES` e entrou na
+  allowlist de arquivos sem extensão, como o `.gitignore`.
+
+### Corrigido
+- **O FlatDrop escondia o próprio `.flatdropignore` do upload** (spec0019): o arquivo de
+  controle é contexto importante e deve ir ao Projeto (e ser versionado no repo). Reverte
+  a decisão antiga de mantê-lo fora do upload (DEC-018).
+
 ## [0.4.0] — 2026-07-11
 
 Editor visual de `.flatdropignore` na GUI (Fase 2-D): marca-se "quero no Projeto" e a

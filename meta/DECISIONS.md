@@ -468,3 +468,30 @@ do lado versionado (base incluída), sai **por folha** (`caminho`), em qualquer 
 
 **Consequência.** Armadilha canônica registrada: não "otimizar" o gerador para `dir/` + `!dir/arquivo`
 no futuro — não funciona. A geração passa por pasta liberada, não por folha reincluída.
+
+---
+
+## DEC-018 — `.flatdropignore` vai ao mount + nomes alternativos (spec0019)
+**Data:** 2026-07-11 · **Status:** aceita (reverte parte da DEC-014)
+
+**Contexto.** A DEC-014 mantinha o próprio `.flatdropignore` fora do upload (entrava em
+`DEFAULT_FILE_IGNORES`), enquanto o `.gitignore` ia ao Projeto pela allowlist. Na prática os dois
+arquivos de ignore são contexto igualmente importante para o Claude entender o projeto. Além disso,
+baixar um dotfile da internet às vezes falha (o navegador/OS renomeia ou recusa arquivos sem stem),
+o que dificultava começar um `.flatdropignore` a partir de um modelo baixado.
+
+**Decisão.** (1) **Reverter** a decisão de esconder o `.flatdropignore`: tirá-lo de
+`DEFAULT_FILE_IGNORES` e pô-lo na allowlist de arquivos sem extensão — vai ao mount como o
+`.gitignore`. (2) Aceitar **nomes alternativos** via `FLATDROPIGNORE_NAMES`
+(`.flatdropignore` → `.flatdropignore.txt` → `flatdropignore.txt`), nesta ordem de **precedência**:
+num mesmo diretório, o primeiro nome encontrado vence. `_collect_ignore_lines` percorre a constante;
+o editor da GUI grava no alias existente via o novo helper `core.flatdropignore_path` (não cria um
+segundo arquivo). Verificado rodando o `make_plan` real; 2 testes novos (44 → 46). Bump 0.5.0.
+
+**Alternativas.** Manter o `.flatdropignore` fora (mais "limpo", mas esconde contexto útil); só o nome
+canônico (não resolve o download falho); aceitar qualquer `*.flatdropignore*` (frouxo demais, casaria
+lixo). Os aliases `.txt` já vão ao mount por serem `.txt` (tipo aceito); se o autor filtrar `.txt`, o
+canônico `.flatdropignore` continua garantido pela allowlist — borda aceitável.
+
+**Consequência.** Os dois arquivos de ignore agora são versionáveis e visíveis no Projeto. Precedência
+explícita evita ambiguidade quando há mais de um alias na mesma pasta.

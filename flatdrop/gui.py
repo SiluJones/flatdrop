@@ -362,7 +362,7 @@ class FlatDropIgnoreEditor(tk.Toplevel):
 
     def _save(self):
         wants = self._collect_wants()
-        target = self.root_dir / ".flatdropignore"
+        target = core.flatdropignore_path(self.root_dir)
         existing = target.read_text(encoding="utf-8") if target.exists() else None
         text = core.build_flatdropignore(self.root_dir, self.cfg, wants, existing_text=existing)
         target.write_text(text, encoding="utf-8")

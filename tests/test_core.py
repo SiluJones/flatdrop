@@ -594,3 +594,25 @@ def test_editor_roundtrip_preserves_manual(tmp_path):
     assert "# regra minha" in txt and "*.tmp" in txt          # linhas manuais preservadas
     assert txt.count(core.FLATDROP_EDITOR_MARK_A) == 1         # um unico bloco gerenciado
     assert "docs/a.md" in txt
+
+
+@pytest.mark.skipif(not core.HAS_PATHSPEC, reason="requer pathspec")
+def test_flatdropignore_reaches_mount(tmp_path):
+    (tmp_path / "keep.md").write_text("x", encoding="utf-8")
+    (tmp_path / ".flatdropignore").write_text("# controle\n", encoding="utf-8")
+    plan = core.make_plan(str(tmp_path), core.ScanConfig(mode="collisions"))
+    names = {f.rel.as_posix() for f in plan.files}
+    assert ".flatdropignore" in names  # agora vai ao Projeto (spec0019)
+
+
+@pytest.mark.skipif(not core.HAS_PATHSPEC, reason="requer pathspec")
+def test_flatdropignore_alias_txt_applies(tmp_path):
+    (tmp_path / "logs").mkdir()
+    (tmp_path / "logs" / "l.md").write_text("x", encoding="utf-8")
+    (tmp_path / "keep.md").write_text("x", encoding="utf-8")
+    # sem .flatdropignore canonico; so o alias sem ponto
+    (tmp_path / "flatdropignore.txt").write_text("logs/\n", encoding="utf-8")
+    plan = core.make_plan(str(tmp_path), core.ScanConfig(mode="collisions"))
+    names = {f.rel.as_posix() for f in plan.files}
+    assert "logs/l.md" not in names           # o alias foi aplicado
+    assert "keep.md" in names
