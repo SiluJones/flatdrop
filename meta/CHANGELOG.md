@@ -10,6 +10,33 @@ _Itens de produto em aberto: trecho de KCM (ler `_TREE.md` → gerar `.flatdropi
 persistência/recentes (Fase 2-C), multi-raiz na GUI, formato de nome "caminho escrito"
 (raiz→pastas→stem), UI-2/UI-3._
 
+## [0.5.1] — 2026-07-11
+
+Correção do gerador do editor de `.flatdropignore`: deixava passar arquivo novo criado
+depois da geração e podia perder exclusões no round-trip. spec0020 / FIX-006. Suíte de
+48 testes verde.
+
+### Corrigido
+- **Gerador deixava passar arquivo novo** (FIX-006): ao excluir uma pasta inteira, o
+  editor listava os arquivos um a um em vez de bloquear a pasta — um arquivo criado
+  depois da geração vazava para o mount. `build_flatdropignore` agora **colapsa pasta
+  cheia** (todas as folhas versionadas excluídas) em `dir/` (nível pasta) em vez de N
+  linhas por arquivo; pasta parcial continua saindo por folha (preserva o irmão mantido).
+- **Round-trip perdia exclusões**: o gerador usava o estado efetivo (`full`,
+  git+flatdropignore) como base, então regenerar sobre um `.flatdropignore` existente
+  podia largar exclusões de pastas não expandidas na tela. Agora a **base de geração é
+  git puro** (uma exclusão só do `.flatdropignore` é re-emitida) e o **default de folha
+  não editada é o estado efetivo atual** (preserva o que já valia sem reafirmar item a
+  item). 2 testes novos (46 → 48).
+- **Checkbox de pasta não ficava indeterminado ao abrir** uma raiz que já tem
+  `.flatdropignore`: ao expandir uma pasta, os filhos recarregavam mas o glifo da
+  própria pasta não era recomputado. Cosmético — a gravação sempre usou o `want` por
+  folha, nunca dependeu do glifo da pasta.
+
+### Chore
+- `.gitignore` na raiz com bloco Python (`__pycache__/`, `*.py[cod]`, `*.egg-info/`,
+  `.pytest_cache/`) e destrastreamento do `__pycache__` que estava versionado.
+
 ## [0.5.0] — 2026-07-11
 
 O `.flatdropignore` deixa de ser escondido do upload e passa a ir ao Projeto (como o

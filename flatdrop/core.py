@@ -477,16 +477,30 @@ def build_flatdropignore(root, cfg: ScanConfig, wants: dict[str, bool],
     """Gera o texto do ``.flatdropignore`` (bloco gerenciado) a partir de ``wants``.
 
     ``wants``: ``{rel_arquivo: bool}`` — inclusao desejada por FOLHA; ausentes seguem o
-    baseline do git. Respeita a assimetria do gitignore (ver spec0018 §0):
-    - LIBERAR: para cada pasta gitignored com alguma folha desejada, ``!dir/`` +
-      re-exclui (``dir/arquivo``) as folhas indesejadas sob ela (senao vazam);
-    - EXCLUIR: folhas versionadas que o autor tirou saem por folha.
+    ESTADO EFETIVO atual (preserva o .flatdropignore existente no round-trip). Regras:
+    - base de geracao = GIT PURO (uma exclusao so-do-flatdropignore e re-emitida);
+    - LIBERAR pasta que o git esconde: ``!dir/`` + re-excluir os indesejados;
+    - EXCLUIR do lado versionado: colapsa pasta CHEIA em ``dir/`` (a prova de arquivo
+      novo); pasta parcial sai por folha (preserva o irmao mantido).
     Preserva linhas fora do bloco gerenciado (round-trip, DEC-016 opcao i).
     """
     root = Path(root)
-    probes = _ignore_probes(root, cfg)
-    leaves, gi_dirs, base = _walk_leaves(root, cfg, probes)
-    want_of = lambda rel: wants.get(rel, base.get(rel, True))
+    full, gi, _fd = _build_ignore_specs(root, cfg)
+
+    def git_in(rel: str, is_dir: bool = False) -> bool:   # baseline SO do git
+        if gi is None:
+            return True
+        return not gi.match_file(rel + "/" if is_dir else rel)
+
+    def full_in(rel: str, is_dir: bool = False) -> bool:  # estado EFETIVO atual
+        if full is None:
+            return True
+        return not full.match_file(rel + "/" if is_dir else rel)
+
+    leaves, _gd, _b = _walk_leaves(root, cfg, _ignore_probes(root, cfg))
+    all_dirs = {"/".join(l.split("/")[:i]) for l in leaves for i in range(1, len(l.split("/")))}
+    gi_dirs = sorted(d for d in all_dirs if not git_in(d, True))  # pastas escondidas pelo GIT
+    want_of = lambda rel: wants.get(rel, full_in(rel))            # default: efetivo atual
 
     def nearest_gi(rel: str):
         best = None
@@ -495,24 +509,33 @@ def build_flatdropignore(root, cfg: ScanConfig, wants: dict[str, bool],
                 best = g
         return best
 
+    # LIBERAR: pasta git-ignored com alguma folha desejada -> !dir/ + re-exclui indesejados
     liberate: list[str] = []
     reexclude: list[str] = []
-    exclude: list[str] = []
     freed: set[str] = set()
     for g in gi_dirs:
         under = [l for l in leaves if l.startswith(g + "/")]
-        # so libera se ha algo desejado e a pasta nao esta sob outra ja liberada
         if any(want_of(l) for l in under) and not any(g.startswith(o + "/") for o in freed):
             liberate.append(f"!{g}/")
             freed.add(g)
             for l in under:
                 if not want_of(l):
                     reexclude.append(l)
-    for l in leaves:
-        if base.get(l, True) and not want_of(l) and nearest_gi(l) is None:
-            exclude.append(l)
 
-    block = liberate + sorted(set(reexclude)) + sorted(set(exclude))
+    # EXCLUIR: base git puro; colapsa pasta CHEIA (a prova de arquivo novo)
+    excluded = {l for l in leaves if git_in(l) and not want_of(l) and nearest_gi(l) is None}
+    cand = {"/".join(l.split("/")[:i]) for l in excluded for i in range(1, len(l.split("/")))}
+
+    def fully_excluded(d: str) -> bool:
+        under = [l for l in leaves if l.startswith(d + "/")]
+        return bool(under) and all(l in excluded for l in under)
+
+    collapsible = {d for d in cand if fully_excluded(d)}
+    maximal = {d for d in collapsible if not any(d != o and d.startswith(o + "/") for o in collapsible)}
+    exclude = [f"{d}/" for d in sorted(maximal)]
+    exclude += [l for l in sorted(excluded) if not any(l.startswith(d + "/") for d in maximal)]
+
+    block = liberate + sorted(set(reexclude)) + exclude
     body = "\n".join(block) if block else "# (sem alteracoes)"
     managed = f"{FLATDROP_EDITOR_MARK_A}\n{body}\n{FLATDROP_EDITOR_MARK_B}"
     if existing_text and FLATDROP_EDITOR_MARK_A in existing_text and FLATDROP_EDITOR_MARK_B in existing_text:

@@ -267,6 +267,7 @@ class FlatDropIgnoreEditor(tk.Toplevel):
             self.tree.delete(c)
         self._populate(iid, s["path"])
         s["loaded"] = True
+        self._set_glyph(iid, self._folder_state(iid))  # recomputa a propria pasta
         self._refresh_chain(iid)
 
     def _nearest_override(self, rel_dir):

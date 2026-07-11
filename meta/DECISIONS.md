@@ -495,3 +495,42 @@ canônico `.flatdropignore` continua garantido pela allowlist — borda aceitáv
 
 **Consequência.** Os dois arquivos de ignore agora são versionáveis e visíveis no Projeto. Precedência
 explícita evita ambiguidade quando há mais de um alias na mesma pasta.
+
+---
+
+## FIX-006 — Gerador do editor deixava passar arquivo novo + perdia exclusões no round-trip
+**Data:** 2026-07-11 · **Status:** corrigido (spec0020)
+
+**Sintoma.** Verificado rodando o `make_plan` real: (1) ao excluir uma pasta inteira no
+editor, o `.flatdropignore` saía com os arquivos listados **um a um**, então um arquivo
+criado DEPOIS da geração (ex.: `260711-spec0019-...md` em `meta/specs/`, criado após
+"excluir" a pasta) não estava em nenhuma linha e **vazava** para o mount. (2) Regenerar o
+arquivo sobre um `.flatdropignore` existente, mexendo só numa pasta, podia **largar** a
+exclusão de outra pasta não expandida na tela — o gerador usava o estado efetivo atual
+(`full` = git+flatdropignore) como base, então uma folha ausente de `wants` herdava o
+estado JÁ CONSIDERANDO o próprio `.flatdropignore`, e ao reconstruir o bloco gerenciado do
+zero essa herança não bastava para reafirmar a exclusão.
+
+**Causa raiz.** `build_flatdropignore` tratava exclusão por FOLHA como suficiente e usava
+uma base única (`full`) tanto para decidir o que emitir quanto para o default do que não
+foi editado — mas esses dois papéis exigem bases diferentes: gerar por folha nunca
+bloqueia arquivo novo (ele não existia na varredura), e usar o estado efetivo como base de
+geração reemite só o que já está representado, não o que precisaria ser preservado.
+
+**Solução.** Duas bases distintas: **base de geração = git puro (`gi`)** — uma exclusão
+só do `.flatdropignore` é sempre re-emitida ao regenerar, não some; **default de folha não
+editada = estado efetivo atual (`full`)** — preserva o round-trip sem o usuário reafirmar
+item a item. E **colapso de pasta cheia**: quando todas as folhas versionadas de uma pasta
+estão excluídas, emite `pasta/` (nível pasta) em vez de N linhas por arquivo — bloqueia
+arquivo novo criado depois, porque a regra passa a valer para a pasta inteira, não para
+nomes específicos. Escolhe a pasta cheia mais alta (maximal); pasta parcial continua saindo
+por folha, preservando o irmão mantido. Verificado no `make_plan` real antes da spec: excluir
+`logs/` inteiro gera `logs/` e um `logs/NOVO.md` criado depois continua bloqueado; regenerar
+mexendo só em `docs/a` preserva `logs/`/`meta/specs/`; excluir `docs/a,b` mantendo `keep.md`
+sai por folha. 2 testes novos (`test_editor_collapse_blocks_new_files`,
+`test_editor_roundtrip_preserves_folder_exclusion`; 46 → 48).
+
+**Lição.** "Gerar a partir do estado atual" e "preservar o que não foi tocado" são papéis
+diferentes e podem exigir bases de dados diferentes (git puro vs. efetivo) — usar uma base
+só para os dois criou um bug sutil que só aparece com o tempo (arquivo criado depois da
+geração), não no teste ingênuo do dia da implementação.

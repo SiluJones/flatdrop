@@ -616,3 +616,39 @@ def test_flatdropignore_alias_txt_applies(tmp_path):
     names = {f.rel.as_posix() for f in plan.files}
     assert "logs/l.md" not in names           # o alias foi aplicado
     assert "keep.md" in names
+
+
+@pytest.mark.skipif(not core.HAS_PATHSPEC, reason="requer pathspec")
+def test_editor_collapse_blocks_new_files(tmp_path):
+    for p in ("logs/a.md", "logs/b.md", "keep.md"):
+        f = tmp_path / p
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text("x", encoding="utf-8")
+    (tmp_path / ".gitignore").write_text("", encoding="utf-8")
+    cfg = core.ScanConfig(mode="collisions")
+    txt = core.build_flatdropignore(str(tmp_path), cfg, {"logs/a.md": False, "logs/b.md": False})
+    assert "logs/" in txt and "logs/a.md" not in txt  # colapsou em pasta, nao por arquivo
+    (tmp_path / ".flatdropignore").write_text(txt, encoding="utf-8")
+    (tmp_path / "logs" / "NOVO.md").write_text("x", encoding="utf-8")  # arquivo novo
+    names = {f.rel.as_posix() for f in core.make_plan(str(tmp_path), cfg).files}
+    assert "logs/NOVO.md" not in names  # bloqueado pela regra de pasta
+
+
+@pytest.mark.skipif(not core.HAS_PATHSPEC, reason="requer pathspec")
+def test_editor_roundtrip_preserves_folder_exclusion(tmp_path):
+    for p in ("logs/a.md", "docs/a.md", "docs/keep.md"):
+        f = tmp_path / p
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text("x", encoding="utf-8")
+    (tmp_path / ".gitignore").write_text("", encoding="utf-8")
+    cfg = core.ScanConfig(mode="collisions")
+    first = core.build_flatdropignore(str(tmp_path), cfg, {"logs/a.md": False})
+    (tmp_path / ".flatdropignore").write_text(first, encoding="utf-8")
+    existing = (tmp_path / ".flatdropignore").read_text(encoding="utf-8")
+    # usuario mexe SO em docs/a; logs nao entra em wants (nao expandido)
+    second = core.build_flatdropignore(str(tmp_path), cfg, {"docs/a.md": False}, existing_text=existing)
+    (tmp_path / ".flatdropignore").write_text(second, encoding="utf-8")
+    names = {f.rel.as_posix() for f in core.make_plan(str(tmp_path), cfg).files}
+    assert "logs/a.md" not in names   # exclusao preservada no round-trip
+    assert "docs/a.md" not in names   # nova exclusao aplicada
+    assert "docs/keep.md" in names    # irmao preservado
