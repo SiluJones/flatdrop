@@ -652,3 +652,21 @@ def test_editor_roundtrip_preserves_folder_exclusion(tmp_path):
     assert "logs/a.md" not in names   # exclusao preservada no round-trip
     assert "docs/a.md" not in names   # nova exclusao aplicada
     assert "docs/keep.md" in names    # irmao preservado
+
+
+@pytest.mark.skipif(not core.HAS_PATHSPEC, reason="requer pathspec")
+def test_folder_effective_state(tmp_path):
+    for p in ("meta/specs/s1.md", "meta/refs/r.md", "logs/a.md", "README.md"):
+        f = tmp_path / p
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text("x", encoding="utf-8")
+    (tmp_path / ".gitignore").write_text("", encoding="utf-8")
+    (tmp_path / ".flatdropignore").write_text(
+        core.FLATDROP_EDITOR_MARK_A + "\nlogs/\nmeta/specs/\n" + core.FLATDROP_EDITOR_MARK_B + "\n",
+        encoding="utf-8")
+    cfg = core.ScanConfig(mode="collisions")
+    st = lambda d: core.folder_effective_state(str(tmp_path), cfg, d)
+    assert st("meta") is None       # misto -> indeterminado (o bug dos prints)
+    assert st("meta/specs") is False
+    assert st("meta/refs") is True
+    assert st("logs") is False

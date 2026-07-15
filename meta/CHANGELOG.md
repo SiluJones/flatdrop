@@ -10,6 +10,16 @@ _Itens de produto em aberto: trecho de KCM (ler `_TREE.md` → gerar `.flatdropi
 persistência/recentes (Fase 2-C), multi-raiz na GUI, formato de nome "caminho escrito"
 (raiz→pastas→stem), UI-2/UI-3._
 
+## [0.5.2] — 2026-07-15
+
+### Corrigido
+- **Glifo da pasta correto na visão colapsada** (FIX-007): uma pasta com conteúdo
+  parcialmente excluído (ex.: `meta/` com `meta/specs/` excluído) aparecia ☑ marcada em
+  vez de ▣ indeterminada, e só se corrigia depois de expandir. O estado do checkbox de
+  pasta derivava dos filhos já carregados na `Treeview`, e o lazy load só carrega ao
+  expandir. Agora o glifo vem do core (`folder_effective_state`), que agrega a subárvore
+  (todas/nenhuma/misto) independente da árvore da GUI. spec0021. 1 teste novo (48 → 49).
+
 ## [0.5.1] — 2026-07-11
 
 Correção do gerador do editor de `.flatdropignore`: deixava passar arquivo novo criado

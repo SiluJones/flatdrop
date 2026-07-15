@@ -534,3 +534,26 @@ sai por folha. 2 testes novos (`test_editor_collapse_blocks_new_files`,
 diferentes e podem exigir bases de dados diferentes (git puro vs. efetivo) — usar uma base
 só para os dois criou um bug sutil que só aparece com o tempo (arquivo criado depois da
 geração), não no teste ingênuo do dia da implementação.
+
+## FIX-007 — Glifo da pasta mentia na visão colapsada do editor
+**Data:** 2026-07-15 · **Status:** corrigido (spec0021)
+
+**Sintoma.** Ao abrir o editor numa raiz com `.flatdropignore`, uma pasta com conteúdo
+parcialmente excluído (ex.: `meta/` com `meta/specs/` excluído) aparecia ☑ marcada em vez
+de ▣ indeterminada. O estado só se corrigia depois de expandir a pasta.
+
+**Causa raiz.** `_folder_state` calcula o estado a partir dos filhos carregados na
+`Treeview`, e o lazy load só os carrega ao expandir. Sem filhos, a função caía no
+`return self.st[iid]["want"]` — o `want` da própria pasta (que não está ignorada) — e
+devolvia ☑. O fix da spec0020 (recompor o glifo ao expandir) agia só ao expandir; a visão
+inicial continuava mentindo. O dado necessário já existe no core e não depende da UI.
+
+**Solução.** Novo `core.folder_effective_state(root, cfg, rel_dir, probes)` agrega a
+subárvore via `_walk_leaves` e devolve `True`/`False`/`None` (todas/nenhuma/misto). A GUI
+passa a pintar o checkbox de pasta a partir dele (em `_populate`), em vez de olhar os
+filhos carregados. `_GLYPH` já mapeia `None` → ▣ e `_style`/`_eff_want` já tratam `None`
+como "vai". 1 teste novo (`test_folder_effective_state`; 48 → 49).
+
+**Lição.** O estado de checkbox de pasta não pode derivar dos filhos carregados na árvore
+(o lazy load faz a visão colapsada mentir) — deriva do core. Impede a regressão de
+"otimizar" de volta para a árvore.

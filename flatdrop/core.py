@@ -472,6 +472,29 @@ def _walk_leaves(root: Path, cfg: ScanConfig, probes):
     return leaves, sorted(gi_dirs), base
 
 
+def folder_effective_state(root, cfg: ScanConfig, rel_dir: str, probes=None):
+    """Estado agregado de uma pasta, SEM depender do lazy load da GUI (spec0021).
+
+    Retorna ``True`` (todas as folhas sob ela iriam ao Projeto), ``False`` (nenhuma) ou
+    ``None`` (misto -> checkbox indeterminado). Pasta vazia cai no proprio estado dela.
+    A GUI usa isto para pintar o glifo mesmo com a pasta colapsada — antes, o estado vinha
+    dos filhos ja carregados na arvore, entao uma pasta nao expandida mentia (FIX-007).
+    """
+    root = Path(root)
+    base_in, source = probes or _ignore_probes(root, cfg)
+    leaves, _gd, _b = _walk_leaves(root, cfg, (base_in, source))
+    prefix = rel_dir + "/"
+    under = [l for l in leaves if l.startswith(prefix)]
+    if not under:
+        return base_in(rel_dir, True)
+    vals = [base_in(l, False) for l in under]
+    if all(vals):
+        return True
+    if not any(vals):
+        return False
+    return None
+
+
 def build_flatdropignore(root, cfg: ScanConfig, wants: dict[str, bool],
                          existing_text: str | None = None) -> str:
     """Gera o texto do ``.flatdropignore`` (bloco gerenciado) a partir de ``wants``.

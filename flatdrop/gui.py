@@ -244,7 +244,13 @@ class FlatDropIgnoreEditor(tk.Toplevel):
         inherited = self._nearest_override(rel_dir)
         for rel, is_dir, base_in, src, allowed, sens in core.annotate_children(
                 self.root_dir, self.cfg, rel_dir, self.probes):
-            want = inherited if inherited is not None else base_in
+            if inherited is not None:
+                want = inherited          # pasta ancestral marcada como um todo vence
+            elif is_dir:
+                # estado agregado real da subarvore (nao depende de expandir) — spec0021
+                want = core.folder_effective_state(self.root_dir, self.cfg, rel, self.probes)
+            else:
+                want = base_in
             note = ""
             if not is_dir and not allowed:
                 note = "  (nao vem: tipo)"
@@ -325,7 +331,7 @@ class FlatDropIgnoreEditor(tk.Toplevel):
                 continue
             vals.append(self._folder_state(c) if cs["is_dir"] and cs["loaded"] else cs["want"])
         if not vals:
-            return self.st[iid]["want"]
+            return self.st[iid]["want"]  # ja e o agregado do core quando nao expandida
         if all(v is True for v in vals):
             return True
         if all(v is False for v in vals):
