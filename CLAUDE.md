@@ -16,6 +16,11 @@ Leia `meta/CEREBRO.md` → `meta/CONTEXT.md` → `meta/STATUS.md` antes de agir.
 - Mensagens de commit **sem acento** (o ambiente do Code usa Git Bash; o CMD do usuário corrompe acento). Conventional Commits.
 - Edições nos `meta/` são **append-only** pelo Code (linha no STATUS, `DEC-`/`FIX-` em DECISIONS, marcar estado de fase no ROADMAP). Curadoria que REESCREVE um doc vem do chat (arquivo inteiro OU spec em `meta/specs/`).
 - Ao aplicar uma spec de `meta/specs/`: ache cada âncora EXATAMENTE; se não achar, PARE e reporte — não chute lugar próximo. Não mexa fora das edições nomeadas. `git diff` antes do commit.
+- **Invariante — proteger o `.bat` (DEC-020).** O gerador/uso de `.bat` é o núcleo mais
+  valioso; NÃO o quebre por conveniência. `flatdrop/cli.py`, `gui._build_cli_args`,
+  `gui._generate_bat` e `gui._sources` são intocáveis por features de estado/persistência.
+  Se algo só avançar mexendo neles, PARE e reporte ao autor — claro, mais de uma vez, como
+  URGENTE — antes de priorizar a feature.
 
 ## Mapa rápido
 - `flatdrop/core.py` — lógica pura (varredura, nomeação, multi-fonte). Sem UI.

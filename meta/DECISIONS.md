@@ -578,3 +578,29 @@ mais recente no topo). A persistência é **exclusiva da GUI**: a CLI NÃO lê o
 atômico (temp + `os.replace`); falha de escrita desliga a persistência em silêncio sem
 derrubar a GUI. Precedência: defaults < config salva (carregada nos widgets) < edições ao
 vivo < `.bat`/CLI. Geometria de janela fica de fora (ideia futura).
+
+## DEC-020 — Invariante: proteger o `.bat` e o núcleo comprovado acima de features novas
+**Data:** 2026-07-15 · **Status:** aceita (invariante permanente)
+
+**Contexto.** O gerador e o uso de `.bat` são, até aqui, a funcionalidade mais útil e
+prática do FlatDrop (snapshot reproduzível da config, roda sem abrir a GUI). O autor
+determinou explicitamente que estragar isso por causa de uma conveniência (ex.: persistência
+de config) seria a pior das decisões — pior do que não ter a conveniência.
+
+**Decisão.** Fica registrado como invariante permanente do projeto: nenhuma funcionalidade
+nova pode degradar o `.bat`, nem outra função de valor já comprovada (a paridade GUI×`.bat`
+do FIX-004, a renomeação à prova de colisão, a poda visível do FIX-001, o `.flatdropignore`
+correto). Concretamente: (1) a CLI e o gerador de `.bat` (`flatdrop/cli.py`,
+`gui._build_cli_args`, `gui._generate_bat`, `gui._sources`) são **intocáveis** por features
+de conveniência — persistência/estado de GUI NUNCA os alcança nem é lido pela CLI; (2) se
+alguma tarefa futura só puder avançar mexendo nesse caminho, o assistente **PARA e reporta
+ao autor**, de forma clara, **MAIS DE UMA VEZ** e marcada como **URGENTE**, ANTES de
+priorizar a feature — nunca segue no automático; (3) se ainda assim o `.bat` for quebrado,
+aplica-se a doutrina do autor: **regredir** para antes da feature, **limpar todo o vestígio**
+e registrar aqui um **FIX** proibindo repetir o erro.
+
+**Consequência.** Toda conversa futura (chat e Code) herda esse freio: conveniência jamais
+tem precedência sobre o núcleo comprovado sem aprovação explícita e consciente do autor. Uma
+guarda automatizada (`test_cli_has_no_settings`, spec0024) falha alto se a persistência
+vazar para a CLI. Este DEC é apontado no `meta/CONTEXT.md` (armadilhas) e no `CLAUDE.md`
+para ser lido no ritual de início das duas raias.

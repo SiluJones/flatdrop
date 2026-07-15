@@ -249,6 +249,10 @@ macOS `~/Downloads`. Home só como último recurso.
   `--add-ext` ou o modal, sem cravar no `config.py` sem evidência.
 - **Multi-fonte e raiz comum.** Caminhos do manifesto relativos à raiz comum;
   raízes em drives diferentes (Windows) caem em modo degradado. Dedup por caminho real.
+- **O `.bat` é intocável por conveniência (DEC-020).** O gerador/uso de `.bat` é a peça
+  mais valiosa da ferramenta. Nenhuma feature nova pode degradá-lo; a CLI nunca lê estado de
+  GUI/persistência. Se uma tarefa só avançar mexendo nesse caminho, PARE e reporte ao autor,
+  claro e mais de uma vez, como URGENTE, antes de priorizar a feature.
 
 ## Convenções
 
