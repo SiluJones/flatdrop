@@ -1,29 +1,4 @@
 # >>> flatdrop-editor
-logs/2026-06-05.md
-logs/2026-06-14.md
-logs/2026-06-22.md
-logs/2026-06-24 (2).md
-logs/2026-06-24.md
-logs/2026-07-03.md
-logs/2026-07-04.md
-logs/2026-07-05 (novo menor, analisar e fazer merge com outro).md
-logs/2026-07-05.md
-meta/specs/260624-spec0010-kit-update.md
-meta/specs/260704-spec0011-tree-output.md
-meta/specs/260704-spec0012-release-0.3.0.md
-meta/specs/260704-spec0013-fullpath-root.md
-meta/specs/260704-spec0014-root-order.md
-meta/specs/260705-spec0015-release-0.3.1.md
-meta/specs/260705-spec0016-conftest-pytest-path.md
-meta/specs/260705-spec0017-flatdropignore-editor-design.md
-meta/specs/260706-spec0018-flatdropignore-editor-impl.md
-meta/specs/spec-0001-file-types.md
-meta/specs/spec-0002-meta-session.md
-meta/specs/spec-0003-gui-types-and-bat-generator.md
-meta/specs/spec-0004-meta-session.md
-meta/specs/spec-0005-gui-multisource-fix.md
-meta/specs/spec-0006-meta-session.md
-meta/specs/spec-0007-gui-type-picker.md
-meta/specs/spec-0008-flatdropignore.md
-meta/specs/spec-0009-meta-session.md
+logs/
+meta/specs/
 # <<<
