@@ -3,6 +3,12 @@
 Direção do projeto por fases. Sem datas: a ordem importa mais que o calendário.
 Itens em aberto vêm de `IDEAS.md`; ao concluir, registre em `CHANGELOG.md`.
 
+> **Mudanças nesta revisão (2026-07-15):** specs 0017–0024 aplicadas. **KCM**, **editor
+> visual de `.flatdropignore` (Fase 2-D)** e **item C (persistência + recentes)**
+> concluídos; **0.6.0**, **58 testes**. O invariante **DEC-020** grava que o `.bat` não
+> pode ser degradado por conveniência. Próximas frentes: **multi-raiz na GUI** e o
+> **force-include por caminho exato** (correção do `.min.js`).
+
 > **Mudanças nesta revisão (2026-07-05, transferência):** ciclo fechado — specs
 > 0011–0016 aplicadas, `pytest` puro corrigido (FIX-005), **0.3.1** cortada, 41
 > testes. Prioridade da Fase 2 redefinida: as **próximas duas tarefas** são (1) o
@@ -35,9 +41,9 @@ Itens em aberto vêm de `IDEAS.md`; ao concluir, registre em `CHANGELOG.md`.
 - [x] **`.flatdropignore`** (aninhado + negação) + `.gitignore` aninhado (DEC-014, spec-0008).
 - [x] **FIX-003** (`.bat` ASCII) e **FIX-004** (multi-fonte ao vivo na GUI).
 - [x] **B — `_TREE.md`** opcional na saída (árvore + pulados + pastas ignoradas colapsadas em UMA linha, sem recursão). Entregue na spec0011 (35 testes; verificado no mount).
-- [ ] **Trecho de KCM: ler `_TREE.md` → gerar `.flatdropignore`.** Conteúdo portável (não é código): ensina o Claude de qualquer Projeto que usa FlatDrop a ditar um `.flatdropignore` a partir do `_TREE.md`. **← PRÓXIMA 1.** (Não é fase formal, mas é o próximo trabalho.)
-- [ ] **D — Editor de `.flatdropignore` na GUI** (consolida "ignores de pasta editáveis"): árvore navegável da raiz com checkbox por item, sinalizando o que o git ignora, gerando o `.flatdropignore`. Feature de UI não-trivial — provável spec de investigação antes da de implementação. **← PRÓXIMA 2.**
-- [ ] **C —** Persistir configurações + pastas recentes na GUI. **← depois das duas acima.**
+- [x] **Trecho de KCM: ler `_TREE.md` → gerar `.flatdropignore`.** Entregue (bloco de KCM portável + exemplo no README; material externo, não é código do repo). Habilitado pela spec0011.
+- [x] **D — Editor de `.flatdropignore` na GUI** (Fase 2-D, specs 0017–0021). Modal com árvore lazy, checkbox binário, badges de tipo/sensível, bloco gerenciado no arquivo e glifo indeterminado correto na visão colapsada (FIX-007). Consolidou "ignores de pasta editáveis".
+- [x] **C —** Persistir configurações + pastas recentes na GUI (specs 0022–0024, 0.6.0). `settings.json` por plataforma, Combobox de recentes, grava ao Executar; escopo só-GUI (DEC-020) para não tocar o `.bat`.
 - [ ] **Multi-raiz na GUI**: selecionar N pastas de uma vez, prefixando cada uma com o nome da sua raiz (a core já suporta multi-fonte; falta a UI de N raízes).
 - [x] **Fullpath com pasta-raiz** (spec0013 + spec0014): flag `root_in_name` inclui o nome do projeto no nome de cada arquivo, no modo fullpath. Formato final: stem + caminho invertido + raiz no fim.
 - [x] **FIX-005** (`conftest.py` na raiz para `pytest` puro achar o pacote) — spec0016.

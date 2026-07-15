@@ -5,6 +5,12 @@ virarem item de `ROADMAP.md`, serem implementados ou descartados. Ideia adotada
 vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
 "Descartadas" com o motivo. Nunca se perde nada — muda de status.
 
+> **Mudanças nesta revisão (2026-07-15):** specs 0017–0024 aplicadas. KCM, editor visual
+> (Fase 2-D) e item C (persistência) movidos para **Concluídas**. Nova ideia ativa:
+> **force-include por caminho exato** (correção do `.min.js`). Descartada: **remover a
+> `DEFAULT_SUFFIX_IGNORES`** (motivo nas Descartadas). Próximas frentes: multi-raiz na GUI
+> / force-include.
+
 > **Mudanças nesta revisão (2026-07-05, transferência de conversa):** ciclo de
 > release fechado — specs 0011–0016 todas aplicadas, `pytest` puro corrigido
 > (FIX-005), versão 0.3.1, 41 testes. Sem ideia nova; as ideias foram **repriorizadas**
@@ -15,35 +21,10 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
 
 ## Ativas
 
-> **Próximas duas tarefas (ordem definida na transferência de 2026-07-05):** os dois
-> primeiros itens abaixo são o foco imediato da próxima conversa; o restante segue
-> por prioridade aproximada.
+> **Foco (2026-07-15):** as tarefas KCM, editor (Fase 2-D) e item C foram concluídas (ver
+> Concluídas). As frentes candidatas agora são **multi-raiz na GUI** e o **force-include
+> por caminho exato**; o restante segue por prioridade aproximada.
 
-- **[PRÓXIMA 1] Trecho de KCM: "Claude lê o `_TREE.md` e dita o `.flatdropignore`"
-  (refinada pela nota 0714).** Não é código do FlatDrop — é conteúdo de KCM, portável
-  para todo Projeto que usa FlatDrop. O autor sobe o `_TREE.md`; o Claude vê o que
-  sobrou/faltou (com o motivo de cada exclusão) e devolve o conteúdo do
-  `.flatdropignore` pronto para salvar na raiz e rodar de novo. O tree é o
-  diagnóstico; o `.flatdropignore` é a receita. Três ganhos: (1) o `.flatdropignore`
-  fica **versionado** no repo (parte do projeto, não config solta); (2) o KCM torna
-  o comportamento **portável** sem reensinar a cada projeto; (3) fecha o ciclo
-  `_TREE -> flatdropignore -> mount melhor`. **Refino técnico importante:** o fluxo
-  serve sobretudo para **liberar o que o `.gitignore` esconde** (via `!padrão`), pois
-  arquivos que nem estão no Git não aparecem no mount para o Claude os enxergar; o
-  `_TREE.md` mostra o que foi podado por `[ignorada: gitignore]` e o Claude sugere a
-  reinclusão. Entregável: um bloco de KCM + um exemplo no README. Habilitado pela
-  spec0011. (Ideia do usuário, notas 0704-0714.)
-- **[PRÓXIMA 2] Editor visual de `.flatdropignore` na GUI (= Fase 2-D).** Marcar
-  visualmente o que excluir/re-incluir e a ferramenta grava o `.flatdropignore` por
-  você — sem decorar a sintaxe. Como o usuário descreveu: uma **árvore navegável das
-  pastas/arquivos percorridos da raiz, com checkbox por item**, sinalizando o que já
-  é **ignorado pelo git**, prática/intuitiva/manipulável. Hoje o `.flatdropignore` é
-  criado à mão; a ferramenta só o LÊ. **Feature de UI não-trivial:** precisa de árvore
-  com estado tri-state (incluído / excluído / liberado via `!`), leitura do que o
-  `.gitignore` já pega para sinalizar, e geração dos padrões do `.flatdropignore` a
-  partir das marcações. Provavelmente pede uma **spec de investigação/design antes**
-  da spec de implementação (o próprio usuário reconhece que exige pesquisa/estudo).
-  Consolida o antigo item D "ignores de pasta editáveis na GUI". (Ideia do usuário.)
 - **Formato de nome "caminho escrito" (`raiz__pastas__stem.ext`).** Um seletor de
   formato do nome, alternativo ao `root_in_name` atual. Em vez de stem na frente,
   escreveria o caminho na ordem natural de leitura com o **stem no fim**:
@@ -54,6 +35,15 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
   barata (a mecânica de nomeação já existe), mas fica em **espera**: só entra se o
   usuário quiser o seletor de formatos. Coexistiria com o `root_in_name`
   (stem-primeiro) como dois estilos opt-in. (Ideia do usuário, 2026-07-04.)
+- **Force-include por caminho exato (resgatar um arquivo específico barrado por ignore
+  embutido).** Uma lista de "sempre inclua exatamente este caminho", checada ANTES dos
+  cortes embutidos (suffix-ignore, tipo, gitignore), ainda barrada por "sensível". Motiva:
+  `htmx.min.js` (e afins) some porque `.min.js` está em `DEFAULT_SUFFIX_IGNORES`, e o `!`
+  do `.flatdropignore` age numa camada abaixo (só o matcher), então não resgata. Marcador
+  próprio no `.flatdropignore` (distinto do `!`, para não borrar a semântica gitignore do
+  DEC-017). DEC-020-safe: vive no `_scan`, simétrica GUI×`.bat`, não toca o gerador de
+  `.bat`. Mexe no `_scan` → pede spec de design. **Não urgente** (o autor adiou). (Ideia do
+  usuário + assistente, nota 0827.)
 - **Selecionar várias pastas de uma vez na GUI (multi-raiz).** Irmã do multi-fonte
   que já existe na core (`make_plan_sources`/`Source`): escolher N pastas na
   interface, prefixar cada arquivo com o nome da sua pasta-raiz e só cair na
@@ -68,9 +58,6 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
   a última seleção do modal.
 - **Saída da CLI ASCII-safe.** Trocar `↳`/`•`/`—` da saída por `->`/`*`/`-` para
   dispensar `chcp 65001` nos `.bat` e evitar de vez problemas de code page. Baixo custo.
-- **Pastas recentes + persistir configurações.** Lembrar últimas raízes, destino,
-  modo, separador, toggles e seleção de tipos entre execuções (JSON em
-  `%APPDATA%`/`~/.config`); Combobox de recentes na GUI. (Fase 2 — item C.)
 - **Ignores de pasta editáveis na GUI** com núcleo imutável
   (`.git`/`node_modules`/`__pycache__`/VCS sempre reaplicados), para tirar/pôr
   pastas como `dist`/`build`/`.venv` caso a caso. (Fase 2 — item D.) **Consolidado
@@ -91,6 +78,18 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
 
 ## Concluídas
 
+- **[KCM — entregue] Claude lê o `_TREE.md` e dita o `.flatdropignore`.** Bloco de KCM
+  portável (material externo, não é código do repo) + exemplo no README; habilitado pela
+  spec0011. Fecha o ciclo `_TREE → flatdropignore → mount melhor`, sobretudo liberando via
+  `!` o que o `.gitignore` esconde. (Ideia do usuário, notas 0704–0714.)
+- **Editor visual de `.flatdropignore` na GUI (Fase 2-D, specs 0017–0021).** Modal com
+  árvore lazy, checkbox binário ("quero no Projeto"), badges de tipo/sensível, bloco
+  gerenciado no arquivo, e glifo indeterminado correto já na visão colapsada
+  (`core.folder_effective_state`, FIX-007). Consolidou o antigo item D. (Ideia do usuário.)
+- **Persistir config + pastas recentes na GUI (item C, specs 0022–0024, 0.6.0).**
+  `settings.json` por plataforma (`%APPDATA%`/`~/.config`/App Support), Combobox de
+  recentes, grava ao Executar; escopo **só-GUI (DEC-020)** para não tocar o `.bat`;
+  allowlist salva como delta. `load` nunca lança, `save` atômico. (Fase 2 — item C.)
 - **Fullpath com nome da pasta-raiz (spec0013 + ajuste de ordem na spec0014).** Flag
   `root_in_name`: no modo fullpath e em fonte única, inclui o nome do projeto no
   nome de cada arquivo (inclusive os da raiz: `README.md` → `README__meuapp.md`).
@@ -138,6 +137,16 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
 
 ## Descartadas
 
+- **Remover a `DEFAULT_SUFFIX_IGNORES` (ou tirar `.min.js` dela), confiando em
+  git/`.flatdropignore`.** Descartada (análise de 2026-07-15). A lista é **redundante** com
+  o allowlist de tipos para `.map/.lock/.pyc/.pyo/.class/.o/.so/.dll/.exe` — essas
+  extensões não são aceitas, então o filtro de tipo já as barra. Mas é **essencial** para
+  `.min.js`/`.min.css`, cujas extensões (`js`/`css`) SÃO aceitas: sem a lista, todo
+  minificado/bundle vazaria ao mount. Confiar no git não cobre committados (lockfiles, libs
+  vendorizadas e source maps costumam ser versionados) e exigiria `.flatdropignore` por
+  projeto para ruído binário — contra o zero-config. E tirar só `.min.js` liberaria TODOS
+  os `.min.js`, contra o objetivo de liberar só um. O lever certo para exceções pontuais é
+  o **force-include por caminho exato** (ver Ativas), não remover o default.
 - **Flag CLI `--ext-set a,b,c` (allowlist exata).** Não foi preciso: o gerador de
   `.bat` reproduz qualquer seleção do modal com `--add-ext` (adições) +
   `--exclude-ext` (remoções), já que o `cli.py` reseta `exclude_ext` na fonte de `.md`.
