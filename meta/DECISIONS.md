@@ -557,3 +557,24 @@ como "vai". 1 teste novo (`test_folder_effective_state`; 48 → 49).
 **Lição.** O estado de checkbox de pasta não pode derivar dos filhos carregados na árvore
 (o lazy load faz a visão colapsada mentir) — deriva do core. Impede a regressão de
 "otimizar" de volta para a árvore.
+
+## DEC-019 — Persistir config + recentes num settings.json de escopo só-GUI
+**Data:** 2026-07-15 · **Status:** aceita (design; implementação na spec0023)
+
+**Contexto.** A GUI reconstruía toda a configuração a cada abertura (raiz, saída, tipos,
+flags), e não havia atalho para as pastas usadas com frequência. O item C pede persistir a
+última config e uma lista de raízes recentes.
+
+**Decisão.** Novo módulo `flatdrop/settings.py` grava um `settings.json` por plataforma
+(`%APPDATA%\FlatDrop` no Windows, `~/.config/flatdrop` no Linux, `~/Library/Application
+Support/FlatDrop` no macOS), espelhando `core.default_downloads_dir()`. Persiste o mesmo
+estado que já serializa no `.bat`, com a **allowlist gravada como delta** (added/removed vs
+`DEFAULT_EXTENSIONS`) para não congelar defaults futuros, mais `recent_roots` (dedup, cap 8,
+mais recente no topo). A persistência é **exclusiva da GUI**: a CLI NÃO lê o arquivo.
+
+**Consequência.** O `.bat` continua sendo um snapshot reproduzível (não absorve estado de
+`%APPDATA%`) e evita-se a armadilha do argparse de distinguir flag-digitado de flag-default.
+`load_settings` nunca lança (arquivo corrompido/ausente → defaults) e `save_settings` é
+atômico (temp + `os.replace`); falha de escrita desliga a persistência em silêncio sem
+derrubar a GUI. Precedência: defaults < config salva (carregada nos widgets) < edições ao
+vivo < `.bat`/CLI. Geometria de janela fica de fora (ideia futura).
