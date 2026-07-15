@@ -20,6 +20,7 @@ from tkinter import filedialog, messagebox, scrolledtext, ttk
 
 from . import config as C
 from . import core
+from . import settings as settings_store
 
 
 def _parse_exts(text: str) -> set[str]:
@@ -416,6 +417,11 @@ class FlatDropApp(ttk.Frame):
         self._last_dest: Path | None = None
         self._busy = False
 
+        # Persistência é SÓ-GUI (DEC-020): carrega a última config nos widgets.
+        # load_settings nunca lança; a CLI/.bat jamais leem este arquivo.
+        self._settings = settings_store.load_settings()
+        self._apply_settings_to_vars()
+
         self._build()
 
     # ------------------------------------------------------------------ #
@@ -436,6 +442,14 @@ class FlatDropApp(ttk.Frame):
         ttk.Label(self, text="Pasta raiz *").grid(row=r, column=0, sticky="w")
         ttk.Entry(self, textvariable=self.root_var).grid(row=r, column=1, sticky="ew", padx=6)
         ttk.Button(self, text="Procurar…", command=self._choose_root).grid(row=r, column=2)
+        r += 1
+
+        # Recentes (só-GUI): atalho para as raízes usadas antes. Escolher preenche a raiz.
+        ttk.Label(self, text="Recentes").grid(row=r, column=0, sticky="w", pady=(6, 0))
+        self.recent_combo = ttk.Combobox(
+            self, state="readonly", values=list(self._settings.recent_roots))
+        self.recent_combo.grid(row=r, column=1, sticky="ew", padx=6, pady=(6, 0))
+        self.recent_combo.bind("<<ComboboxSelected>>", self._on_recent_selected)
         r += 1
 
         # Destino
@@ -563,6 +577,79 @@ class FlatDropApp(ttk.Frame):
         if path:
             self.also_md_root_var.set(path)
             self.also_md_var.set(True)
+
+    # ------------------------------------------------------------------ #
+    # Persistência (só-GUI; DEC-020: nada disto toca a CLI nem o gerador de .bat)
+    # ------------------------------------------------------------------ #
+    def _apply_settings_to_vars(self) -> None:
+        """Sobrescreve os valores iniciais dos widgets com a última config salva.
+
+        Guardas: nenhum valor inválido do disco chega aos widgets — assim o .bat
+        gerado a partir da tela sempre serializa uma config válida.
+        """
+        s = self._settings
+        if s.root:
+            self.root_var.set(s.root)
+        if s.name:
+            self.name_var.set(s.name)
+            self._name_edited = True  # não deixar o _choose_root sobrescrever
+        # dest só é aceito se for uma pasta real; senão fica o default (Downloads).
+        if s.dest and Path(s.dest).is_dir():
+            self.dest_var.set(s.dest)
+        self.mode_var.set(s.mode)          # já saneado para {collisions,all,fullpath}
+        self.sep_var.set(s.sep)            # já saneado para não-vazio
+        self.gitignore_var.set(s.read_gitignore)
+        self.skip_sensitive_var.set(s.skip_sensitive)
+        self.manifest_var.set(s.write_manifest)
+        self.tree_var.set(s.write_tree)
+        self.root_in_name_var.set(s.root_in_name)
+        self.clear_var.set(s.clear_dest)
+        self.also_md_var.set(s.also_md)
+        self.also_md_root_var.set(s.also_md_root)
+        # allowlist reconstruída do delta contra os defaults ATUAIS.
+        defaults = set(C.DEFAULT_EXTENSIONS)
+        self._selected_exts = (defaults | set(s.ext_added)) - set(s.ext_removed)
+
+    def _on_recent_selected(self, _event=None) -> None:
+        """Escolher um recente preenche a raiz (e o nome, se ainda não editado)."""
+        path = self.recent_combo.get().strip()
+        if not path:
+            return
+        self.root_var.set(path)
+        if not self._name_edited:
+            self.name_var.set(Path(path).name)
+
+    def _persist_settings(self) -> None:
+        """Captura a config atual da tela num Settings e grava (best-effort).
+
+        Chamado SÓ após um Executar bem-sucedido. Lê os widgets diretamente —
+        NÃO chama _build_cli_args (que é do caminho do .bat, intocável). Uma
+        falha de gravação nunca afeta o resultado já concluído.
+        """
+        defaults = set(C.DEFAULT_EXTENSIONS)
+        root = self.root_var.get().strip()
+        s = settings_store.Settings(
+            root=root,
+            dest=self.dest_var.get().strip(),
+            name=self.name_var.get().strip(),
+            mode=self.mode_var.get(),
+            sep=self.sep_var.get(),
+            ext_added=sorted(self._selected_exts - defaults),
+            ext_removed=sorted(defaults - self._selected_exts),
+            read_gitignore=self.gitignore_var.get(),
+            skip_sensitive=self.skip_sensitive_var.get(),
+            write_manifest=self.manifest_var.get(),
+            write_tree=self.tree_var.get(),
+            root_in_name=self.root_in_name_var.get(),
+            clear_dest=self.clear_var.get(),
+            also_md=self.also_md_var.get(),
+            also_md_root=self.also_md_root_var.get().strip(),
+            recent_roots=settings_store.push_recent(self._settings.recent_roots, root),
+        )
+        settings_store.save_settings(s)
+        self._settings = s
+        # Reflete o novo recente no Combobox dentro da mesma sessão.
+        self.recent_combo.configure(values=list(s.recent_roots))
 
     def _build_cli_args(self) -> list[str]:
         """Serializa a configuração atual da tela em argumentos da CLI (para o .bat)."""
@@ -841,6 +928,8 @@ class FlatDropApp(ttk.Frame):
         plan, res = payload
         self._last_dest = res.dest
         self.btn_open.config(state="normal")
+        # Só-GUI: grava a config que acabou de dar certo + raiz recente (DEC-020).
+        self._persist_settings()
         lines = ["CONCLUÍDO", "=" * 60]
         lines += self._plan_summary(plan)
         lines.append(f"Copiados: {res.copied} arquivo(s)")

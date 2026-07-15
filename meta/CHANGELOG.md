@@ -10,6 +10,18 @@ _Itens de produto em aberto: trecho de KCM (ler `_TREE.md` → gerar `.flatdropi
 persistência/recentes (Fase 2-C), multi-raiz na GUI, formato de nome "caminho escrito"
 (raiz→pastas→stem), UI-2/UI-3._
 
+## [0.6.0] — 2026-07-15
+
+### Adicionado
+- **Persistência de config + pastas recentes na GUI** (item C, spec0024, DEC-019). A GUI
+  reabre com a última config usada e um Combobox de raízes recentes (dedup, até 8). Grava só
+  após um Executar bem-sucedido, num `settings.json` por plataforma (`%APPDATA%\FlatDrop` no
+  Windows, `~/.config/flatdrop` no Linux, `~/Library/Application Support/FlatDrop` no macOS).
+  A allowlist é salva como delta (não congela defaults futuros). `load` nunca lança (arquivo
+  ausente/corrompido → defaults) e `save` é atômico; falha de escrita desliga a persistência
+  sem derrubar a GUI. **Escopo só-GUI (DEC-020): a CLI e o gerador de `.bat` não leem nada
+  disto — o `.bat` segue snapshot reproduzível.** Guarda `test_cli_has_no_settings`.
+
 ## [0.5.2] — 2026-07-15
 
 ### Corrigido

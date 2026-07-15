@@ -25,7 +25,9 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
   aplicadas e commitadas.
 - **(2026-07-15, spec0021 aplicada) Editor de `.flatdropignore` (Fase 2-D) fechado:**
   glifo da pasta correto já na visão colapsada (`core.folder_effective_state`, FIX-007).
-  Versão **0.5.2**, **49 testes verdes**. Próxima = item C (persistência).
+- **(2026-07-15, spec0024 aplicada) Item C — persistência entregue:** `flatdrop/settings.py`
+  grava config + recentes (só-GUI; DEC-020 blinda o `.bat`). Versão **0.6.0**,
+  **58 testes verdes**. Próxima = multi-raiz na GUI.
 
 ## O que funciona (além do MVP)
 
