@@ -52,6 +52,12 @@ que vai pro git mas não pro Projeto); padrões com **`!`** re-incluem o que o
 `.gitignore` (decisão deliberada, ≠ git puro). O próprio arquivo não vai para o
 upload. (Ver DEC-014.)
 
+**Force-include (`++caminho`).** Linha do `.flatdropignore` (marcador `++`, distinto do
+`!`) que resgata UM arquivo EXATO barrado por um corte embutido. Ao contrário do `!` (que
+age no matcher, abaixo dos cortes de suffix/tipo/poda), o `++` vence **todos** os cortes
+embutidos — **exceto "sensível"** — via `stat` direto (alcança dentro de pastas podadas sem
+varrê-las). Caminho exato ancorado onde é declarado; independe do `pathspec`. (Ver DEC-021.)
+
 **Manifesto (`_MANIFEST.md`).** Arquivo gerado na pasta de saída com metadados e a
 tabela `caminho original → nome plano`. Devolve ao Claude a estrutura que o
 achatamento desfez.

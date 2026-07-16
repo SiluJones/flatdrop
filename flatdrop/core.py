@@ -298,7 +298,8 @@ def _rebase_ignore(line: str, base: str) -> list[str]:
     - sem âncora (ex.: ``*.log``): casa direto em ``base`` E em qualquer profundidade abaixo.
     """
     s = line.strip()
-    if not s or s.startswith("#"):
+    # '++' é force-include (DEC-021), tratado à parte — nunca vira padrão de ignore.
+    if not s or s.startswith("#") or s.startswith("++"):
         return []
     neg = ""
     if s.startswith("!"):
@@ -350,6 +351,38 @@ def _collect_ignore_lines(root: Path, cfg: ScanConfig) -> tuple[list[str], list[
     for _, lines in sorted(fd_by, key=lambda t: t[0]):
         fd_lines += lines
     return gi_lines, fd_lines
+
+
+def _collect_force_includes(root: Path, cfg: ScanConfig) -> list[str]:
+    """Coleta os force-includes ('++caminho') de todos os .flatdropignore da árvore.
+
+    Cada caminho é EXATO, ancorado onde é declarado (um '++x' num .flatdropignore em
+    'sub/' vira 'sub/x'), rebaseado para relativo à raiz (posix). Dedup preservando
+    ordem. Ao contrário dos ignores, NÃO usa pathspec — é caminho exato (DEC-021).
+    """
+    forced: list[str] = []
+    seen: set[str] = set()
+    for dirpath, dirnames, filenames in os.walk(root, followlinks=False):
+        cur = Path(dirpath)
+        rel = cur.relative_to(root).as_posix()
+        base = "" if rel == "." else rel
+        # mesma poda do _collect_ignore_lines (não desce em node_modules etc.)
+        dirnames[:] = [d for d in dirnames if d not in cfg.dir_ignores]
+        for _nm in C.FLATDROPIGNORE_NAMES:
+            if _nm in filenames:
+                for ln in _read_ignore_lines(cur / _nm):
+                    s = ln.strip()
+                    if not s.startswith("++"):
+                        continue
+                    p = s[2:].strip().lstrip("/")
+                    if not p:
+                        continue
+                    full_rel = f"{base}/{p}" if base else p
+                    if full_rel not in seen:
+                        seen.add(full_rel)
+                        forced.append(full_rel)
+                break  # precedência: primeiro nome encontrado no diretório vence
+    return forced
 
 
 def _make_spec(lines: list[str]):
@@ -673,6 +706,38 @@ def _scan(
             except OSError:
                 size = 0
             candidates.append((cur / fn, rel, size))
+
+    # Force-include (DEC-021): resgata caminhos '++' barrados por corte embutido.
+    # stat direto — alcança dentro de pastas podadas sem varrê-las; vence tudo
+    # EXCETO sensível. Roda por ÚLTIMO para poder tirar o arquivo dos pulados.
+    forced = _collect_force_includes(root, cfg)
+    if forced:
+        have = {rel.as_posix() for _src, rel, _sz in candidates}
+        for frel in forced:
+            if frel in have:
+                continue
+            full = root / frel
+            if not full.is_file():
+                warnings.append(f"force-include nao encontrado: {frel}")
+                continue
+            if not cfg.include_sensitive and is_sensitive(full.name):
+                warnings.append(f"force-include ignorado (sensivel): {frel}")
+                continue
+            # tira o arquivo dos pulados (se a varredura o marcou) p/ não contar 2x
+            for _i in range(len(skipped_items) - 1, -1, -1):
+                _srel, _sreason = skipped_items[_i]
+                if _srel == frel:
+                    skipped_items.pop(_i)
+                    if skipped.get(_sreason):
+                        skipped[_sreason] -= 1
+                    if frel in samples.get(_sreason, []):
+                        samples[_sreason].remove(frel)
+            try:
+                size = full.stat().st_size
+            except OSError:
+                size = 0
+            candidates.append((full, PurePath(frel), size))
+            have.add(frel)
 
     return candidates, skipped, samples, warnings, skipped_items
 

@@ -10,6 +10,17 @@ _Itens de produto em aberto: trecho de KCM (ler `_TREE.md` → gerar `.flatdropi
 persistência/recentes (Fase 2-C), multi-raiz na GUI, formato de nome "caminho escrito"
 (raiz→pastas→stem), UI-2/UI-3._
 
+## [0.7.0] — 2026-07-16
+
+### Adicionado
+- **Force-include por caminho exato no `.flatdropignore`** (DEC-021, spec0027). Uma linha
+  `++caminho/exato` resgata um arquivo barrado por um ignore embutido (ex.: `.min.js` da
+  `DEFAULT_SUFFIX_IGNORES`) sem liberar todos do tipo. Vence suffix/file-ignore, poda de
+  pasta, matcher gitignore/`.flatdropignore` e tipo — **exceto "sensível"**, que segue
+  barrado (com aviso). Resgate por `stat` direto: alcança dentro de pastas podadas sem
+  varrê-las. Caminho inexistente vira aviso. Independe do `pathspec`. **Só-core/scan: a CLI
+  e o gerador de `.bat` seguem intocados (DEC-020).** 4 testes novos (58 → 62).
+
 ## [0.6.0] — 2026-07-15
 
 ### Adicionado

@@ -28,6 +28,10 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
 - **(2026-07-15, spec0024 aplicada) Item C — persistência entregue:** `flatdrop/settings.py`
   grava config + recentes (só-GUI; DEC-020 blinda o `.bat`). Versão **0.6.0**,
   **58 testes verdes**. Próxima = multi-raiz na GUI.
+- **(2026-07-16, spec0027 aplicada) Force-include por caminho exato entregue (DEC-021):**
+  `++caminho` no `.flatdropignore` resgata arquivo barrado por ignore embutido (vence tudo
+  menos sensível); `.bat` intocado. Versão **0.7.0**, **62 testes**. Próxima = corrigir o
+  nome ao trocar de raiz (FIX-008, spec0028) e multi-raiz na GUI.
 
 ## O que funciona (além do MVP)
 
