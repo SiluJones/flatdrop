@@ -627,3 +627,21 @@ FIX-004 preservada); não toca o gerador de `.bat` (DEC-020-safe). O arquivo for
 pulados do `_TREE.md`/`_MANIFEST.md`. O editor visual poderá, no futuro, expor um terceiro
 estado ("forçar mesmo assim"). Lógica verificada no sandbox contra a core real antes de virar
 spec.
+
+## FIX-008 — Nome parava de renomear ao trocar de raiz (regressão da persistência)
+**Data:** 2026-07-16 · **Origem:** spec0024 (persistência) · **Correção:** spec0028
+
+**Sintoma.** Com a config restaurada ao abrir a GUI, escolher outra pasta raiz não
+atualizava mais o campo de nome para o nome da nova pasta (antes atualizava).
+
+**Causa raiz.** `_choose_root`/`_on_recent_selected` só auto-renomeiam quando
+`_name_edited` é `False` (flag que significa "usuário digitou um nome"; setada pelo bind
+`<Key>`). Em `_apply_settings_to_vars` a flag foi marcada `True` ao **restaurar** o nome
+salvo, confundindo "restaurado" com "editado à mão" — então a flag nascia `True` e o
+auto-rename nunca disparava.
+
+**Correção.** Restaurar o nome salvo SEM tocar em `_name_edited`. Consequência: trocar de
+raiz volta a renomear; um nome digitado na sessão (que marca a flag via `<Key>`) ainda
+persiste ao trocar de raiz. Um nome custom restaurado deixa de ficar "travado" entre
+sessões — comportamento desejado pelo autor. GUI não é coberta pela suíte → validação por
+smoke manual.

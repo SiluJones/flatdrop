@@ -10,6 +10,15 @@ _Itens de produto em aberto: trecho de KCM (ler `_TREE.md` → gerar `.flatdropi
 persistência/recentes (Fase 2-C), multi-raiz na GUI, formato de nome "caminho escrito"
 (raiz→pastas→stem), UI-2/UI-3._
 
+## [0.7.1] — 2026-07-16
+
+### Corrigido
+- **Nome volta a renomear ao trocar de raiz** (FIX-008). A persistência (0.6.0) travava o
+  campo de nome ao restaurar a config, confundindo "nome restaurado" com "nome editado à
+  mão"; escolher outra raiz não atualizava mais o nome. Agora o nome salvo é restaurado sem
+  travar a flag `_name_edited`, então trocar de raiz renomeia de novo — e um nome digitado
+  na sessão ainda é preservado.
+
 ## [0.7.0] — 2026-07-16
 
 ### Adicionado

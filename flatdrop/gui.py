@@ -591,8 +591,11 @@ class FlatDropApp(ttk.Frame):
         if s.root:
             self.root_var.set(s.root)
         if s.name:
+            # Restaura o ultimo nome, mas NAO trava _name_edited: escolher outra raiz
+            # (ou um recente) deve voltar a renomear automaticamente. Digitar no campo
+            # ainda marca _name_edited (bind <Key>), entao um nome custom da sessao
+            # persiste ao trocar de raiz. (FIX-008 — regressao da spec0024.)
             self.name_var.set(s.name)
-            self._name_edited = True  # não deixar o _choose_root sobrescrever
         # dest só é aceito se for uma pasta real; senão fica o default (Downloads).
         if s.dest and Path(s.dest).is_dir():
             self.dest_var.set(s.dest)

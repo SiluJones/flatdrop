@@ -30,8 +30,9 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
   **58 testes verdes**. Próxima = multi-raiz na GUI.
 - **(2026-07-16, spec0027 aplicada) Force-include por caminho exato entregue (DEC-021):**
   `++caminho` no `.flatdropignore` resgata arquivo barrado por ignore embutido (vence tudo
-  menos sensível); `.bat` intocado. Versão **0.7.0**, **62 testes**. Próxima = corrigir o
-  nome ao trocar de raiz (FIX-008, spec0028) e multi-raiz na GUI.
+  menos sensível); `.bat` intocado. Versão **0.7.0**, **62 testes**.
+- **(2026-07-16, spec0028 aplicada) FIX-008:** o nome volta a renomear ao trocar de raiz
+  (regressão da persistência corrigida). Versão **0.7.1**. Próxima = multi-raiz na GUI.
 
 ## O que funciona (além do MVP)
 
