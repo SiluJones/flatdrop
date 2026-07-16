@@ -604,3 +604,26 @@ tem precedência sobre o núcleo comprovado sem aprovação explícita e conscie
 guarda automatizada (`test_cli_has_no_settings`, spec0024) falha alto se a persistência
 vazar para a CLI. Este DEC é apontado no `meta/CONTEXT.md` (armadilhas) e no `CLAUDE.md`
 para ser lido no ritual de início das duas raias.
+
+## DEC-021 — Force-include por caminho exato (`++path` no `.flatdropignore`)
+**Data:** 2026-07-15 · **Status:** aceita (design; implementação na spec0027)
+
+**Contexto.** Arquivos barrados por um ignore embutido (ex.: `.min.js` em
+`DEFAULT_SUFFIX_IGNORES`) não podem ser resgatados pelo `!` do `.flatdropignore`: o corte
+embutido roda antes do matcher onde o `!` age, e pastas podadas nem são visitadas. Faltava
+liberar UM arquivo específico sem liberar todos os de um tipo.
+
+**Decisão.** Novo mecanismo **force-include**: linhas `++caminho/exato` no `.flatdropignore`
+(marcador distinto do `!`, extraídas antes do `pathspec`). Caminho EXATO, ancorado onde é
+declarado. O arquivo é resgatado por `stat` direto (alcança dentro de pastas podadas sem
+varrê-las) e **vence todos os cortes embutidos** (suffix/file-ignore, poda de pasta, matcher,
+tipo) — **exceto "sensível"**, que permanece barrado (com aviso), coerente com "`!` não vence
+sensível". Caminho inexistente vira aviso. Independe do `pathspec` (é pertinência de conjunto,
+não glob).
+
+**Consequência.** Resolve o caso `htmx.min.js` e afins de forma cirúrgica, sem reinundar o
+mount. Vive na core/scan, lido do `.flatdropignore` que GUI e CLI consomem igual (paridade
+FIX-004 preservada); não toca o gerador de `.bat` (DEC-020-safe). O arquivo forçado sai dos
+pulados do `_TREE.md`/`_MANIFEST.md`. O editor visual poderá, no futuro, expor um terceiro
+estado ("forçar mesmo assim"). Lógica verificada no sandbox contra a core real antes de virar
+spec.
