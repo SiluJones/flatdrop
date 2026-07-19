@@ -3,26 +3,34 @@
 Estado atual do projeto. Atualize ao fim de cada sessão de trabalho (rolante: o
 resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
 
-> **Mudanças nesta revisão (2026-07-11):** spec0019 (nomes alternativos +
-> `.flatdropignore` vai ao mount, DEC-018) e spec0020 (gerador do editor corrigido:
-> colapsa pasta cheia à prova de arquivo novo, base git-pura preserva exclusões no
-> round-trip, checkbox indeterminado ao expandir; FIX-006) **aplicadas e
-> commitadas**. Versão **0.5.1**, **48 testes verdes**. Higiene: `.gitignore` do
-> Python + `__pycache__` destrastreado. **Próxima:** item C (persistência —
-> configurações + pastas recentes na GUI). O trecho de KCM (`_TREE.md` →
-> `.flatdropignore`) segue em aberto, ver backlog.
+> **Mudanças nesta revisão (2026-07-17):** specs 0021–0029 aplicadas e commitadas.
+> Fechados nesta leva: **editor de `.flatdropignore` (Fase 2-D)**, **item C
+> (persistência + recentes)**, **force-include `++`** e o **FIX-008** (nome voltando a
+> renomear ao trocar de raiz). Versão **0.7.1**, **62 testes verdes**. Invariante
+> **DEC-020** grava que o `.bat` não pode ser degradado por conveniência.
+> **O projeto entra em PAUSA PLANEJADA a partir de 2026-07-17** — ferramenta estável e
+> em uso real, sem bug aberto e sem fase grande pendente. **Ao retomar:** ler este
+> STATUS, o `CHANGELOG` e as Ativas do `IDEAS.md`; a frente candidata é **multi-raiz na
+> GUI**, que **exige decisão do autor antes de desenhar** (ver "Decisão pendente" abaixo).
 
-- **Versão:** 0.5.1 no `__init__.py` (spec0020: fix do gerador do editor de
-  `.flatdropignore` + checkbox indeterminado, FIX-006). `[Não lançado]` no CHANGELOG
-  só tem itens de produto em aberto.
-- **Data:** 2026-07-11
-- **Fase:** F1 (MVP) OK · F2 (robustez/conveniência): quase toda feita — em aberto C
-  (persistência), D (editor de ignores = editor de `.flatdropignore`), multi-raiz na
-  GUI, UI-2/UI-3 · F3 (gerador de `.bat` + multi-fonte na GUI) OK · F4 (distribuição
-  + single-file) não iniciada — ver `ROADMAP.md`.
-- **Situação geral:** em uso real e estável. Fluxo do monorepo `cinzeiro` coberto de
-  ponta a ponta (GUI, CLI e `.bat`). Modo Claude Code em operação; specs 0001–0020
-  aplicadas e commitadas.
+- **Versão:** 0.7.1 no `__init__.py` (spec0028: FIX-008, nome volta a renomear ao trocar
+  de raiz). `[Não lançado]` no CHANGELOG só tem itens de produto em aberto.
+- **Data:** 2026-07-17
+- **Fase:** F1 (MVP) OK · F2 (robustez/conveniência) OK — **C (persistência) e D (editor
+  de `.flatdropignore`) fechados**; em aberto só **multi-raiz na GUI** e **UI-2/UI-3**
+  (polimento, opcionais) · F3 (gerador de `.bat` + multi-fonte na GUI) OK · F4
+  (distribuição: `.exe`, single-file, contagem de tokens) não iniciada — ver `ROADMAP.md`.
+- **Situação geral:** em uso real, **estável**, em **pausa planejada**. Fluxo do monorepo
+  `cinzeiro` coberto de ponta a ponta (GUI, CLI e `.bat`). Modo Claude Code em operação;
+  specs 0001–0029 aplicadas e commitadas. **62 testes verdes**; nenhum bug aberto.
+- **Decisão pendente (bloqueia a próxima frente):** **multi-raiz na GUI** não tem versão
+  "só-GUI, zero-toque" — a core já aceita N fontes, mas a CLI só tem `--root` + N
+  `--also-md-from` (fontes só-`.md`). Ou (**B**) a GUI roda N raízes e o botão "Gerar
+  .bat…" fica **desabilitado** no modo multi-raiz (o `.bat` nunca mente; caminho protegido
+  intocado), ou (**A**) cria-se um flag aditivo `--add-root` e o `.bat` passa a codificar N
+  raízes — o que **toca o caminho protegido** e, por DEC-020, exige aval consciente do
+  autor + prova de que todo `.bat` de raiz única segue idêntico. **Recomendação: B.**
+  Nada foi desenhado; a spec de design só começa depois dessa escolha.
 - **(2026-07-15, spec0021 aplicada) Editor de `.flatdropignore` (Fase 2-D) fechado:**
   glifo da pasta correto já na visão colapsada (`core.folder_effective_state`, FIX-007).
 - **(2026-07-15, spec0024 aplicada) Item C — persistência entregue:** `flatdrop/settings.py`
@@ -106,7 +114,13 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
 
 ## Riscos / pontos de atenção
 
-- **Nenhum bug aberto.** (FIX-005 resolvido pelo `conftest.py`.)
+- **Nenhum bug aberto.** (FIX-005 resolvido pelo `conftest.py`; FIX-008 corrigido na
+  spec0028 — falta só o smoke manual de confirmação no Windows.)
+- **Backup do repositório (atenção numa pausa longa).** Os commits recentes foram feitos
+  na `main` **sem `git push`** e o repo não parecia ter remoto configurado. O repositório é
+  a memória do projeto (specs, DECISIONS, CHANGELOG, logs) — se ficar só no disco local
+  durante meses, uma falha de máquina apaga tudo. **Configurar um remoto (mesmo privado) e
+  enviar antes de pausar.**
 - O `_TREE.md` deste projeto mostra `Pulados: 0` (sem `.flatdropignore` nem arquivos
   pulados por tipo aqui) — a diferença `summary`×`full` e as linhas `[pulado: …]` só
   aparecem "ao vivo" num projeto com `.env`/`.flatdropignore`. Coberto por testes.

@@ -44,6 +44,16 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
   DEC-017). DEC-020-safe: vive no `_scan`, simétrica GUI×`.bat`, não toca o gerador de
   `.bat`. Mexe no `_scan` → pede spec de design. **Não urgente** (o autor adiou). (Ideia do
   usuário + assistente, nota 0827.)
+- **Mostrar a REGRA de ignore que casou (não só a contagem).** Ao achatar, informar quais
+  arquivos ficaram de fora por `.gitignore` **e por qual padrão** — para o autor perceber na
+  hora se algo relevante foi podado. **Estado atual (verificado):** a contagem por motivo e
+  uma amostra de nomes **já existem** (`Pulados: gitignore: N ↳ a.py, b.py…` na CLI/GUI e no
+  `_TREE.md`); o que **falta** é a **regra que casou** — `_ignore_status` devolve só
+  `(True, "gitignore", False)`, sem o padrão. Implementação exigiria o `pathspec` reportando
+  o padrão vencedor (a API expõe isso por `match_file` com detalhes / iterar os patterns), o
+  que encarece o scan. Valor real: quem lê o `_TREE.md` (inclusive o KCM) descobre *por que*
+  o arquivo sumiu sem abrir o `.gitignore`. Escopo pequeno-médio, sem risco ao `.bat`
+  (relato apenas). (Ideia do usuário, nota `260717-1338`.)
 - **Selecionar várias pastas de uma vez na GUI (multi-raiz).** Irmã do multi-fonte
   que já existe na core (`make_plan_sources`/`Source`): escolher N pastas na
   interface, prefixar cada arquivo com o nome da sua pasta-raiz e só cair na
