@@ -20,17 +20,33 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 
+def _split_start_dir(argv: list[str]) -> tuple[str | None, list[str]]:
+    """Extrai ``--start-dir`` (argumento SÓ-GUI) de ``argv``.
+
+    Devolve ``(start_dir, resto)``. O ``resto`` VAZIO significa "abrir a GUI"; o
+    ``resto`` não-vazio (ex.: ``--root``) significa "rodar o flatten". O RUN .bat
+    NUNCA passa ``--start-dir``, então para ele o ``resto`` é idêntico ao ``argv``
+    original — o caminho do .bat não muda (DEC-020). Função pura e testável.
+    """
+    if "--start-dir" not in argv:
+        return None, argv
+    i = argv.index("--start-dir")
+    if i + 1 < len(argv):
+        return argv[i + 1], argv[:i] + argv[i + 2:]
+    return None, argv[:i] + argv[i + 1:]
+
+
 def _run() -> None:
-    argv = sys.argv[1:]
-    if argv:
+    start_dir, rest = _split_start_dir(sys.argv[1:])
+    if rest:
         # Modo terminal/.bat: roda direto, sem abrir janela.
         from flatdrop.cli import main as cli_main
 
-        raise SystemExit(cli_main(argv))
-    # Sem argumentos: experiência de duplo-clique -> interface gráfica.
+        raise SystemExit(cli_main(rest))
+    # Sem argumentos de flatten: experiência de duplo-clique -> interface gráfica.
     from flatdrop.gui import main as gui_main
 
-    gui_main()
+    gui_main(start_dir=start_dir)
 
 
 if __name__ == "__main__":

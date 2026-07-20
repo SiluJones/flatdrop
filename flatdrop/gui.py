@@ -382,7 +382,7 @@ class FlatDropIgnoreEditor(tk.Toplevel):
 class FlatDropApp(ttk.Frame):
     """Janela principal do FlatDrop."""
 
-    def __init__(self, master: tk.Tk) -> None:
+    def __init__(self, master: tk.Tk, *, start_dir: str | None = None) -> None:
         super().__init__(master, padding=12)
         master.title(f"FlatDrop {core.__import__('flatdrop').__version__}"
                      if False else "FlatDrop — achatar projeto para o Claude")
@@ -416,6 +416,9 @@ class FlatDropApp(ttk.Frame):
         self._name_edited = False  # usuário mexeu no nome manualmente?
         self._last_dest: Path | None = None
         self._busy = False
+        # Semente de navegação do atalho "abrir GUI" (--start-dir "%~dp0."): pasta
+        # onde "Procurar…" começa quando não há raiz. NÃO define a raiz (spec0030).
+        self._start_dir = start_dir or ""
 
         # Persistência é SÓ-GUI (DEC-020): carrega a última config nos widgets.
         # load_settings nunca lança; a CLI/.bat jamais leem este arquivo.
@@ -557,7 +560,11 @@ class FlatDropApp(ttk.Frame):
     # Handlers de seleção
     # ------------------------------------------------------------------ #
     def _choose_root(self) -> None:
-        path = filedialog.askdirectory(title="Escolha a pasta raiz do projeto")
+        # Começa na raiz já preenchida; senão na semente do atalho (--start-dir).
+        # "" faz o tkinter usar o padrão dele. (spec0030)
+        initial = self.root_var.get().strip() or self._start_dir
+        path = filedialog.askdirectory(
+            title="Escolha a pasta raiz do projeto", initialdir=initial)
         if not path:
             return
         self.root_var.set(path)
@@ -587,6 +594,14 @@ class FlatDropApp(ttk.Frame):
         Guardas: nenhum valor inválido do disco chega aos widgets — assim o .bat
         gerado a partir da tela sempre serializa uma config válida.
         """
+        # Atalho "abrir GUI" (--start-dir presente): começa LIMPO — não restaura a
+        # última sessão. O atalho é genérico e copiado para pastas variadas;
+        # restaurar o projeto anterior faria "Procurar…" abrir no lugar errado
+        # (a raiz restaurada venceria a semente). O Combobox de Recentes segue
+        # disponível (nada se perde). Rodar a GUI sem --start-dir restaura como
+        # antes. (spec0030 — espelha ASU spec0012.)
+        if self._start_dir:
+            return
         s = self._settings
         if s.root:
             self.root_var.set(s.root)
@@ -949,14 +964,20 @@ class FlatDropApp(ttk.Frame):
         self._write("\n".join(lines))
 
 
-def main() -> None:
-    """Ponto de entrada: cria a janela e entra no loop do tkinter."""
+def main(start_dir: str | None = None) -> None:
+    """Ponto de entrada: cria a janela e entra no loop do tkinter.
+
+    ``start_dir`` (opcional): pasta onde "Procurar…" começa quando não há raiz.
+    Vem do atalho "abrir GUI" (``--start-dir "%~dp0."``); NÃO define a raiz. Sua
+    presença também faz a GUI abrir LIMPA (não restaura a última sessão), pois o
+    atalho é copiado para pastas variadas (spec0030).
+    """
     root = tk.Tk()
     try:
         ttk.Style().theme_use("vista" if sys.platform.startswith("win") else "clam")
     except tk.TclError:
         pass
-    FlatDropApp(root)
+    FlatDropApp(root, start_dir=start_dir)
     root.mainloop()
 
 

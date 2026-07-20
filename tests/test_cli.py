@@ -73,3 +73,31 @@ def test_execute_creates_single_manifest(tmp_path, capsys):
     names = {p.name for p in pack.iterdir()}
     assert {"cena.gd", "HUB.md", "BIBLIA.md", "ESTILO.md", "_MANIFEST.md"} <= names
     assert len(list(pack.glob("_MANIFEST*.md"))) == 1
+
+
+def test_run_start_dir_routes_to_gui():
+    """spec0030: só --start-dir => resto vazio => abre a GUI com a semente."""
+    from run import _split_start_dir
+
+    sd, rest = _split_start_dir(["--start-dir", "C:/proj"])
+    assert sd == "C:/proj"
+    assert rest == []
+
+
+def test_run_root_still_flatten():
+    """GUARDA DEC-020: o RUN .bat (--root ...) segue indo para o flatten, intacto."""
+    from run import _split_start_dir
+
+    argv = ["--root", "C:/proj", "--name", "proj", "--tree"]
+    sd, rest = _split_start_dir(argv)
+    assert sd is None
+    assert rest == argv  # idêntico — o caminho do .bat não muda
+
+
+def test_run_start_dir_with_root_goes_flatten():
+    """Se sobrar --root além de --start-dir, é flatten (o resto não fica vazio)."""
+    from run import _split_start_dir
+
+    sd, rest = _split_start_dir(["--start-dir", "X", "--root", "C:/p"])
+    assert sd == "X"
+    assert rest == ["--root", "C:/p"]

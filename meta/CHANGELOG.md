@@ -10,6 +10,18 @@ _Itens de produto em aberto: trecho de KCM (ler `_TREE.md` → gerar `.flatdropi
 persistência/recentes (Fase 2-C), multi-raiz na GUI, formato de nome "caminho escrito"
 (raiz→pastas→stem), UI-2/UI-3._
 
+## [0.8.0] — 2026-07-20
+
+### Adicionado
+- **Atalho "abrir GUI" semeia a navegação (`--start-dir`, spec0030).** O `flatdrop-ui.bat`
+  passa a mandar `--start-dir "%~dp0."`, então o "Procurar…" da Raiz abre **na pasta onde o
+  `.bat` está** — que é para onde o atalho é copiado, junto dos projetos. O argumento apenas
+  SEMEIA a navegação; **não define a raiz**. E, quando presente, a GUI **abre limpa** (não
+  restaura a última sessão) — senão a raiz salva sobrescreveria a semente e o diálogo abriria
+  no projeto anterior. O Combobox de **Recentes** segue disponível. Rodar `run.py` sem
+  `--start-dir` restaura a sessão como antes. **Só-GUI/launcher: o gerador do RUN `.bat` e a
+  CLI de flatten ficam intocados (DEC-020), com teste de guarda.** 3 testes novos (62 → 65).
+
 ## [0.7.1] — 2026-07-16
 
 ### Corrigido

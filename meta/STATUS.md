@@ -3,15 +3,15 @@
 Estado atual do projeto. Atualize ao fim de cada sessão de trabalho (rolante: o
 resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
 
-> **Mudanças nesta revisão (2026-07-17):** specs 0021–0029 aplicadas e commitadas.
-> Fechados nesta leva: **editor de `.flatdropignore` (Fase 2-D)**, **item C
-> (persistência + recentes)**, **force-include `++`** e o **FIX-008** (nome voltando a
-> renomear ao trocar de raiz). Versão **0.7.1**, **62 testes verdes**. Invariante
-> **DEC-020** grava que o `.bat` não pode ser degradado por conveniência.
-> **O projeto entra em PAUSA PLANEJADA a partir de 2026-07-17** — ferramenta estável e
-> em uso real, sem bug aberto e sem fase grande pendente. **Ao retomar:** ler este
-> STATUS, o `CHANGELOG` e as Ativas do `IDEAS.md`; a frente candidata é **multi-raiz na
-> GUI**, que **exige decisão do autor antes de desenhar** (ver "Decisão pendente" abaixo).
+> **Mudanças nesta revisão (2026-07-20):** **pausa interrompida** pelo uso real. O atalho
+> "abrir GUI" agora **semeia a navegação** (`--start-dir "%~dp0."`) e **abre limpo**
+> (spec0030, 0.8.0) — clicar o `.bat` numa pasta de projeto faz o "Procurar…" abrir ali.
+> Versão **0.8.0**, **65 testes verdes**. O RUN `.bat` seguiu intocado (DEC-020, teste de
+> guarda). Nada quebrado; sem fase grande pendente. **Ao voltar ao repouso:** ler este
+> STATUS, o `CHANGELOG` e as Ativas do `IDEAS.md`; a frente candidata segue sendo
+> **multi-raiz na GUI**, que **exige decisão do autor antes de desenhar** (opções A/B na
+> "Decisão pendente" abaixo). Pendente também: avaliar compactar os **Recentes** num botão
+> "Recentes ▾" (estilo ASU) em vez do Combobox de linha inteira.
 
 - **Versão:** 0.7.1 no `__init__.py` (spec0028: FIX-008, nome volta a renomear ao trocar
   de raiz). `[Não lançado]` no CHANGELOG só tem itens de produto em aberto.
