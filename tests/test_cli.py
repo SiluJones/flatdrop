@@ -101,3 +101,17 @@ def test_run_start_dir_with_root_goes_flatten():
     sd, rest = _split_start_dir(["--start-dir", "X", "--root", "C:/p"])
     assert sd == "X"
     assert rest == ["--root", "C:/p"]
+
+
+def test_open_gui_bat_content_semeia_start_dir():
+    """spec0031: o atalho 'abrir GUI' gerado leva --start-dir e NAO leva --root."""
+    from pathlib import Path
+
+    from flatdrop.gui import _open_gui_bat_content
+
+    txt = _open_gui_bat_content(Path("C:/FlatDrop/flatdrop/run.py"))
+    assert '--start-dir "%~dp0."' in txt
+    assert "--root" not in txt          # generico: NAO e o RUN .bat (DEC-020)
+    assert "run.py" in txt
+    assert txt.startswith("@echo off")
+    assert txt.endswith("\r\n")         # CRLF, como o RUN .bat

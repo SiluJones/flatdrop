@@ -431,6 +431,16 @@ class FlatDropApp(ttk.Frame):
     # Construção da UI
     # ------------------------------------------------------------------ #
     def _build(self) -> None:
+        # Barra de menu: ações de configuração da própria ferramenta (uma vez), fora
+        # do fluxo de execução. "Gerar atalho da UI…" cria o .bat que abre a GUI e que
+        # você copia para pastas de projeto (spec0031). NÃO é o RUN .bat (DEC-020).
+        menubar = tk.Menu(self.master)
+        tools = tk.Menu(menubar, tearoff=0)
+        tools.add_command(label="Gerar atalho da UI…",
+                          command=self._generate_open_gui_bat)
+        menubar.add_cascade(label="Ferramentas", menu=tools)
+        self.master.config(menu=menubar)
+
         self.columnconfigure(1, weight=1)
         r = 0
 
@@ -753,6 +763,29 @@ class FlatDropApp(ttk.Frame):
         Path(path).write_text(content, encoding="utf-8", newline="")
         messagebox.showinfo("FlatDrop", "'.bat' gerado em:\n" + path)
 
+    def _generate_open_gui_bat(self) -> None:
+        """Gera o atalho 'abrir GUI' (menu Ferramentas). Genérico, sem config —
+        você o copia para pastas de projeto. NÃO é o RUN .bat (DEC-020)."""
+        run_py = Path(__file__).resolve().parent.parent / "run.py"
+        # Default: uma pasta ACIMA da raiz do repo, onde os .bat do FlatDrop já
+        # vivem (fora do worktree, não são achatados nem versionados). (spec0031)
+        default_dir = run_py.parent.parent
+        if not str(run_py).isascii():
+            if not messagebox.askyesno(
+                "FlatDrop",
+                "O caminho da ferramenta tem acentos. Em .bat no CMD isso pode "
+                "falhar. Gerar mesmo assim?"):
+                return
+        path = filedialog.asksaveasfilename(
+            title="Salvar atalho 'abrir GUI'", defaultextension=".bat",
+            initialdir=str(default_dir), initialfile="flatdrop-ui.bat",
+            filetypes=[("Arquivo .bat", "*.bat")])
+        if not path:
+            return
+        Path(path).write_text(
+            _open_gui_bat_content(run_py), encoding="utf-8", newline="")
+        messagebox.showinfo("FlatDrop", "Atalho 'abrir GUI' gerado em:\n" + path)
+
     def _update_types_summary(self) -> None:
         total = len(set(C.DEFAULT_EXTENSIONS) | self._selected_exts)
         self.types_summary.config(
@@ -962,6 +995,26 @@ class FlatDropApp(ttk.Frame):
         lines.append("")
         lines.append("Agora é só abrir a pasta, selecionar tudo e arrastar para o Projeto do Claude.")
         self._write("\n".join(lines))
+
+
+def _open_gui_bat_content(run_py: Path) -> str:
+    """Conteúdo do atalho 'abrir GUI' (.bat). Função pura, testável.
+
+    Genérico (sem --root): abre só a interface. Passa --start-dir "%~dp0." para o
+    "Procurar…" começar na pasta do próprio .bat (spec0030). NÃO é o RUN .bat: não
+    reproduz config nenhuma. chcp só quando o caminho tem não-ASCII (como no RUN).
+    """
+    precisa_utf8 = not str(run_py).isascii()
+    linhas = ["@echo off"]
+    if precisa_utf8:
+        linhas.append("chcp 65001 >nul")
+    linhas += [
+        "rem FlatDrop - abre a interface grafica. Atalho gerado pela propria GUI.",
+        "rem Copie este .bat para uma pasta de projeto: ao abrir, 'Procurar...' ja",
+        'rem comeca nela (--start-dir "%~dp0."). NAO define a raiz; a GUI abre limpa.',
+        'start "" pythonw "' + str(run_py) + '" --start-dir "%~dp0."',
+    ]
+    return "\r\n".join(linhas) + "\r\n"
 
 
 def main(start_dir: str | None = None) -> None:

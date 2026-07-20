@@ -10,6 +10,17 @@ _Itens de produto em aberto: trecho de KCM (ler `_TREE.md` → gerar `.flatdropi
 persistência/recentes (Fase 2-C), multi-raiz na GUI, formato de nome "caminho escrito"
 (raiz→pastas→stem), UI-2/UI-3._
 
+## [0.9.0] — 2026-07-20
+
+### Adicionado
+- **Menu "Ferramentas → Gerar atalho da UI…" (spec0031).** A GUI passa a gerar o `.bat` que
+  abre a interface (antes mantido à mão), já com `--start-dir "%~dp0."` (o "Procurar…" abre
+  na pasta do atalho, spec0030). Salva por padrão **uma pasta acima da raiz do repo** — onde
+  os `.bat` do FlatDrop já vivem, fora do worktree (não são achatados nem versionados). É um
+  gerador **novo e separado**; o RUN `.bat` (`_generate_bat`/`_build_cli_args`) fica
+  **intocado** (DEC-020). Colocado num menu (ação de setup, uma vez), não na barra de ações
+  por-execução. 1 teste novo (65 → 66).
+
 ## [0.8.0] — 2026-07-20
 
 ### Adicionado
