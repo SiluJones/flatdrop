@@ -10,6 +10,14 @@ _Itens de produto em aberto: trecho de KCM (ler `_TREE.md` → gerar `.flatdropi
 persistência/recentes (Fase 2-C), multi-raiz na GUI, formato de nome "caminho escrito"
 (raiz→pastas→stem), UI-2/UI-3._
 
+## [0.9.1] — 2026-07-20
+
+### Alterado
+- **Recentes compacto (spec0032).** O Combobox de Recentes (que ocupava uma linha inteira)
+  virou um botão **"Recentes ▾"** na própria linha da Raiz, ao lado de "Procurar…" — libera
+  a linha e deixa a feature discreta. Comportamento igual: escolher um recente preenche a
+  raiz (e o nome, se não editado). Só GUI; o `.bat` não é afetado.
+
 ## [0.9.0] — 2026-07-20
 
 ### Adicionado

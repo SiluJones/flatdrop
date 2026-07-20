@@ -451,18 +451,15 @@ class FlatDropApp(ttk.Frame):
         ).grid(row=r, column=0, columnspan=3, sticky="w", pady=(0, 10))
         r += 1
 
-        # Pasta raiz
+        # Pasta raiz (+ Recentes compacto na mesma linha, à direita — spec0032).
         ttk.Label(self, text="Pasta raiz *").grid(row=r, column=0, sticky="w")
         ttk.Entry(self, textvariable=self.root_var).grid(row=r, column=1, sticky="ew", padx=6)
         ttk.Button(self, text="Procurar…", command=self._choose_root).grid(row=r, column=2)
-        r += 1
-
-        # Recentes (só-GUI): atalho para as raízes usadas antes. Escolher preenche a raiz.
-        ttk.Label(self, text="Recentes").grid(row=r, column=0, sticky="w", pady=(6, 0))
-        self.recent_combo = ttk.Combobox(
-            self, state="readonly", values=list(self._settings.recent_roots))
-        self.recent_combo.grid(row=r, column=1, sticky="ew", padx=6, pady=(6, 0))
-        self.recent_combo.bind("<<ComboboxSelected>>", self._on_recent_selected)
+        self.recent_menu = tk.Menu(self, tearoff=0)
+        self.recent_btn = ttk.Menubutton(
+            self, text="Recentes ▾", menu=self.recent_menu)
+        self.recent_btn.grid(row=r, column=3, padx=(6, 0))
+        self._refresh_recent_menu()
         r += 1
 
         # Destino
@@ -638,9 +635,20 @@ class FlatDropApp(ttk.Frame):
         defaults = set(C.DEFAULT_EXTENSIONS)
         self._selected_exts = (defaults | set(s.ext_added)) - set(s.ext_removed)
 
-    def _on_recent_selected(self, _event=None) -> None:
+    def _refresh_recent_menu(self) -> None:
+        """(Re)popula o menu "Recentes ▾" a partir dos recentes salvos."""
+        self.recent_menu.delete(0, "end")
+        roots = self._settings.recent_roots
+        if not roots:
+            self.recent_menu.add_command(label="(nenhum recente)", state="disabled")
+            return
+        for path in roots:
+            self.recent_menu.add_command(
+                label=path, command=lambda p=path: self._use_recent(p))
+
+    def _use_recent(self, path: str) -> None:
         """Escolher um recente preenche a raiz (e o nome, se ainda não editado)."""
-        path = self.recent_combo.get().strip()
+        path = (path or "").strip()
         if not path:
             return
         self.root_var.set(path)
@@ -677,7 +685,7 @@ class FlatDropApp(ttk.Frame):
         settings_store.save_settings(s)
         self._settings = s
         # Reflete o novo recente no Combobox dentro da mesma sessão.
-        self.recent_combo.configure(values=list(s.recent_roots))
+        self._refresh_recent_menu()
 
     def _build_cli_args(self) -> list[str]:
         """Serializa a configuração atual da tela em argumentos da CLI (para o .bat)."""
