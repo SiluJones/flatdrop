@@ -645,3 +645,20 @@ raiz volta a renomear; um nome digitado na sessão (que marca a flag via `<Key>`
 persiste ao trocar de raiz. Um nome custom restaurado deixa de ficar "travado" entre
 sessões — comportamento desejado pelo autor. GUI não é coberta pela suíte → validação por
 smoke manual.
+
+## FIX-009 — "Recentes ▾" criava coluna global morta (layout)
+**Data:** 2026-07-20 · **Origem:** spec0032 · **Correção:** spec0033
+
+**Sintoma.** O botão compacto de Recentes deixou um bloco de espaço vazio à direita de
+todas as linhas e alargou a janela, em vez de só encolher a linha da Raiz.
+
+**Causa raiz.** As colunas do grid do tkinter são **globais** (compartilhadas por todas as
+linhas). Pôr o "Recentes ▾" em `column=3` do grid principal criou uma 4ª coluna que sobrava
+vazia em cada linha (o resto da UI usa `columnspan=3`), e o `columnconfigure(1, weight=1)`
+empurrava tudo à direita.
+
+**Correção.** Agrupar os controles da linha (Entry + "Procurar…" + "Recentes ▾") num
+**sub-frame** que ocupa col1–col2; a grade principal volta a 3 colunas e o Entry encolhe só
+o necessário. **Lição (não regredir):** um controle extra em UMA linha do grid NÃO vai numa
+coluna nova do grid principal — vai num sub-frame daquela linha, senão vira coluna global
+morta. GUI não é coberta pela suíte → validação por smoke manual.

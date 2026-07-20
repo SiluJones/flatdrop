@@ -451,14 +451,23 @@ class FlatDropApp(ttk.Frame):
         ).grid(row=r, column=0, columnspan=3, sticky="w", pady=(0, 10))
         r += 1
 
-        # Pasta raiz (+ Recentes compacto na mesma linha, à direita — spec0032).
+        # Pasta raiz — Entry + "Procurar…" + "Recentes ▾" agrupados num sub-frame,
+        # tight à direita (spec0033/FIX-009). Antes (spec0032) o "Recentes ▾" ia
+        # para a coluna 3 do grid PRINCIPAL; como as colunas do tkinter são globais
+        # e o resto da UI usa columnspan=3 (colunas 0–2), a coluna 4 sobrava vazia
+        # em toda linha e alargava a janela. O sub-frame mantém a grade em 3 colunas:
+        # o Entry encolhe só o necessário para os dois botões caberem, como no ASU.
         ttk.Label(self, text="Pasta raiz *").grid(row=r, column=0, sticky="w")
-        ttk.Entry(self, textvariable=self.root_var).grid(row=r, column=1, sticky="ew", padx=6)
-        ttk.Button(self, text="Procurar…", command=self._choose_root).grid(row=r, column=2)
+        raiz = ttk.Frame(self)
+        raiz.grid(row=r, column=1, columnspan=2, sticky="ew", padx=(6, 0))
+        raiz.columnconfigure(0, weight=1)  # só o Entry expande
+        ttk.Entry(raiz, textvariable=self.root_var).grid(row=0, column=0, sticky="ew")
+        ttk.Button(raiz, text="Procurar…", command=self._choose_root).grid(
+            row=0, column=1, padx=(6, 0))
         self.recent_menu = tk.Menu(self, tearoff=0)
         self.recent_btn = ttk.Menubutton(
-            self, text="Recentes ▾", menu=self.recent_menu)
-        self.recent_btn.grid(row=r, column=3, padx=(6, 0))
+            raiz, text="Recentes ▾", menu=self.recent_menu)
+        self.recent_btn.grid(row=0, column=2, padx=(6, 0))
         self._refresh_recent_menu()
         r += 1
 

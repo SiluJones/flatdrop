@@ -10,6 +10,15 @@ _Itens de produto em aberto: trecho de KCM (ler `_TREE.md` → gerar `.flatdropi
 persistência/recentes (Fase 2-C), multi-raiz na GUI, formato de nome "caminho escrito"
 (raiz→pastas→stem), UI-2/UI-3._
 
+## [0.9.2] — 2026-07-20
+
+### Corrigido
+- **Layout do "Recentes ▾" (FIX-009, spec0033).** O botão compacto (0.9.1) tinha ido para
+  uma coluna do grid principal; como as colunas do tkinter são globais, isso deixava espaço
+  morto à direita de toda a interface e alargava a janela. Agora Entry + "Procurar…" +
+  "Recentes ▾" ficam num sub-frame na linha da Raiz: a grade volta a 3 colunas e o Entry
+  encolhe só o necessário para os botões caberem colados, como no ASU. Só GUI.
+
 ## [0.9.1] — 2026-07-20
 
 ### Alterado
