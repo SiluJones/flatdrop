@@ -40,6 +40,14 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
   menos sensível); `.bat` intocado. Versão **0.7.0**, **62 testes**.
 - **(2026-07-16, spec0028 aplicada) FIX-008:** o nome volta a renomear ao trocar de raiz
   (regressão da persistência corrigida). Versão **0.7.1**. Próxima = multi-raiz na GUI.
+- **(2026-07-20, specs 0031–0033 aplicadas) Leva de conveniências de GUI, 0.9.0 → 0.9.2,
+  66 testes verdes.** spec0031: menu **Ferramentas → "Gerar atalho da UI…"** gera o `.bat`
+  que abre a interface (gerador NOVO e separado; RUN `.bat` intocado, DEC-020) — 1 teste
+  novo (65 → 66). spec0032: **Recentes** compacto como botão **"Recentes ▾"** na linha da
+  Raiz. spec0033/**FIX-009**: sub-frame na linha da Raiz tira a coluna global morta que o
+  botão criava (grade de volta a 3 colunas). Pendências de smoke manual no Windows e dois
+  prints candidatos a README (menu Ferramentas; linha da Raiz corrigida). Próxima = multi-
+  raiz na GUI (decisão A/B do autor antes de desenhar).
 
 ## O que funciona (além do MVP)
 
