@@ -441,25 +441,17 @@ class FlatDropApp(ttk.Frame):
         menubar.add_cascade(label="Ferramentas", menu=tools)
         self.master.config(menu=menubar)
 
+        self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)
-        r = 0
 
-        ttk.Label(
-            self, text="Achata uma pasta de projeto numa pasta plana, "
-            "renomeando arquivos repetidos, pronta para arrastar ao Projeto do Claude.",
-            wraplength=680, foreground="#555",
-        ).grid(row=r, column=0, columnspan=3, sticky="w", pady=(0, 10))
-        r += 1
-
-        # Pasta raiz — Entry + "Procurar…" + "Recentes ▾" agrupados num sub-frame,
-        # tight à direita (spec0033/FIX-009). Antes (spec0032) o "Recentes ▾" ia
-        # para a coluna 3 do grid PRINCIPAL; como as colunas do tkinter são globais
-        # e o resto da UI usa columnspan=3 (colunas 0–2), a coluna 4 sobrava vazia
-        # em toda linha e alargava a janela. O sub-frame mantém a grade em 3 colunas:
-        # o Entry encolhe só o necessário para os dois botões caberem, como no ASU.
-        ttk.Label(self, text="Pasta raiz *").grid(row=r, column=0, sticky="w")
-        raiz = ttk.Frame(self)
-        raiz.grid(row=r, column=1, columnspan=2, sticky="ew", padx=(6, 0))
+        # ---- Caminhos (topo compacto) ------------------------------------ #
+        # Raiz (+ Procurar/Recentes) e "Nome da pasta" na MESMA linha (curtos).
+        top = ttk.Frame(self)
+        top.grid(row=0, column=0, columnspan=2, sticky="ew")
+        top.columnconfigure(1, weight=1)
+        ttk.Label(top, text="Pasta raiz *").grid(row=0, column=0, sticky="w")
+        raiz = ttk.Frame(top)
+        raiz.grid(row=0, column=1, sticky="ew", padx=(6, 12))
         raiz.columnconfigure(0, weight=1)  # só o Entry expande
         ttk.Entry(raiz, textvariable=self.root_var).grid(row=0, column=0, sticky="ew")
         ttk.Button(raiz, text="Procurar…", command=self._choose_root).grid(
@@ -469,29 +461,27 @@ class FlatDropApp(ttk.Frame):
             raiz, text="Recentes ▾", menu=self.recent_menu)
         self.recent_btn.grid(row=0, column=2, padx=(6, 0))
         self._refresh_recent_menu()
-        r += 1
-
-        # Destino
-        ttk.Label(self, text="Destino").grid(row=r, column=0, sticky="w", pady=(6, 0))
-        ttk.Entry(self, textvariable=self.dest_var).grid(row=r, column=1, sticky="ew", padx=6, pady=(6, 0))
-        ttk.Button(self, text="Procurar…", command=self._choose_dest).grid(row=r, column=2, pady=(6, 0))
-        r += 1
-        ttk.Label(self, text="(padrão: pasta Downloads)", foreground="#888").grid(
-            row=r, column=1, sticky="w", padx=6
-        )
-        r += 1
-
-        # Nome da pasta
-        ttk.Label(self, text="Nome da pasta").grid(row=r, column=0, sticky="w", pady=(6, 0))
-        name_entry = ttk.Entry(self, textvariable=self.name_var)
-        name_entry.grid(row=r, column=1, sticky="ew", padx=6, pady=(6, 0))
+        ttk.Label(top, text="Nome da pasta").grid(row=0, column=2, sticky="w")
+        name_entry = ttk.Entry(top, textvariable=self.name_var, width=20)
+        name_entry.grid(row=0, column=3, sticky="w", padx=6)
         name_entry.bind("<Key>", lambda _e: setattr(self, "_name_edited", True))
-        ttk.Label(self, text="(padrão: nome da raiz)", foreground="#888").grid(row=r, column=2, sticky="w")
-        r += 1
+        ttk.Label(top, text="(padrão: nome da raiz)", foreground="#888").grid(
+            row=0, column=4, sticky="w")
 
-        # Modo de renomeação
+        # Destino (largura total)
+        drow = ttk.Frame(self)
+        drow.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(8, 0))
+        drow.columnconfigure(1, weight=1)
+        ttk.Label(drow, text="Destino").grid(row=0, column=0, sticky="w")
+        ttk.Entry(drow, textvariable=self.dest_var).grid(
+            row=0, column=1, sticky="ew", padx=6)
+        ttk.Button(drow, text="Procurar…", command=self._choose_dest).grid(row=0, column=2)
+        ttk.Label(drow, text="(padrão: pasta Downloads)", foreground="#888").grid(
+            row=1, column=1, sticky="w", padx=6)
+
+        # ---- Duas colunas: Renomeação | Opções --------------------------- #
         modes = ttk.LabelFrame(self, text="Renomeação", padding=8)
-        modes.grid(row=r, column=0, columnspan=3, sticky="ew", pady=(10, 0))
+        modes.grid(row=2, column=0, sticky="nsew", pady=(10, 0), padx=(0, 6))
         ttk.Radiobutton(modes, text="Só duplicados (recomendado) — só arquivos de nome repetido ganham sufixo",
                         variable=self.mode_var, value="collisions").grid(sticky="w")
         ttk.Radiobutton(modes, text="Todos os arquivos — todo arquivo recebe a pasta no nome",
@@ -500,13 +490,13 @@ class FlatDropApp(ttk.Frame):
                         variable=self.mode_var, value="fullpath").grid(sticky="w")
         ttk.Checkbutton(modes, text="Incluir o nome da pasta-raiz (só no modo fullpath)",
                         variable=self.root_in_name_var).grid(sticky="w")
-        r += 1
+        # (spec0035 insere aqui, abaixo, o checkbox de nomear _MANIFEST/_TREE.)
 
-        # Opções
         opts = ttk.LabelFrame(self, text="Opções", padding=8)
-        opts.grid(row=r, column=0, columnspan=3, sticky="ew", pady=(10, 0))
-        opts.columnconfigure(1, weight=1)
-        ttk.Checkbutton(opts, text="Ler .gitignore da raiz", variable=self.gitignore_var).grid(row=0, column=0, sticky="w")
+        opts.grid(row=2, column=1, sticky="nsew", pady=(10, 0), padx=(6, 0))
+        opts.columnconfigure(0, weight=1)
+        ttk.Checkbutton(opts, text="Ler .gitignore da raiz",
+                        variable=self.gitignore_var).grid(row=0, column=0, sticky="w")
         ttk.Checkbutton(opts, text="Pular arquivos sensíveis (.env, chaves, segredos)",
                         variable=self.skip_sensitive_var).grid(row=1, column=0, sticky="w")
         ttk.Checkbutton(opts, text="Limpar a pasta de destino antes (só se foi criada pelo FlatDrop)",
@@ -516,45 +506,43 @@ class FlatDropApp(ttk.Frame):
         ttk.Checkbutton(opts, text="Gerar _TREE.md (árvore: copiados, pulados c/ motivo, pastas colapsadas)",
                         variable=self.tree_var).grid(row=4, column=0, sticky="w")
         sepf = ttk.Frame(opts)
-        sepf.grid(row=0, column=2, rowspan=2, sticky="e")
-        ttk.Label(sepf, text="Separador:").grid(row=0, column=0, padx=(12, 4))
+        sepf.grid(row=5, column=0, sticky="w", pady=(6, 0))
+        ttk.Label(sepf, text="Separador:").grid(row=0, column=0, padx=(0, 4))
         ttk.Entry(sepf, textvariable=self.sep_var, width=6).grid(row=0, column=1)
         ttk.Label(sepf, text="(p/ projeto Python, '-' lê melhor)", foreground="#888").grid(
-            row=1, column=0, columnspan=2, sticky="e"
-        )
-        r += 1
+            row=0, column=2, padx=(8, 0))
 
-        # Tipos de arquivo (seleção via modal)
+        # ---- Duas colunas: Tipos de arquivo | Ignore --------------------- #
         typef = ttk.LabelFrame(self, text="Tipos de arquivo", padding=8)
-        typef.grid(row=r, column=0, columnspan=3, sticky="ew", pady=(10, 0))
+        typef.grid(row=3, column=0, sticky="nsew", pady=(10, 0), padx=(0, 6))
         typef.columnconfigure(0, weight=1)
         self.types_summary = ttk.Label(typef, text="")
         self.types_summary.grid(row=0, column=0, sticky="w")
-        ttk.Button(typef, text="Escolher tipos…", command=self._choose_types).grid(row=0, column=1, sticky="e")
+        ttk.Button(typef, text="Escolher tipos…", command=self._choose_types).grid(
+            row=0, column=1, sticky="e")
         self._update_types_summary()
-        r += 1
 
-        # Editor visual do .flatdropignore
         ignf = ttk.LabelFrame(self, text="Ignore (.flatdropignore)", padding=8)
-        ignf.grid(row=r, column=0, columnspan=3, sticky="ew", pady=(8, 0))
+        ignf.grid(row=3, column=1, sticky="nsew", pady=(10, 0), padx=(6, 0))
         ignf.columnconfigure(0, weight=1)
-        ttk.Label(ignf, text="Editar visualmente o que vai ao Projeto (gera o arquivo na raiz).").grid(row=0, column=0, sticky="w")
-        ttk.Button(ignf, text="Editar .flatdropignore…", command=self._edit_ignore).grid(row=0, column=1, sticky="e")
-        r += 1
+        ttk.Label(ignf, text="Editar visualmente o que vai ao Projeto (gera o arquivo na raiz).").grid(
+            row=0, column=0, sticky="w")
+        ttk.Button(ignf, text="Editar .flatdropignore…", command=self._edit_ignore).grid(
+            row=0, column=1, sticky="e")
 
-        # Multi-fonte (opcional)
+        # ---- Multi-fonte (largura total, fina) --------------------------- #
         ff = ttk.LabelFrame(self, text="Multi-fonte (opcional)", padding=8)
-        ff.grid(row=r, column=0, columnspan=3, sticky="ew", pady=(8, 0))
+        ff.grid(row=4, column=0, columnspan=2, sticky="ew", pady=(10, 0))
         ff.columnconfigure(1, weight=1)
         ttk.Checkbutton(ff, text="Também incluir todos os .md a partir de:",
                         variable=self.also_md_var).grid(row=0, column=0, sticky="w")
-        ttk.Entry(ff, textvariable=self.also_md_root_var).grid(row=0, column=1, sticky="ew", padx=6)
+        ttk.Entry(ff, textvariable=self.also_md_root_var).grid(
+            row=0, column=1, sticky="ew", padx=6)
         ttk.Button(ff, text="Procurar…", command=self._choose_also_md).grid(row=0, column=2, sticky="e")
-        r += 1
 
-        # Botões de ação
+        # ---- Ações ------------------------------------------------------- #
         actions = ttk.Frame(self)
-        actions.grid(row=r, column=0, columnspan=3, sticky="ew", pady=(12, 6))
+        actions.grid(row=5, column=0, columnspan=2, sticky="ew", pady=(12, 6))
         self.btn_preview = ttk.Button(actions, text="Pré-visualizar", command=self._on_preview)
         self.btn_preview.grid(row=0, column=0, padx=(0, 6))
         self.btn_exec = ttk.Button(actions, text="Executar", command=self._on_execute)
@@ -565,12 +553,13 @@ class FlatDropApp(ttk.Frame):
         self.btn_genbat.grid(row=0, column=3, padx=6)
         self.status = ttk.Label(actions, text="", foreground="#06c")
         self.status.grid(row=0, column=4, padx=12, sticky="w")
-        r += 1
 
-        # Saída / log
-        self.rowconfigure(r, weight=1)
+        # ---- Saída / console (ocupa o espaço livre) ---------------------- #
+        ttk.Label(self, text="Saída", foreground="#888").grid(
+            row=6, column=0, columnspan=2, sticky="w")
+        self.rowconfigure(7, weight=1)
         self.out = scrolledtext.ScrolledText(self, height=12, wrap="none", font=("Consolas", 9))
-        self.out.grid(row=r, column=0, columnspan=3, sticky="nsew")
+        self.out.grid(row=7, column=0, columnspan=2, sticky="nsew")
 
     # ------------------------------------------------------------------ #
     # Handlers de seleção

@@ -10,6 +10,16 @@ _Itens de produto em aberto: trecho de KCM (ler `_TREE.md` → gerar `.flatdropi
 persistência/recentes (Fase 2-C), multi-raiz na GUI, formato de nome "caminho escrito"
 (raiz→pastas→stem), UI-2/UI-3._
 
+## [0.10.0] — 2026-07-20
+
+### Alterado
+- **Layout da GUI reorganizado em duas colunas (spec0034).** Raiz e "Nome da pasta" na mesma
+  linha; Renomeação | Opções e Tipos | Ignore lado a lado; Multi-fonte numa linha fina; a
+  descrição do topo foi removida (a barra de título já a diz). Isso encurta muito o
+  formulário e **devolve espaço ao console de saída** (`Saída`), que antes sumia da vista, e
+  encurta os campos (não mais "longos demais"). Só rearranjo: mesmos controles e
+  comportamento; `.bat` intocado (DEC-020).
+
 ## [0.9.2] — 2026-07-20
 
 ### Corrigido

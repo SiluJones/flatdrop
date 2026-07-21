@@ -3,14 +3,14 @@
 Estado atual do projeto. Atualize ao fim de cada sessão de trabalho (rolante: o
 resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
 
-> **Mudanças nesta revisão (2026-07-20):** leva de conveniências de GUI, agora com o layout
-> do Recentes corrigido. Menu **Ferramentas → "Gerar atalho da UI…"** (spec0031, 0.9.0);
-> **Recentes** compacto como botão **"Recentes ▾"** na linha da Raiz (spec0032, 0.9.1); e o
-> **FIX-009** (spec0033, 0.9.2) que tirou a coluna morta que o botão criava — Entry +
-> botões num sub-frame, grade de volta a 3 colunas, como no ASU. Versão **0.9.2**,
-> **66 testes verdes**. RUN `.bat` intocado (DEC-020). Nada quebrado. **Frente candidata:**
-> **multi-raiz na GUI** (exige decisão A/B do autor antes de desenhar, ver "Decisão
-> pendente").
+> **Mudanças nesta revisão (2026-07-20):** **layout da GUI reorganizado em duas colunas**
+> (spec0034, 0.10.0) — Raiz+Nome na mesma linha, Renomeação|Opções e Tipos|Ignore lado a
+> lado, e o **console de saída de volta à vista**. Antes, nesta leva: menu Ferramentas →
+> "Gerar atalho da UI…" (0.9.0), Recentes compacto (0.9.1) e FIX-009 do layout (0.9.2).
+> Versão **0.10.0**, **66 testes verdes**. Só rearranjo de UI; RUN `.bat` intocado
+> (DEC-020). **Pendente (autorizado, a desenhar):** checkbox para nomear `_MANIFEST`/`_TREE`
+> com o nome da pasta no fim (default-ON; toca `cli.py`/`_build_cli_args` para paridade —
+> DEC-020). **Frente candidata maior:** multi-raiz na GUI (decisão A/B pendente).
 
 - **Versão:** 0.7.1 no `__init__.py` (spec0028: FIX-008, nome volta a renomear ao trocar
   de raiz). `[Não lançado]` no CHANGELOG só tem itens de produto em aberto.
