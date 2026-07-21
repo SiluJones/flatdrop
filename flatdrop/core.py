@@ -62,6 +62,7 @@ class ScanConfig:
     suffix_ignores: tuple[str, ...] = C.DEFAULT_SUFFIX_IGNORES
     write_manifest: bool = True
     write_tree: bool = False  # gera _TREE.md (arvore da origem); desligado por padrao (spec0011)
+    name_meta_with_folder: bool = True  # _MANIFEST/_TREE ganham _<pasta> no fim (spec0036)
     # Nivel de detalhe dos ARQUIVOS pulados soltos no _TREE.md:
     #   "summary" -> agregado por pasta ([pulados: tipo x3]); "full" -> folha por arquivo.
     # Pastas ignoradas sao SEMPRE uma linha colapsada, independente disto.
@@ -999,16 +1000,31 @@ def make_plan_sources(sources: list["Source"]) -> FlattenPlan:
     )
 
 
+def meta_name(base: str, dest: Path, cfg: ScanConfig) -> str:
+    """Nome de um arquivo meta (_MANIFEST.md / _TREE.md).
+
+    Com ``name_meta_with_folder`` (padrão), insere o nome da pasta de saída no FIM,
+    antes da extensão — ``_MANIFEST_<pasta>.md`` —, desambiguando no Projeto do
+    Claude e mantendo o prefixo (_MANIFEST/_TREE) para a busca. (spec0036/DEC-022)
+    """
+    if not cfg.name_meta_with_folder:
+        return base
+    stem, _, ext = base.rpartition(".")       # "_MANIFEST", ".", "md"
+    folder = _sanitize(dest.name)
+    return f"{stem}_{folder}.{ext}" if folder else base
+
+
 def is_our_folder(dest: Path) -> bool:
-    """True se a pasta de destino foi criada pelo FlatDrop (tem manifesto nosso)."""
-    mani = dest / C.MANIFEST_NAME
-    if not mani.is_file():
-        return False
-    try:
-        first = mani.read_text(encoding="utf-8", errors="ignore").splitlines()[:1]
-    except OSError:
-        return False
-    return bool(first) and first[0].strip() == C.MANIFEST_SIGNATURE
+    """True se a pasta foi criada pelo FlatDrop (tem manifesto nosso). Reconhece
+    _MANIFEST.md E _MANIFEST_<nome>.md (o sufixo da spec0036)."""
+    for mani in sorted(dest.glob("_MANIFEST*.md")):
+        try:
+            first = mani.read_text(encoding="utf-8", errors="ignore").splitlines()[:1]
+        except OSError:
+            continue
+        if first and first[0].strip() == C.MANIFEST_SIGNATURE:
+            return True
+    return False
 
 
 def safe_clear(dest: Path) -> bool:
@@ -1093,7 +1109,7 @@ def write_manifest(dest: Path, plan: FlattenPlan, cfg: ScanConfig) -> Path:
     for f in plan.files:
         lines.append(f"| `{f.rel.as_posix()}` | `{f.target}` |")
     lines.append("")
-    mani = dest / C.MANIFEST_NAME
+    mani = dest / meta_name(C.MANIFEST_NAME, dest, cfg)
     mani.write_text("\n".join(lines), encoding="utf-8")
     return mani
 
@@ -1223,7 +1239,7 @@ def write_tree(dest: Path, plan: FlattenPlan, cfg: ScanConfig) -> Path:
     _tree_render(root_node, 1, cfg.tree_skipped, lines)
     lines.append("")
 
-    tree = dest / C.TREE_NAME
+    tree = dest / meta_name(C.TREE_NAME, dest, cfg)
     tree.write_text("\n".join(lines), encoding="utf-8")
     return tree
 

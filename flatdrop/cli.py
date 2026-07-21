@@ -74,6 +74,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--no-gitignore", action="store_false", dest="use_gitignore", help="não ler o .gitignore da raiz")
     p.add_argument("--include-sensitive", action="store_true", help="incluir arquivos sensíveis (.env, chaves)")
     p.add_argument("--no-manifest", action="store_false", dest="write_manifest", help="não gerar _MANIFEST.md")
+    p.add_argument("--no-name-meta", action="store_false", dest="name_meta_with_folder",
+                   help="não incluir o nome da pasta no fim de _MANIFEST/_TREE")
     p.add_argument("--tree", action="store_true", dest="write_tree",
                    help="gerar _TREE.md (arvore da origem: copiados, pulados com motivo, pastas colapsadas)")
     p.add_argument("--tree-detail", choices=["summary", "full"], default="summary",
@@ -103,6 +105,7 @@ def _primary_cfg(args: argparse.Namespace) -> core.ScanConfig:
         include_sensitive=args.include_sensitive,
         write_manifest=args.write_manifest,
         write_tree=args.write_tree,
+        name_meta_with_folder=args.name_meta_with_folder,
         tree_skipped=args.tree_detail,
         clear_dest=args.clear_dest,
         extensions=extensions,

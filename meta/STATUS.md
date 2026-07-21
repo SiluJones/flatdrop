@@ -3,14 +3,15 @@
 Estado atual do projeto. Atualize ao fim de cada sessão de trabalho (rolante: o
 resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
 
-> **Mudanças nesta revisão (2026-07-20):** **layout da GUI reorganizado em duas colunas**
-> (spec0034, 0.10.0) — Raiz+Nome na mesma linha, Renomeação|Opções e Tipos|Ignore lado a
-> lado, e o **console de saída de volta à vista**. Antes, nesta leva: menu Ferramentas →
-> "Gerar atalho da UI…" (0.9.0), Recentes compacto (0.9.1) e FIX-009 do layout (0.9.2).
-> Versão **0.10.0**, **66 testes verdes**. Só rearranjo de UI; RUN `.bat` intocado
-> (DEC-020). **Pendente (autorizado, a desenhar):** checkbox para nomear `_MANIFEST`/`_TREE`
-> com o nome da pasta no fim (default-ON; toca `cli.py`/`_build_cli_args` para paridade —
-> DEC-020). **Frente candidata maior:** multi-raiz na GUI (decisão A/B pendente).
+> **Mudanças nesta revisão (2026-07-20):** **DEC-022** (spec0036, 0.11.0) — checkbox
+> default-ON que nomeia `_MANIFEST`/`_TREE` com o nome da pasta no fim
+> (`_MANIFEST_<pasta>.md`), desambiguando no Projeto do Claude e mantendo o prefixo p/ busca.
+> Flag aditivo `--no-name-meta` na CLI e em `_build_cli_args` (DEC-020, **autorizado**);
+> `_generate_bat`/`_sources` intocados. **Desvio registrado:** a spec não ligava o campo ao
+> `_gather_cfg` (execução ao vivo); acrescentei a linha p/ manter a paridade GUI×`.bat`
+> (FIX-004). `is_our_folder` reconhece o sufixo. Antes, nesta leva: FIX-010 (0.10.1), layout
+> em duas colunas (0.10.0), atalho da UI (0.9.0), Recentes compacto (0.9.1), FIX-009 (0.9.2).
+> Versão **0.11.0**, **68 testes verdes**. **Frente maior:** multi-raiz (decisão A/B pendente).
 
 - **Versão:** 0.7.1 no `__init__.py` (spec0028: FIX-008, nome volta a renomear ao trocar
   de raiz). `[Não lançado]` no CHANGELOG só tem itens de produto em aberto.

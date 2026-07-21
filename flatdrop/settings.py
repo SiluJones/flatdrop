@@ -45,6 +45,7 @@ class Settings:
     skip_sensitive: bool = True
     write_manifest: bool = True
     write_tree: bool = False
+    name_meta_with_folder: bool = True
     root_in_name: bool = False
     clear_dest: bool = True
     also_md: bool = False
@@ -112,6 +113,7 @@ def _sanitize(data: dict) -> Settings:
     s.skip_sensitive = _bool("skip_sensitive", True)
     s.write_manifest = _bool("write_manifest", True)
     s.write_tree = _bool("write_tree", False)
+    s.name_meta_with_folder = _bool("name_meta_with_folder", True)
     s.root_in_name = _bool("root_in_name", False)
     s.clear_dest = _bool("clear_dest", True)
     s.also_md = _bool("also_md", False)

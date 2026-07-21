@@ -10,6 +10,27 @@ _Itens de produto em aberto: trecho de KCM (ler `_TREE.md` → gerar `.flatdropi
 persistência/recentes (Fase 2-C), multi-raiz na GUI, formato de nome "caminho escrito"
 (raiz→pastas→stem), UI-2/UI-3._
 
+## [0.11.0] — 2026-07-20
+
+### Adicionado
+- **Nomear _MANIFEST/_TREE com o nome da pasta no fim (DEC-022, spec0036).** Checkbox
+  default-ON: os meta gerados viram `_MANIFEST_<pasta>.md`/`_TREE_<pasta>.md` (`<pasta>` = o
+  campo "Nome da pasta", editável), mantendo o prefixo para busca e desambiguando no Projeto
+  do Claude. Só para o que está marcado. Flag `--no-name-meta` na CLI (paridade `.bat`).
+  `is_our_folder` reconhece o sufixo. 2 testes (66 → 68).
+
+## [0.10.1] — 2026-07-20
+
+### Corrigido
+- **Preferências voltam a persistir abrindo pelo atalho (FIX-010, spec0035).** A semente de
+  navegação (0.8.0) fazia a GUI começar 100% limpa quando aberta pelo atalho "abrir GUI",
+  descartando renomeação/opções/tipos/separador salvos. Agora só a **localização**
+  (raiz/nome/multi-fonte) reseta pelo atalho; as **preferências** são sempre restauradas.
+
+### Adicionado
+- **Menu Ferramentas → "Restaurar padrões de fábrica…" (spec0035).** Volta a config ao
+  padrão e apaga o salvo (mantém os recentes). Só GUI; `.bat` intocado (DEC-020).
+
 ## [0.10.0] — 2026-07-20
 
 ### Alterado

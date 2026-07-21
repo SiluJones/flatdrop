@@ -662,3 +662,38 @@ empurrava tudo à direita.
 o necessário. **Lição (não regredir):** um controle extra em UMA linha do grid NÃO vai numa
 coluna nova do grid principal — vai num sub-frame daquela linha, senão vira coluna global
 morta. GUI não é coberta pela suíte → validação por smoke manual.
+
+## FIX-010 — Atalho "abrir GUI" descartava as preferências salvas
+**Data:** 2026-07-20 · **Origem:** spec0030 · **Correção:** spec0035
+
+**Sintoma.** Abrindo a GUI pelo atalho "abrir GUI", nenhuma config voltava (renomeação,
+opções, tipos, separador) — tudo resetava.
+
+**Causa raiz.** A spec0030, para semear a navegação, pôs `if self._start_dir: return` no
+topo de `_apply_settings_to_vars` — começava 100% limpo com `--start-dir`, jogando fora
+também as preferências.
+
+**Correção.** Separar **preferências** (renomeação/opções/tipos/separador/destino), que são
+SEMPRE restauradas, da **localização** (raiz/nome/multi-fonte), que só é restaurada sem
+`--start-dir`. Assim a config montada persiste entre projetos e o atalho ainda abre no lugar
+certo. Adicionado um "Restaurar padrões de fábrica…" no menu Ferramentas (apaga o salvo,
+mantém os recentes). **Lição:** "começar limpo" pelo atalho vale para a LOCALIZAÇÃO, não
+para as preferências. Persistência é só-GUI (DEC-020); nada disto toca o `.bat`.
+
+## DEC-022 — Nomear _MANIFEST/_TREE com o nome da pasta no fim
+**Data:** 2026-07-20 · **Status:** aceita (spec0036)
+
+**Contexto.** Vários projetos achatados no Claude têm `_MANIFEST.md`/`_TREE.md` homônimos —
+ambíguos. O autor quer desambiguar com o nome da pasta de saída, mas no FIM (os projetos
+buscam pelo prefixo `_MANIFEST`/`_TREE` no começo).
+
+**Decisão.** Checkbox **default-ON** "Nomear _MANIFEST/_TREE com o nome da pasta": os meta
+gerados viram `_MANIFEST_<pasta>.md`/`_TREE_<pasta>.md`, onde `<pasta>` = `dest.name` (o
+campo "Nome da pasta", editável — não a raiz). Aplica-se só ao que está marcado. O flag
+`--no-name-meta` leva o desligamento à CLI (paridade GUI×`.bat`, FIX-004). `is_our_folder`
+passou a reconhecer `_MANIFEST*.md` para o "limpar destino" seguir funcionando.
+
+**Consequência.** Muda o nome PADRÃO dos meta (default-ON) — `.bat` antigos passam a gerar
+os nomes com sufixo (comportamento desejado). Só-core/CLI/GUI; o gerador do `.bat`
+(`_generate_bat`) não muda, só ganha um flag aditivo em `_build_cli_args` (DEC-020,
+autorizado). É preferência persistida (settings).

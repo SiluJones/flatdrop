@@ -404,6 +404,7 @@ class FlatDropApp(ttk.Frame):
         self.name_var = tk.StringVar()
         self.mode_var = tk.StringVar(value="collisions")
         self.sep_var = tk.StringVar(value=C.DEFAULT_SEP)
+        self.name_meta_var = tk.BooleanVar(value=True)  # nomear meta c/ a pasta (spec0036)
         self.gitignore_var = tk.BooleanVar(value=True)
         self.skip_sensitive_var = tk.BooleanVar(value=True)
         self.clear_var = tk.BooleanVar(value=True)
@@ -438,6 +439,8 @@ class FlatDropApp(ttk.Frame):
         tools = tk.Menu(menubar, tearoff=0)
         tools.add_command(label="Gerar atalho da UI…",
                           command=self._generate_open_gui_bat)
+        tools.add_command(label="Restaurar padrões de fábrica…",
+                          command=self._reset_defaults)
         menubar.add_cascade(label="Ferramentas", menu=tools)
         self.master.config(menu=menubar)
 
@@ -490,7 +493,8 @@ class FlatDropApp(ttk.Frame):
                         variable=self.mode_var, value="fullpath").grid(sticky="w")
         ttk.Checkbutton(modes, text="Incluir o nome da pasta-raiz (só no modo fullpath)",
                         variable=self.root_in_name_var).grid(sticky="w")
-        # (spec0035 insere aqui, abaixo, o checkbox de nomear _MANIFEST/_TREE.)
+        ttk.Checkbutton(modes, text="Nomear _MANIFEST/_TREE com o nome da pasta (no fim, p/ desambiguar)",
+                        variable=self.name_meta_var).grid(sticky="w")
 
         opts = ttk.LabelFrame(self, text="Opções", padding=8)
         opts.grid(row=2, column=1, sticky="nsew", pady=(10, 0), padx=(6, 0))
@@ -596,42 +600,70 @@ class FlatDropApp(ttk.Frame):
     def _apply_settings_to_vars(self) -> None:
         """Sobrescreve os valores iniciais dos widgets com a última config salva.
 
-        Guardas: nenhum valor inválido do disco chega aos widgets — assim o .bat
-        gerado a partir da tela sempre serializa uma config válida.
+        PREFERÊNCIAS (renomeação, opções, tipos, separador, destino) são SEMPRE
+        restauradas — inclusive abrindo pela GUI pelo atalho "abrir GUI" —, porque
+        o autor quer a config montada persistente entre projetos (FIX-010). Só a
+        LOCALIZAÇÃO (raiz, nome, multi-fonte, que é do projeto) NÃO é restaurada
+        quando há --start-dir: o atalho é copiado para pastas variadas e restaurar
+        o projeto anterior faria "Procurar…" abrir no lugar errado. Guardas: nenhum
+        valor inválido do disco chega aos widgets.
         """
-        # Atalho "abrir GUI" (--start-dir presente): começa LIMPO — não restaura a
-        # última sessão. O atalho é genérico e copiado para pastas variadas;
-        # restaurar o projeto anterior faria "Procurar…" abrir no lugar errado
-        # (a raiz restaurada venceria a semente). O Combobox de Recentes segue
-        # disponível (nada se perde). Rodar a GUI sem --start-dir restaura como
-        # antes. (spec0030 — espelha ASU spec0012.)
-        if self._start_dir:
-            return
         s = self._settings
-        if s.root:
-            self.root_var.set(s.root)
-        if s.name:
-            # Restaura o ultimo nome, mas NAO trava _name_edited: escolher outra raiz
-            # (ou um recente) deve voltar a renomear automaticamente. Digitar no campo
-            # ainda marca _name_edited (bind <Key>), entao um nome custom da sessao
-            # persiste ao trocar de raiz. (FIX-008 — regressao da spec0024.)
-            self.name_var.set(s.name)
-        # dest só é aceito se for uma pasta real; senão fica o default (Downloads).
-        if s.dest and Path(s.dest).is_dir():
-            self.dest_var.set(s.dest)
+        # --- Preferências: sempre ---
         self.mode_var.set(s.mode)          # já saneado para {collisions,all,fullpath}
         self.sep_var.set(s.sep)            # já saneado para não-vazio
         self.gitignore_var.set(s.read_gitignore)
         self.skip_sensitive_var.set(s.skip_sensitive)
+        self.clear_var.set(s.clear_dest)
         self.manifest_var.set(s.write_manifest)
         self.tree_var.set(s.write_tree)
+        self.name_meta_var.set(s.name_meta_with_folder)
         self.root_in_name_var.set(s.root_in_name)
-        self.clear_var.set(s.clear_dest)
-        self.also_md_var.set(s.also_md)
-        self.also_md_root_var.set(s.also_md_root)
         # allowlist reconstruída do delta contra os defaults ATUAIS.
         defaults = set(C.DEFAULT_EXTENSIONS)
         self._selected_exts = (defaults | set(s.ext_added)) - set(s.ext_removed)
+        # destino é preferência (não é do projeto): só se for uma pasta real.
+        if s.dest and Path(s.dest).is_dir():
+            self.dest_var.set(s.dest)
+
+        # --- Localização: só quando NÃO aberto pelo atalho "abrir GUI" ---
+        if self._start_dir:
+            return
+        if s.root:
+            self.root_var.set(s.root)
+        if s.name:
+            # NAO trava _name_edited: trocar de raiz deve voltar a renomear
+            # (bind <Key> marca a flag quando o usuario digita). (FIX-008)
+            self.name_var.set(s.name)
+        self.also_md_var.set(s.also_md)
+        self.also_md_root_var.set(s.also_md_root)
+
+    def _reset_defaults(self) -> None:
+        """Volta a config ao padrão de fábrica e apaga o salvo (menu Ferramentas).
+        Repinta só as PREFERÊNCIAS; a localização atual na tela (raiz/nome/multi-
+        fonte) fica como está. Os recentes são mantidos (histórico, não config).
+        (spec0035)"""
+        if not messagebox.askyesno(
+            "FlatDrop",
+            "Restaurar as configurações ao padrão de fábrica? A config salva será "
+            "apagada (os recentes são mantidos)."):
+            return
+        self._settings = settings_store.Settings(
+            recent_roots=self._settings.recent_roots)
+        settings_store.save_settings(self._settings)
+        s = self._settings
+        self.mode_var.set(s.mode)
+        self.sep_var.set(s.sep)
+        self.gitignore_var.set(s.read_gitignore)
+        self.skip_sensitive_var.set(s.skip_sensitive)
+        self.clear_var.set(s.clear_dest)
+        self.manifest_var.set(s.write_manifest)
+        self.tree_var.set(s.write_tree)
+        self.name_meta_var.set(s.name_meta_with_folder)
+        self.root_in_name_var.set(s.root_in_name)
+        self._selected_exts = set(C.DEFAULT_EXTENSIONS)
+        self._update_types_summary()
+        self.status.config(text="Configurações restauradas ao padrão de fábrica.")
 
     def _refresh_recent_menu(self) -> None:
         """(Re)popula o menu "Recentes ▾" a partir dos recentes salvos."""
@@ -674,6 +706,7 @@ class FlatDropApp(ttk.Frame):
             skip_sensitive=self.skip_sensitive_var.get(),
             write_manifest=self.manifest_var.get(),
             write_tree=self.tree_var.get(),
+            name_meta_with_folder=self.name_meta_var.get(),
             root_in_name=self.root_in_name_var.get(),
             clear_dest=self.clear_var.get(),
             also_md=self.also_md_var.get(),
@@ -717,6 +750,8 @@ class FlatDropApp(ttk.Frame):
             args += ["--no-manifest"]
         if self.tree_var.get():
             args += ["--tree"]
+        if not self.name_meta_var.get():
+            args += ["--no-name-meta"]
         if self.root_in_name_var.get():
             args += ["--root-in-name"]
         if not self.clear_var.get():
@@ -828,6 +863,7 @@ class FlatDropApp(ttk.Frame):
             clear_dest=self.clear_var.get(),
             write_manifest=self.manifest_var.get(),
             write_tree=self.tree_var.get(),
+            name_meta_with_folder=self.name_meta_var.get(),
             root_in_name=self.root_in_name_var.get(),
         )
 

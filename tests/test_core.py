@@ -195,7 +195,8 @@ def test_execute_writes_manifest_and_marks_folder(project, tmp_path):
     cfg = ScanConfig(mode="collisions")
     res = execute_plan(make_plan(project, cfg), dest, cfg)
     assert res.copied == len(make_plan(project, cfg).files)
-    assert (res.dest / "_MANIFEST.md").is_file()
+    # default-ON (spec0036): o manifesto ganha o nome da pasta no fim.
+    assert (res.dest / "_MANIFEST_proj.md").is_file()
     assert is_our_folder(res.dest) is True
 
 
@@ -484,7 +485,8 @@ def test_tree_on_creates_file(project, tmp_path):
     dest = tmp_path / "out" / "proj"
     cfg = ScanConfig(mode="collisions", write_tree=True)
     res = execute_plan(make_plan(project, cfg), dest, cfg)
-    tree_path = res.dest / C.TREE_NAME
+    # default-ON (spec0036): o _TREE tambem ganha o nome da pasta no fim.
+    tree_path = res.dest / "_TREE_proj.md"
     assert tree_path.is_file()
     first_line = tree_path.read_text(encoding="utf-8").splitlines()[0]
     assert first_line == C.TREE_SIGNATURE
@@ -492,7 +494,7 @@ def test_tree_on_creates_file(project, tmp_path):
 
 def test_tree_collapses_ignored_folder(project, tmp_path):
     dest = tmp_path / "out" / "proj"
-    cfg = ScanConfig(mode="collisions", write_tree=True)
+    cfg = ScanConfig(mode="collisions", write_tree=True, name_meta_with_folder=False)
     res = execute_plan(make_plan(project, cfg), dest, cfg)
     body = (res.dest / C.TREE_NAME).read_text(encoding="utf-8")
     assert "node_modules/  [ignorada: embutido]" in body
@@ -501,7 +503,7 @@ def test_tree_collapses_ignored_folder(project, tmp_path):
 
 def test_tree_shows_renamed(project, tmp_path):
     dest = tmp_path / "out" / "proj"
-    cfg = ScanConfig(mode="collisions", write_tree=True)
+    cfg = ScanConfig(mode="collisions", write_tree=True, name_meta_with_folder=False)
     res = execute_plan(make_plan(project, cfg), dest, cfg)
     body = (res.dest / C.TREE_NAME).read_text(encoding="utf-8")
     assert "[renomeado:" in body
@@ -509,14 +511,16 @@ def test_tree_shows_renamed(project, tmp_path):
 
 def test_tree_summary_vs_full(project, tmp_path):
     dest_summary = tmp_path / "out" / "proj-summary"
-    cfg_summary = ScanConfig(mode="collisions", write_tree=True, tree_skipped="summary")
+    cfg_summary = ScanConfig(mode="collisions", write_tree=True, tree_skipped="summary",
+                             name_meta_with_folder=False)
     res_summary = execute_plan(make_plan(project, cfg_summary), dest_summary, cfg_summary)
     body_summary = (res_summary.dest / C.TREE_NAME).read_text(encoding="utf-8")
     assert "pulados:" in body_summary
     assert ".env  [pulado:" not in body_summary  # summary não abre folha individual
 
     dest_full = tmp_path / "out" / "proj-full"
-    cfg_full = ScanConfig(mode="collisions", write_tree=True, tree_skipped="full")
+    cfg_full = ScanConfig(mode="collisions", write_tree=True, tree_skipped="full",
+                          name_meta_with_folder=False)
     res_full = execute_plan(make_plan(project, cfg_full), dest_full, cfg_full)
     body_full = (res_full.dest / C.TREE_NAME).read_text(encoding="utf-8")
     assert ".env  [pulado: sensivel]" in body_full
@@ -535,7 +539,8 @@ def test_tree_full_lists_all_skipped_beyond_sample_cap(tmp_path):
     assert len(plan.skipped_samples["tipo"]) == 8  # amostra continua limitada a 8
 
     dest = tmp_path / "out" / "manyskips"
-    cfg = ScanConfig(mode="collisions", write_tree=True, tree_skipped="full")
+    cfg = ScanConfig(mode="collisions", write_tree=True, tree_skipped="full",
+                     name_meta_with_folder=False)
     res = execute_plan(make_plan(root, cfg), dest, cfg)
     body = (res.dest / C.TREE_NAME).read_text(encoding="utf-8")
     for i in range(12):
@@ -670,3 +675,23 @@ def test_folder_effective_state(tmp_path):
     assert st("meta/specs") is False
     assert st("meta/refs") is True
     assert st("logs") is False
+
+
+def test_meta_name_suffix_on_off(tmp_path):
+    from flatdrop import core, config as C
+    from flatdrop.core import ScanConfig
+    dest = tmp_path / "cancioneiro"
+    on = ScanConfig(name_meta_with_folder=True)
+    off = ScanConfig(name_meta_with_folder=False)
+    assert core.meta_name(C.MANIFEST_NAME, dest, on) == "_MANIFEST_cancioneiro.md"
+    assert core.meta_name(C.TREE_NAME, dest, on) == "_TREE_cancioneiro.md"
+    assert core.meta_name(C.MANIFEST_NAME, dest, off) == "_MANIFEST.md"
+
+
+def test_is_our_folder_recognizes_suffixed_manifest(tmp_path):
+    from flatdrop import core, config as C
+    dest = tmp_path / "proj"
+    dest.mkdir()
+    (dest / "_MANIFEST_proj.md").write_text(
+        C.MANIFEST_SIGNATURE + "\n", encoding="utf-8")
+    assert core.is_our_folder(dest) is True

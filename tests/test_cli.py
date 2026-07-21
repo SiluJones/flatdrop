@@ -64,6 +64,7 @@ def test_execute_creates_single_manifest(tmp_path, capsys):
             "--root", str(root / "Story"), "--exclude-ext", "md",
             "--add-ext", "gd", "--also-md-from", str(root),
             "--name", "Story-pack", "--no-gitignore", "--dest", str(dest),
+            "--no-name-meta",
         ]
     )
     assert rc == 0
