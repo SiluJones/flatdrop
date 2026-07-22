@@ -7,7 +7,7 @@ versionamento conforme [SemVer](https://semver.org/lang/pt-BR/).
 ## [Não lançado]
 
 _Itens de produto em aberto: trecho de KCM (ler `_TREE.md` → gerar `.flatdropignore`),
-persistência/recentes (Fase 2-C), multi-raiz na GUI, formato de nome "caminho escrito"
+multi-raiz na GUI (decisão A/B pendente), formato de nome "caminho escrito"
 (raiz→pastas→stem), UI-2/UI-3._
 
 ## [0.11.0] — 2026-07-20

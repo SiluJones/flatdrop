@@ -15,6 +15,14 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
 > 2026-07-21** — uso real, estável, sem bug aberto. **Ao retomar:** ler este STATUS, o
 > `CHANGELOG` e as Ativas do `IDEAS.md`. **Frente candidata maior:** multi-raiz (decisão A/B
 > pendente, ver abaixo). **Antes de tudo:** conferir o backup do repo (ver Riscos).
+>
+> **Higiene extra (2026-07-21), fora da spec0037, a pedido do autor:** o backup foi
+> executado (`git push -u origin main`) e o risco virou RESOLVIDO; "Qualidade/testes" dizia
+> **48 testes** (número congelado de quando `test_core.py` era a suíte inteira) e passou a
+> **68 com a distribuição por arquivo**; no backlog, os itens **C (persistência)** e
+> **"botão Gerar atalho da UI"** estavam listados como abertos mas foram entregues em 0.6.0
+> e 0.9.0 — marcados como ENTREGUE; e o `[Não lançado]` do `CHANGELOG` ainda citava
+> persistência/recentes como pendente.
 
 - **Versão:** 0.11.0 no `__init__.py` (spec0036/DEC-022: nomear `_MANIFEST`/`_TREE` com o
   nome da pasta). `[Não lançado]` no CHANGELOG só tem itens de produto em aberto.
@@ -94,11 +102,14 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
 
 ## Qualidade / testes
 
-- **48 testes pytest passando.** Rodar da raiz: **`pytest -q`** (o `conftest.py` na
-  raiz resolve o import — FIX-005) ou `python -m pytest -q`.
-- test_core.py (MVP + FIX-001 + filtros/multi-fonte/Downloads + `.flatdropignore` +
-  `_TREE.md` + `root_in_name` + editor/spec0018 + aliases/spec0019 + gerador
-  corrigido/spec0020) + 3 em test_cli.py.
+- **68 testes pytest passando** (conferido em 2026-07-21). Rodar da raiz:
+  **`pytest -q`** (o `conftest.py` na raiz resolve o import — FIX-005) ou
+  `python -m pytest -q`.
+- Distribuição: `test_core.py` 48 (MVP + FIX-001 + filtros/multi-fonte/Downloads +
+  `.flatdropignore` + `_TREE.md` + `root_in_name` + editor/spec0018 + aliases/spec0019 +
+  gerador corrigido/spec0020 + nomeação dos meta/spec0036) · `test_settings.py` 9
+  (persistência, spec0024 + FIX-010) · `test_cli.py` 7 · `test_force_include.py` 4
+  (force-include `++`, DEC-021).
 - A GUI **não** é coberta pela suíte (tkinter fora do CI) → smoke manual no Windows.
 
 ## Em aberto (produto) — backlog curto, na ordem sugerida
@@ -117,25 +128,33 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
    + `annotate_children` / `build_flatdropignore` no core. Bloco gerenciado no
    round-trip. 3 testes (spec0018) + 2 (spec0019) + 2 (spec0020) novos. Falta só o
    smoke manual da GUI no Windows (a suíte não cobre tkinter).
-3. **C — Persistir configurações + pastas recentes** na GUI (`settings.py`, JSON em
-   `%APPDATA%`/`~/.config`; Combobox de recentes). **PRÓXIMA tarefa.**
+3. ~~**C — Persistir configurações + pastas recentes** na GUI.~~ **ENTREGUE (0.6.0,
+   spec0024):** `flatdrop/settings.py` grava config + recentes (JSON em
+   `%APPDATA%`/`~/.config`); só-GUI, DEC-020 blinda o `.bat`. Depois: Recentes virou botão
+   compacto (0.9.1, spec0032) e **FIX-010** devolveu as preferências ao abrir pelo atalho
+   (0.10.1, spec0035). 9 testes em `test_settings.py`.
 4. **Multi-raiz na GUI** (selecionar N pastas, prefixar cada uma com sua raiz).
 5. **UI-2** (polimento de layout) e **UI-3** (presets "só docs"/"só código", lembrar
    última seleção).
 6. **Formato "caminho escrito"** (`raiz__pastas__stem.ext`) como seletor de formato
    do nome — útil para empilhar por raiz, não para o Claude achar por nome. Espera.
 7. Aviso mais visível quando o pathspec está ausente (destaque na GUI).
-8. Saída da CLI ASCII-safe (`->`/`*`); botão "Gerar atalho da UI".
+8. Saída da CLI ASCII-safe (`->`/`*`). ~~Botão "Gerar atalho da UI".~~ **ENTREGUE (0.9.0,
+   spec0031):** menu **Ferramentas → "Gerar atalho da UI…"** (gerador NOVO e separado; o
+   RUN `.bat` ficou intocado, DEC-020).
 
 ## Riscos / pontos de atenção
 
 - **Nenhum bug aberto.** (FIX-005 resolvido pelo `conftest.py`; FIX-008 corrigido na
   spec0028 — falta só o smoke manual de confirmação no Windows.)
-- **Backup do repositório (atenção numa pausa longa).** Os commits recentes foram feitos
-  na `main` **sem `git push`** e o repo não parecia ter remoto configurado. O repositório é
-  a memória do projeto (specs, DECISIONS, CHANGELOG, logs) — se ficar só no disco local
-  durante meses, uma falha de máquina apaga tudo. **Configurar um remoto (mesmo privado) e
-  enviar antes de pausar.**
+- **Backup do repositório — RESOLVIDO em 2026-07-21 (era o risco nº 1 da pausa).** O remoto
+  já existia (`origin` → `github.com:SiluJones/flatdrop.git`, SSH), mas a `main` local **não
+  o rastreava** e estava **3 commits à frente** (layout em duas colunas, DEC-022/FIX-010 e o
+  fechamento da spec0037) — a leva 0.10.0–0.11.0 só existia no disco. `git push -u origin
+  main` enviou tudo e amarrou o tracking, então daqui em diante o `git status` avisa sozinho
+  quando houver commit local não enviado. O repositório é a memória do projeto (specs,
+  DECISIONS, CHANGELOG, logs). **Hábito para o retorno: `git push` antes de fechar a
+  sessão.**
 - O `_TREE.md` deste projeto mostra `Pulados: 0` (sem `.flatdropignore` nem arquivos
   pulados por tipo aqui) — a diferença `summary`×`full` e as linhas `[pulado: …]` só
   aparecem "ao vivo" num projeto com `.env`/`.flatdropignore`. Coberto por testes.
