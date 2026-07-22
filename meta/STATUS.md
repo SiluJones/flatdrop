@@ -11,18 +11,25 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
 > `_gather_cfg` (execução ao vivo); acrescentei a linha p/ manter a paridade GUI×`.bat`
 > (FIX-004). `is_our_folder` reconhece o sufixo. Antes, nesta leva: FIX-010 (0.10.1), layout
 > em duas colunas (0.10.0), atalho da UI (0.9.0), Recentes compacto (0.9.1), FIX-009 (0.9.2).
-> Versão **0.11.0**, **68 testes verdes**. **Frente maior:** multi-raiz (decisão A/B pendente).
+> Versão **0.11.0**, **68 testes verdes**. **O projeto entra de novo em PAUSA a partir de
+> 2026-07-21** — uso real, estável, sem bug aberto. **Ao retomar:** ler este STATUS, o
+> `CHANGELOG` e as Ativas do `IDEAS.md`. **Frente candidata maior:** multi-raiz (decisão A/B
+> pendente, ver abaixo). **Antes de tudo:** conferir o backup do repo (ver Riscos).
 
-- **Versão:** 0.7.1 no `__init__.py` (spec0028: FIX-008, nome volta a renomear ao trocar
-  de raiz). `[Não lançado]` no CHANGELOG só tem itens de produto em aberto.
-- **Data:** 2026-07-17
+- **Versão:** 0.11.0 no `__init__.py` (spec0036/DEC-022: nomear `_MANIFEST`/`_TREE` com o
+  nome da pasta). `[Não lançado]` no CHANGELOG só tem itens de produto em aberto.
+- **Data:** 2026-07-21
 - **Fase:** F1 (MVP) OK · F2 (robustez/conveniência) OK — **C (persistência) e D (editor
   de `.flatdropignore`) fechados**; em aberto só **multi-raiz na GUI** e **UI-2/UI-3**
   (polimento, opcionais) · F3 (gerador de `.bat` + multi-fonte na GUI) OK · F4
   (distribuição: `.exe`, single-file, contagem de tokens) não iniciada — ver `ROADMAP.md`.
-- **Situação geral:** em uso real, **estável**, em **pausa planejada**. Fluxo do monorepo
+- **Situação geral:** em uso real, **estável**, em **pausa** (2026-07-21). Fluxo do monorepo
   `cinzeiro` coberto de ponta a ponta (GUI, CLI e `.bat`). Modo Claude Code em operação;
-  specs 0001–0029 aplicadas e commitadas. **62 testes verdes**; nenhum bug aberto.
+  **specs 0001–0037 aplicadas e commitadas**. **68 testes verdes**; nenhum bug aberto. Esta
+  leva (0.8.0–0.11.0): atalho "abrir GUI" semeia navegação (0.8.0), gerar atalho da UI +
+  Recentes compacto + layout em duas colunas (0.9.0–0.10.0), FIX-010 persistência de
+  preferências + padrões de fábrica (0.10.1), e nomeação dos meta com o nome da pasta
+  (0.11.0).
 - **Decisão pendente (bloqueia a próxima frente):** **multi-raiz na GUI** não tem versão
   "só-GUI, zero-toque" — a core já aceita N fontes, mas a CLI só tem `--root` + N
   `--also-md-from` (fontes só-`.md`). Ou (**B**) a GUI roda N raízes e o botão "Gerar
