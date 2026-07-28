@@ -188,3 +188,28 @@ ancora na **localização do `.flatdropignore`** que o contém (semântica gitig
 um padrão de **um segmento** (`specs/`, `logs/`) casa em **qualquer profundidade**.
 Verificado: um `.flatdropignore` **aninhado** numa subpasta funciona (escopo por subárvore).
 Não é bug — é o comportamento correto do gitignore; documentado para evitar confusão.
+
+**WO (work order).** O **delta estruturado** que o chat autora e o Claude Code aplica:
+texto exato + âncora semântica (seção/título, nunca nº de linha). Vive em
+`meta/workorders/`, nome `AAMMDD-woNNNN-desc.md`. Responde **como aplicar**. Aplicada com
+`/apply-wo <arquivo>`. Até 2026-07-28 este artefato se chamava **spec** (DEC-023).
+
+**spec (de feature).** Documento que responde **o quê construir e quando está pronto** —
+problema, critérios de aceite verificáveis, decisões de design, fora-de-escopo. Vem do
+*Spec-Driven Development* (GitHub spec-kit). Modelo em `meta/SPEC.md`, escrita em
+`meta/specs/` **só quando uma feature justifica**. Não confundir com as WOs (DEC-023).
+
+**`spec0001`–`spec0037` (nomes antigos).** As 37 WOs anteriores à DEC-023. **Mantiveram o
+nome** e apenas mudaram de pasta para `meta/workorders/`; toda referência histórica no
+STATUS/CHANGELOG/DECISIONS/logs segue válida e não é reescrita. A numeração continua:
+a próxima é `wo0038`.
+
+**Poda de diretório (`_scan`).** `core._scan` descarta o diretório casado por ignore
+**antes de descer** (`dirnames[:] = kept`, herança do FIX-001). Consequência: um `!` dentro
+de uma pasta podada **nunca é avaliado** — o motor de padrões liberaria o arquivo, mas a
+varredura não chega até ele. É a causa raiz da DEC-025 e o motivo da convenção `pasta/*`.
+
+**Análise (documento).** Estudo escrito que **precede o compromisso** numa mudança
+não-trivial: problema, restrições/medições, opções (com o motivo do descarte),
+recomendação, riscos, ponto de decisão. Vive em `meta/analises/AAMMDD-ANALISE-<tema>.md`;
+a pasta nasce no primeiro uso. Funil: análise → WO → DECISIONS.

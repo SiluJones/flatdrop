@@ -1,4 +1,21 @@
+# .flatdropignore — enxuga o que sobe ao Projeto do Claude (tudo segue versionado no git).
+# Sintaxe .gitignore; salvo na raiz; tem a palavra final sobre o .gitignore.
+#
+# REGRA (DEC-025): use "pasta/*" (o CONTEUDO), nunca "pasta/" (a PASTA).
+# core._scan poda o diretorio casado ANTES de descer, entao um "!" dentro de pasta
+# podada nunca chega a ser avaliado — a subarvore inteira some. Com "pasta/*" a pasta
+# nao casa, a varredura desce, e o "!arquivo" volta a funcionar (PathSpec: a ultima
+# regra que casa vence).
+
+# Logs de sessao: o "agora" fica no meta/STATUS.md; o diario nao precisa ir ao mount.
+logs/*
+
+# WOs aplicadas: o desfecho vive em meta/DECISIONS.md e meta/CHANGELOG.md; o corpo pesa.
+# Para estudar UMA no Projeto, reinclua nominalmente — ex.: !meta/workorders/260728-wo0038-x.md
+meta/workorders/*
+
+# meta/specs/ (specs de feature) NAO entra aqui de proposito: sao poucas e dizem o que
+# esta sendo construido — valem o espaco no Projeto.
+
 # >>> flatdrop-editor
-logs/
-meta/specs/
 # <<<

@@ -697,3 +697,97 @@ passou a reconhecer `_MANIFEST*.md` para o "limpar destino" seguir funcionando.
 os nomes com sufixo (comportamento desejado). Só-core/CLI/GUI; o gerador do `.bat`
 (`_generate_bat`) não muda, só ganha um flag aditivo em `_build_cli_args` (DEC-020,
 autorizado). É preferência persistida (settings).
+
+## DEC-023 — Vocabulário: `wo` para o delta aplicável, `spec` reservado para feature
+**Data:** 2026-07-28 · **Status:** aceita
+
+**Contexto.** Desde a criação do modo Claude Code (DEC-012), o delta estruturado que o chat
+autora e o Code aplica se chamava **spec** e vivia em `meta/specs/` (`AAMMDD-specNNNN-desc.md`,
+0001–0037 aplicadas). O template-update do KCM (v1.87.0) trouxe **duas** coisas de uma vez: o
+mesmo artefato com outro nome (**WO**, *work order*, em `meta/workorders/`) **e** um `SPEC.md`
+que é outra coisa — a **spec de feature** no espírito do Spec-Driven Development (GitHub
+spec-kit): o problema, os critérios de aceite verificáveis, as decisões, o fora-de-escopo.
+Manter "spec" com os dois sentidos garantiria confusão permanente.
+
+**Decisão.** Separar os dois sentidos por nome:
+- **WO** = **como aplicar**. Pasta `meta/workorders/`, nome `AAMMDD-woNNNN-desc.md`, comando
+  `/apply-wo`. É o herdeiro direto das specs 0001–0037.
+- **spec** = **o quê construir e quando está pronto**. Spec de feature, modelo em `meta/SPEC.md`,
+  escrita em `meta/specs/` **só quando uma feature justifica** — nunca por rotina.
+
+**Migração (deliberadamente parcial).** Os 37 arquivos existentes **mudam de pasta e mantêm o
+nome** (`git mv meta\specs meta\workorders`). Nenhuma referência histórica é reescrita —
+STATUS, CHANGELOG, DECISIONS e os logs continuam dizendo "spec0021", "spec0036", e isso está
+certo: são as WOs de antes do nome mudar. A numeração **continua**: a próxima é `wo0038`.
+`meta/specs/` fica vazia e renasce no primeiro uso real como casa das specs de feature.
+
+**Alternativas consideradas.**
+- **Não adotar WO** (manter tudo como "spec") — rejeitada: o `SPEC.md` do kit ficaria ambíguo,
+  e a ambiguidade custaria uma explicação por sessão.
+- **Migração total** (renomear os 37 arquivos e todas as referências) — rejeitada: reescreveria
+  histórico em 4 documentos e nos logs, com custo alto e ganho cosmético. Registro histórico não
+  se reescreve (mesma regra que rege este arquivo).
+
+**Consequência.** Existe, de propósito, um período de coexistência: dentro de `meta/workorders/`
+convivem nomes `spec00NN` (antigos) e `wo00NN` (novos). Quem ler os docs precisa saber disto —
+por isso está no `CLAUDE.md`, no `CEREBRO.md` e no `GLOSSARY.md`. As WOs seguem ignoradas no
+`.flatdropignore`; as specs de feature sobem ao Projeto (são poucas e dizem o que se constrói).
+
+## DEC-024 — Comandos do Code viram Skills; o CEREBRO deixa de carregar apêndice
+**Data:** 2026-07-28 · **Status:** aceita (supera a parte de arranque da DEC-012)
+
+**Contexto.** Dois débitos herdados da montagem do modo Code: (1) os comandos `/` viviam em
+`.claude/commands/*.md`, formato **legado** — o formato atual é **Skill** em
+`.claude/skills/<nome>/SKILL.md`, com front-matter (`name`, `description`,
+`disable-model-invocation`); (2) o `meta/CEREBRO.md` carregava um **apêndice** com o conteúdo de
+`CLAUDE.md`, `settings.json` e dos comandos, "para criar no repo e depois apagar o apêndice".
+O apêndice nunca foi apagado, divergiu do original (apontava para um `meta/DECISOES.md` que não
+existe) e criava fonte de verdade dupla — contra a própria regra de higiene do CEREBRO.
+
+**Decisão.** (1) `/apply-spec` e `/wrap` migram para `.claude/skills/apply-wo/SKILL.md` e
+`.claude/skills/wrap/SKILL.md`, com front-matter e `disable-model-invocation: true` (impede o
+Code de disparar o comando por conta própria). O conteúdo **vivo** é preservado — a versão do
+projeto roda `python -m pytest -q` e usa Conventional Commits, coisas que o template genérico
+não tem — e ganha do template a linha do **relatório de trabalho**. `.claude/commands/` é
+removida. (2) O apêndice sai do CEREBRO, substituído por uma tabela que aponta para os arquivos
+reais da raiz.
+
+**Consequência.** O CEREBRO encolhe ~55 linhas e some uma referência errada. Fica registrado o
+princípio que gerou o atrito: **template genérico nunca substitui arquivo vivo refinado** — a
+comparação existe para colher o que há de novo, não para nivelar por baixo; a única exceção é
+formato descontinuado, que sempre migra. Isso virou seção própria no CEREBRO ("Ao receber um
+template-update do KCM") e crítica ao kit no IDEAS.
+
+## DEC-025 — No `.flatdropignore`, ignorar `pasta/*` e nunca `pasta/`
+**Data:** 2026-07-28 · **Status:** aceita
+
+**Contexto.** O autor tentou liberar um único arquivo dentro de uma pasta ignorada
+(`meta/legacy/` + `!meta/legacy/GOT_Build_-_Joker.md`) e o `!` não teve efeito: o `_TREE`
+mostrava só `meta/legacy/  [ignorada: flatdropignore]`, e o editor da GUI, ao salvar, caiu no
+fallback de ignorar arquivo a arquivo — frágil, porque arquivo novo na pasta entra sozinho.
+
+**Causa raiz (medida, não suposta).** Não é o motor de padrões: `core._scan` **poda diretórios
+in-place** antes de descer (`dirnames[:] = kept`, herança do FIX-001) e a poda sonda a pasta com
+barra final. Com `meta/legacy/`, a sonda casa → a subárvore inteira é descartada → o arquivo
+negado nunca é visitado. Verificado com `pathspec.PathSpec.from_lines("gitignore", ...)`, o
+mesmo motor de `core._make_spec`:
+
+| padrões | `meta/legacy/` casa (= poda)? | `GOT.md` ignorado? | `outro.md` ignorado? |
+|---|---|---|---|
+| `meta/legacy/` + `!…/GOT.md` | **True** (poda: o `!` nunca é avaliado) | False | True |
+| `meta/legacy/*` + `!…/GOT.md` | False | False | True |
+
+Ou seja: o motor **já libera** o arquivo (`match_file` devolve False para ele); quem o perde é a
+poda. `PathSpec` (não `GitIgnoreSpec`) usa "a última regra que casa vence", então a negação
+funciona — desde que a varredura chegue lá.
+
+**Decisão.** Convenção do projeto: no `.flatdropignore`, pasta se escreve **`pasta/*`** (o
+conteúdo), nunca **`pasta/`** (a pasta). O `.flatdropignore` da raiz foi reescrito nessa forma
+(`logs/*`, `meta/workorders/*`) com a regra em comentário.
+
+**Consequência.** É **contorno de convenção, não correção de produto**. O gerador do editor da
+GUI continua escrevendo a forma `pasta/` (e caindo no fallback por arquivo), e o `_TREE` continua
+colapsando a pasta podada sem dizer o que havia dentro. Os dois viraram item ativo no IDEAS e
+são a próxima frente de trabalho — na frente do multi-raiz. Enquanto isso: **não salvar o
+`.flatdropignore` pelo editor da GUI**, sob pena de o bloco `# >>> flatdrop-editor` reescrever
+os padrões na forma antiga.

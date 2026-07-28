@@ -21,6 +21,27 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
 
 ## Ativas
 
+> **Foco (2026-07-28):** as duas frentes abaixo (**`_TREE` nomear o conteúdo útil do que
+> foi ignorado** e **editor gravar `pasta/*`**) passam à frente do multi-raiz por decisão do
+> autor: nasceram de atrito real de uso (notas de 23 e 24/07) e são a próxima sessão.
+
+- **`_TREE` deve nomear o conteúdo útil das pastas ignoradas.** Hoje a árvore colapsa a pasta
+  numa linha (`meta/legacy/  [ignorada: flatdropignore]`) e não diz o que havia dentro — então
+  o chat futuro não tem como saber qual arquivo pediria para liberar. Proposta: listar os
+  filhos de pasta ignorada **por ignore do autor** (`.gitignore`/`.flatdropignore`), marcados
+  como pulados, e seguir colapsando o lixo estrutural (`node_modules`, `.git`, `__pycache__` —
+  a poda embutida de `cfg.dir_ignores`, que ninguém quer ver). Talvez com teto de N nomes por
+  pasta para não inchar o `_TREE`. Insumo já existe: `_scan` produz `skipped_items` completo.
+  (Ideia do usuário, nota de 2026-07-24.)
+- **Editor de `.flatdropignore` deve gravar `pasta/*`, não `pasta/`.** Causa raiz medida em
+  DEC-025: `_scan` poda o diretório casado antes de descer, então um `!` dentro dele nunca é
+  avaliado. Hoje o editor grava a forma `pasta/` e, ao salvar com um filho marcado, cai no
+  fallback de listar arquivo por arquivo — frágil, porque arquivo novo na pasta passa a entrar
+  sozinho. Proposta: o gerador emite `pasta/*` sempre que houver (ou puder haver) reinclusão,
+  e o fallback por arquivo é aposentado. Enquanto não entrar: **não salvar o `.flatdropignore`
+  pela GUI**, sob pena de o bloco `# >>> flatdrop-editor` reescrever a forma antiga.
+  (Nasceu da nota de 2026-07-23 + medição desta sessão.)
+
 > **Foco (2026-07-15):** as tarefas KCM, editor (Fase 2-D) e item C foram concluídas (ver
 > Concluídas). As frentes candidatas agora são **multi-raiz na GUI** e o **force-include
 > por caminho exato**; o restante segue por prioridade aproximada.
@@ -196,6 +217,31 @@ Registro do que ESTE projeto observou/mudou além do kit (material que volta par
 - **Descompasso de versão por corte cedo (2026-07-05).** Cortar a 0.3.0 antes de a spec seguinte
   (root_in_name) entrar deixou código à frente do CHANGELOG; resolvido com um patch de acerto (0.3.1).
   Lição: datar a versão só quando o lote de specs do ciclo estiver todo aplicado, ou assumir o patch.
+- **Template genérico não deve ser candidato a substituir arquivo vivo refinado — e o protocolo
+  de update precisa dizer isso.** A cada template-update, o mesmo atrito: o kit apresenta
+  `CLAUDE.md`, `.claude/settings.json`, skills (e, em outros projetos, as skills de nicho — o
+  caso do *narrative*, com 4) como se coubesse escolher entre o genérico e o vivo. Não cabe: o
+  genérico ensina estrutura e base; o projeto já especializou. Sugestão ao KCM: o
+  `_UPDATE-PROMPT.md` e a seção de update do `CEREBRO.md` devem afirmar de saída que (i)
+  template nunca substitui vivo, (ii) esses arquivos entram por padrão na seção «(c) o projeto
+  tem e o template não cobre», e (iii) a **única** exceção é formato descontinuado, que sempre
+  migra. Adotado localmente na seção «Ao receber um template-update do KCM» do CEREBRO
+  (DEC-024). (2026-07-28.)
+- **`.claude/commands/` está descontinuado — o kit deveria entregar Skills e dizer isso.** O
+  formato atual é `.claude/skills/<nome>/SKILL.md` com front-matter e
+  `disable-model-invocation`. O kit já entrega assim no v1.87.0, mas sem marcar que o antigo é
+  legado; sem essa marca, um projeto montado antes fica no formato velho sem saber. (DEC-024.)
+- **`meta/SPEC.md` chegou sem contexto e colidiu com um termo em uso.** O template não diz que
+  é spec de **feature** (Spec-Driven Development / GitHub spec-kit) nem que é **sob demanda** —
+  e neste projeto "spec" já significava o delta aplicável. Custou um mal-entendido que o autor
+  teve de desfazer à mão. Sugestão: o manifesto deveria trazer a origem (SDD) e a nota "não é o
+  modelo das WOs" na própria linha do arquivo. Resolvido aqui pela DEC-023. (2026-07-28.)
+- **Apêndice dentro do CEREBRO foi um erro de kit — já corrigido no template atual.** A versão
+  que montou este projeto punha os arquivos de arranque do Code como apêndice do `CEREBRO.md`,
+  com a instrução de apagá-lo depois de usar. Documento que manda apagar parte de si vira
+  dívida: nunca foi apagado e a cópia divergiu do original (`meta/DECISOES.md`, que não existe).
+  O template v1.87.0 já resolve remetendo ao `claude-code-kit.zip`. Registrado como resolvido —
+  a reclamação original era deste projeto. (DEC-024.)
 - **Diferença de ambiente esconde bug de teste (FIX-005).** O Code rodava `python -m pytest` (resolvia
   o path); o usuário roda `pytest` puro (não resolvia). Fixar a forma de rodar na infra (`conftest.py`
   na rootdir), não na memória de quem invoca. Vale como recomendação para o Kit em projetos com pacote

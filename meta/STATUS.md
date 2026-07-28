@@ -3,37 +3,32 @@
 Estado atual do projeto. Atualize ao fim de cada sessão de trabalho (rolante: o
 resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
 
-> **Mudanças nesta revisão (2026-07-20):** **DEC-022** (spec0036, 0.11.0) — checkbox
-> default-ON que nomeia `_MANIFEST`/`_TREE` com o nome da pasta no fim
-> (`_MANIFEST_<pasta>.md`), desambiguando no Projeto do Claude e mantendo o prefixo p/ busca.
-> Flag aditivo `--no-name-meta` na CLI e em `_build_cli_args` (DEC-020, **autorizado**);
-> `_generate_bat`/`_sources` intocados. **Desvio registrado:** a spec não ligava o campo ao
-> `_gather_cfg` (execução ao vivo); acrescentei a linha p/ manter a paridade GUI×`.bat`
-> (FIX-004). `is_our_folder` reconhece o sufixo. Antes, nesta leva: FIX-010 (0.10.1), layout
-> em duas colunas (0.10.0), atalho da UI (0.9.0), Recentes compacto (0.9.1), FIX-009 (0.9.2).
-> Versão **0.11.0**, **68 testes verdes**. **O projeto entra de novo em PAUSA a partir de
-> 2026-07-21** — uso real, estável, sem bug aberto. **Ao retomar:** ler este STATUS, o
-> `CHANGELOG` e as Ativas do `IDEAS.md`. **Frente candidata maior:** multi-raiz (decisão A/B
-> pendente, ver abaixo). **Antes de tudo:** conferir o backup do repo (ver Riscos).
+> **Mudanças nesta revisão (2026-07-28) — atualização de meta, sem tocar em código:**
+> merge do **template-update do KCM v1.87.0**. Três decisões novas: **DEC-023** (vocabulário —
+> `meta/specs/` vira `meta/workorders/`, o delta aplicável passa a se chamar **WO**, a próxima
+> é `wo0038`; os 37 arquivos existentes mudam de pasta e **mantêm o nome**, e nenhuma
+> referência histórica é reescrita), **DEC-024** (comandos do Code viram **Skills** em
+> `.claude/skills/`; o apêndice de arranque sai do `CEREBRO.md`) e **DEC-025** (no
+> `.flatdropignore`, pasta se escreve `pasta/*`, nunca `pasta/` — causa raiz medida: `_scan`
+> poda o diretório antes de descer, então o `!` dentro dele nunca é avaliado). Atualizados:
+> `CEREBRO.md`, `CLAUDE.md`, as duas skills, `.gitignore`, `.flatdropignore`, `meta/README.md`,
+> GLOSSARY, IDEAS, DECISIONS e as Instruções do Projeto. **Nada de código mudou** — a suíte não
+> foi rodada nesta sessão (último número verificado: 68 verdes em 2026-07-21).
 >
-> **Higiene extra (2026-07-21), fora da spec0037, a pedido do autor:** o backup foi
-> executado (`git push -u origin main`) e o risco virou RESOLVIDO; "Qualidade/testes" dizia
-> **48 testes** (número congelado de quando `test_core.py` era a suíte inteira) e passou a
-> **68 com a distribuição por arquivo**; no backlog, os itens **C (persistência)** e
-> **"botão Gerar atalho da UI"** estavam listados como abertos mas foram entregues em 0.6.0
-> e 0.9.0 — marcados como ENTREGUE; e o `[Não lançado]` do `CHANGELOG` ainda citava
-> persistência/recentes como pendente.
+> _Notas de revisão anteriores (DEC-022/spec0036 em 20/07 e a higiene de 21/07 — backup,
+> contagem de testes, backlog) foram absorvidas: o desfecho vive no `CHANGELOG` 0.11.0/0.10.1,
+> em DEC-022/FIX-010 e nas seções abaixo._
 
 - **Versão:** 0.11.0 no `__init__.py` (spec0036/DEC-022: nomear `_MANIFEST`/`_TREE` com o
   nome da pasta). `[Não lançado]` no CHANGELOG só tem itens de produto em aberto.
-- **Data:** 2026-07-21
+- **Data:** 2026-07-28
 - **Fase:** F1 (MVP) OK · F2 (robustez/conveniência) OK — **C (persistência) e D (editor
   de `.flatdropignore`) fechados**; em aberto só **multi-raiz na GUI** e **UI-2/UI-3**
   (polimento, opcionais) · F3 (gerador de `.bat` + multi-fonte na GUI) OK · F4
   (distribuição: `.exe`, single-file, contagem de tokens) não iniciada — ver `ROADMAP.md`.
 - **Situação geral:** em uso real, **estável**, em **pausa** (2026-07-21). Fluxo do monorepo
   `cinzeiro` coberto de ponta a ponta (GUI, CLI e `.bat`). Modo Claude Code em operação;
-  **specs 0001–0037 aplicadas e commitadas**. **68 testes verdes**; nenhum bug aberto. Esta
+  **WOs 0001–0037 aplicadas e commitadas** (nomeadas `spec00NN`, anteriores à DEC-023; agora em `meta/workorders/`). **68 testes verdes**; nenhum bug aberto. Esta
   leva (0.8.0–0.11.0): atalho "abrir GUI" semeia navegação (0.8.0), gerar atalho da UI +
   Recentes compacto + layout em duas colunas (0.9.0–0.10.0), FIX-010 persistência de
   preferências + padrões de fábrica (0.10.1), e nomeação dos meta com o nome da pasta
@@ -133,19 +128,35 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
    `%APPDATA%`/`~/.config`); só-GUI, DEC-020 blinda o `.bat`. Depois: Recentes virou botão
    compacto (0.9.1, spec0032) e **FIX-010** devolveu as preferências ao abrir pelo atalho
    (0.10.1, spec0035). 9 testes em `test_settings.py`.
-4. **Multi-raiz na GUI** (selecionar N pastas, prefixar cada uma com sua raiz).
-5. **UI-2** (polimento de layout) e **UI-3** (presets "só docs"/"só código", lembrar
+4. **`_TREE` deve nomear o conteúdo útil das pastas ignoradas** (nota do autor,
+   2026-07-24). Hoje a pasta ignorada vira uma linha só e o chat futuro não descobre o que
+   liberar. Listar os filhos de pasta ignorada **por ignore do autor**, seguindo a colapsar o
+   lixo estrutural (`node_modules`, `.git`, `__pycache__`). Insumo pronto: `skipped_items`.
+   **PRÓXIMA frente, à frente do multi-raiz (decisão do autor, 2026-07-28).**
+5. **Editor de `.flatdropignore` deve gravar `pasta/*`** em vez de `pasta/` + fallback por
+   arquivo (causa raiz em DEC-025). Enquanto não entra: **não salvar o `.flatdropignore` pela
+   GUI** — o bloco `# >>> flatdrop-editor` reescreveria a forma antiga e quebraria o `!`.
+6. **Multi-raiz na GUI** (selecionar N pastas, prefixar cada uma com sua raiz). Decisão A/B
+   ainda pendente (recomendação: B). **Adiada por decisão do autor (2026-07-28).**
+7. **UI-2** (polimento de layout) e **UI-3** (presets "só docs"/"só código", lembrar
    última seleção).
-6. **Formato "caminho escrito"** (`raiz__pastas__stem.ext`) como seletor de formato
+8. **Formato "caminho escrito"** (`raiz__pastas__stem.ext`) como seletor de formato
    do nome — útil para empilhar por raiz, não para o Claude achar por nome. Espera.
-7. Aviso mais visível quando o pathspec está ausente (destaque na GUI).
-8. Saída da CLI ASCII-safe (`->`/`*`). ~~Botão "Gerar atalho da UI".~~ **ENTREGUE (0.9.0,
+9. Aviso mais visível quando o pathspec está ausente (destaque na GUI).
+10. Saída da CLI ASCII-safe (`->`/`*`). ~~Botão "Gerar atalho da UI".~~ **ENTREGUE (0.9.0,
    spec0031):** menu **Ferramentas → "Gerar atalho da UI…"** (gerador NOVO e separado; o
    RUN `.bat` ficou intocado, DEC-020).
 
 ## Riscos / pontos de atenção
 
-- **Nenhum bug aberto.** (FIX-005 resolvido pelo `conftest.py`; FIX-008 corrigido na
+- **Um comportamento aberto (não é regressão): o `!` não resgata arquivo dentro de pasta
+  ignorada.** Causa raiz medida em **DEC-025** — `core._scan` poda o diretório casado antes de
+  descer, então a negação nunca é avaliada. Contornado por convenção (`pasta/*`); a correção de
+  produto é o item 5 do backlog. O `.flatdropignore` da raiz já está na forma nova.
+- **`meta/DECISIONS.md` passou de 700 linhas** (793 com DEC-023/024/025). O arquivamento em
+  `DECISIONS-archive.md` está pendente **de propósito**: fazer agora, no meio da mudança de
+  vocabulário, mexeria nas mesmas referências duas vezes. Fazer depois do commit da migração.
+- Nenhum bug de código aberto. (FIX-005 resolvido pelo `conftest.py`; FIX-008 corrigido na
   spec0028 — falta só o smoke manual de confirmação no Windows.)
 - **Backup do repositório — RESOLVIDO em 2026-07-21 (era o risco nº 1 da pausa).** O remoto
   já existia (`origin` → `github.com:SiluJones/flatdrop.git`, SSH), mas a `main` local **não
