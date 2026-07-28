@@ -97,7 +97,7 @@ Cada arquivo tem um papel e um comportamento temporal distinto. **Respeite o pap
 | `ROADMAP.md` | Plano em fases | OPCIONAL — plano deliberado de evolução em fases. Use quando o projeto tem direção de médio/longo prazo. |
 | `GLOSSARY.md` | Estável | OPCIONAL — termos próprios do projeto. Use quando há jargão que se repete entre sessões. |
 | `HISTORY.md` | Cresce (histórico) | OPCIONAL — conhecimento consolidado de fases antigas (guias, análises que não cabem no CONTEXT enxuto). Lido sob demanda. |
-| `logs/AAAA-MM-DD.md` | Histórico | Ao final de cada sessão (formato em LOG-TEMPLATE). |
+| `logs/AAAA-MM-DD.md` | Histórico | Ao final de cada sessão (formato em LOG-TEMPLATE). **Um arquivo por DIA** (DEC-026): segunda sessão no mesmo dia vira `## Sessão N` no mesmo arquivo, nunca arquivo novo. |
 | `workorders/AAMMDD-woNNNN-desc.md` | Cresce (uma por delta) | Delta estruturado que o Code aplica: texto exato + âncora semântica. Autorado pelo chat. |
 
 ## Análise antes do compromisso

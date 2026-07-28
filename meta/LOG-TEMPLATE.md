@@ -1,5 +1,8 @@
 # LOG-TEMPLATE — FlatDrop
 
+> Um arquivo por DIA (DEC-026). Segunda sessão no mesmo dia entra como
+> `## Sessão N — <período>: <assunto>` neste mesmo arquivo — nunca um arquivo novo.
+
 Este arquivo é o **molde** dos logs de sessão. NÃO é um log preenchido: copie-o
 para `logs/AAAA-MM-DD.md` ao iniciar uma sessão e preencha os campos. Mantenha
 este molde em branco como referência do formato.

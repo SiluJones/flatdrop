@@ -25,6 +25,22 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
 > foi ignorado** e **editor gravar `pasta/*`**) passam à frente do multi-raiz por decisão do
 > autor: nasceram de atrito real de uso (notas de 23 e 24/07) e são a próxima sessão.
 
+- **O teto de nomes do `_TREE` esconde justamente as pastas grandes.** Depois do wo0038 a árvore
+  nomeia até `TREE_NAME_CAP` (10) e agrega o resto: `meta/workorders/` sai com 10 nomes e
+  `(+29 mais)` — e são os 29 que a pessoa precisaria ver para escolher o que liberar. Despejar
+  tudo também não serve (uma pasta de 100 arquivos inunda o `_TREE`). Caminhos a considerar:
+  primeiros N + últimos N (dá a faixa e a ordem); teto por pasta em vez de global; teto maior
+  quando a pasta é o alvo de um `!`; ou uma lista completa fora do `_TREE`, num arquivo à parte
+  que só a pasta grande gera. Vale também levar isso à GUI, para o editor mostrar a pasta inteira
+  quando ela vier de um ignore do autor. **Ainda sem forma decidida — o teto atual não serve.**
+  (Autor, 2026-07-28.)
+- **`pasta/` deveria voltar a ser exclusão DURA?** O FIX-011 tornou `pasta/` e `pasta/*`
+  equivalentes no FlatDrop: os dois aceitam `!` por dentro. O autor prefere o contrário — `pasta/`
+  significando "nunca entra, nem aparece na árvore" e só `pasta/*` aceitando resgate, que é o
+  comportamento do git puro e dá duas ferramentas com dois usos. Em troca, reintroduz o caso que
+  gerou a reclamação de 23/07, então só fecha se a GUI escrever `pasta/*` sozinha e o `_TREE`
+  disser em qual forma cada pasta está. **Decisão separada da do gerador**; ver
+  `meta/analises/260728-ANALISE-gerador-flatdropignore.md`. (2026-07-28.)
 - **`_TREE` deve nomear o conteúdo útil das pastas ignoradas.** Hoje a árvore colapsa a pasta
   numa linha (`meta/legacy/  [ignorada: flatdropignore]`) e não diz o que havia dentro — então
   o chat futuro não tem como saber qual arquivo pediria para liberar. Proposta: listar os

@@ -808,3 +808,20 @@ os padrões na forma antiga.
 - **Lição:** poda ≠ filtro. Otimização que corta a árvore antes de decidir muda a semântica,
   não só a performance — e o sintoma aparece longe da causa. A convenção `pasta/*` (DEC-025)
   continua valendo como cinto e suspensório, mas deixou de ser obrigatória.
+
+## DEC-026 — Um log por DIA, sessões concatenadas
+**Data:** 2026-07-28 · **Status:** aceita
+
+**Contexto.** A convenção `logs/AAAA-MM-DD.md` não previu duas sessões no mesmo dia. Aconteceu
+duas vezes (24/06 e 05/07) e foi resolvido na mão, com sufixos: `2026-06-24 (2).md` e
+`2026-07-05 (novo menor, analisar e fazer merge com outro).md`. O resultado foi pior que o
+problema — em 24/06 os dois arquivos diziam "cobre o dia inteiro" e **nenhum dos dois cobria**:
+um tinha o teste real do usuário e o modal da UI-1, o outro tinha a spec-0008 e a DEC-014.
+Informação perdida em ambos, e ninguém sabia qual ler.
+
+**Decisão.** Um arquivo por dia. Segunda sessão no mesmo dia **concatena** no arquivo existente,
+como seção `## Sessão N — <período>: <assunto>`, nunca como arquivo novo. Se um log já foi
+entregue e a sessão continua, o chat reentrega o arquivo do dia INTEIRO, com a seção nova ao fim.
+
+**Consequência.** Os quatro arquivos viraram dois (wo0040), com nota de fusão no topo e nada
+descartado. A regra entrou no `meta/CEREBRO.md` e no `meta/LOG-TEMPLATE.md`.

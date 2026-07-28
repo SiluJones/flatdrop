@@ -128,15 +128,16 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
    `%APPDATA%`/`~/.config`); só-GUI, DEC-020 blinda o `.bat`. Depois: Recentes virou botão
    compacto (0.9.1, spec0032) e **FIX-010** devolveu as preferências ao abrir pelo atalho
    (0.10.1, spec0035). 9 testes em `test_settings.py`.
-4. **`_TREE` deve nomear o conteúdo útil das pastas ignoradas** (nota do autor,
-   2026-07-24). Hoje a pasta ignorada vira uma linha só e o chat futuro não descobre o que
-   liberar. Listar os filhos de pasta ignorada **por ignore do autor**, seguindo a colapsar o
-   lixo estrutural (`node_modules`, `.git`, `__pycache__`). Insumo pronto: `skipped_items`.
-   **PRÓXIMA frente, à frente do multi-raiz (decisão do autor, 2026-07-28).**
+4. **Teto de nomes do `_TREE` (`+N mais`) esconde as pastas grandes.** A parte de nomear o que
+   foi ignorado saiu na 0.12.0 (wo0038), mas com teto global de 10: `meta/workorders/` mostra 10
+   e esconde 29 — e são os 29 que interessam para escolher o que liberar. Despejar tudo inunda o
+   `_TREE`. Forma ainda não decidida (ver IDEAS). Vale para a GUI também. **Próxima frente.**
 5. **Editor de `.flatdropignore` deveria gravar `pasta/*` + `!mantido`** em vez de listar a
    pasta parcial por folha. Depois do FIX-011 (0.12.0) deixou de ser bloqueio — o `!` funciona
    nas duas formas —, mas a lista por folha continua não sendo à prova de arquivo novo. Mexe na
-   maquinaria de round-trip (DEC-016/spec0020): **pede análise antes da WO**.
+   maquinaria de round-trip (DEC-016/spec0020). **Análise escrita e em discussão:**
+   `meta/analises/260728-ANALISE-gerador-flatdropignore.md` — três opções (B, C, D), a decisão
+   depende de responder "arquivo novo em pasta curada entra ou fica fora?". Aguarda o autor.
 6. **Multi-raiz na GUI** (selecionar N pastas, prefixar cada uma com sua raiz). Decisão A/B
    ainda pendente (recomendação: B). **Adiada por decisão do autor (2026-07-28).**
 7. **UI-2** (polimento de layout) e **UI-3** (presets "só docs"/"só código", lembrar

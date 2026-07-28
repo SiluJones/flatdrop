@@ -213,3 +213,11 @@ varredura não chega até ele. É a causa raiz da DEC-025 e o motivo da convenç
 não-trivial: problema, restrições/medições, opções (com o motivo do descarte),
 recomendação, riscos, ponto de decisão. Vive em `meta/analises/AAMMDD-ANALISE-<tema>.md`;
 a pasta nasce no primeiro uso. Funil: análise → WO → DECISIONS.
+
+**`pasta/` × `pasta/*`.** Duas formas de ignorar uma pasta. `pasta/` nomeia **a pasta**;
+`pasta/*` nomeia **o conteúdo direto** dela. No git puro a diferença é decisiva: com `pasta/`
+o walker poda o diretório e um `!pasta/arquivo` posterior nunca chega a ser avaliado; com
+`pasta/*` a pasta não casa, a varredura desce e o resgate funciona. No FlatDrop, **desde o
+FIX-011 (0.12.0) as duas formas aceitam resgate** — a poda passou a consultar as negações antes
+de descartar a pasta. A convenção `pasta/*` (DEC-025) segue recomendada por ser explícita e
+compatível com quem lê o arquivo como se fosse `.gitignore`.
