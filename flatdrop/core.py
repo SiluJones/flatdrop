@@ -455,6 +455,10 @@ def _ignore_status(rel: str, full, gi, fd) -> tuple[bool, str, bool]:
 # --------------------------------------------------------------------------- #
 # Editor de .flatdropignore (spec0018): anotacao da arvore + geracao dos padroes
 # --------------------------------------------------------------------------- #
+# Nome de arquivo que nao existe, usado para PERGUNTAR ao ignore o que ele faria com um
+# arquivo novo dentro de uma pasta. E como o gerador descobre o estado de uma trava que o
+# chamador nao informou (wo0041 / DEC-027).
+FLATDROP_PROBE = "__flatdrop_arquivo_novo__"
 FLATDROP_EDITOR_MARK_A = "# >>> flatdrop-editor"
 FLATDROP_EDITOR_MARK_B = "# <<<"
 
@@ -559,15 +563,35 @@ def folder_effective_state(root, cfg: ScanConfig, rel_dir: str, probes=None):
 
 
 def build_flatdropignore(root, cfg: ScanConfig, wants: dict[str, bool],
-                         existing_text: str | None = None) -> str:
-    """Gera o texto do ``.flatdropignore`` (bloco gerenciado) a partir de ``wants``.
+                         existing_text: str | None = None,
+                         locks: dict[str, bool] | None = None) -> str:
+    """Gera o texto do ``.flatdropignore`` (bloco gerenciado) a partir de ``wants`` + ``locks``.
 
-    ``wants``: ``{rel_arquivo: bool}`` — inclusao desejada por FOLHA; ausentes seguem o
-    ESTADO EFETIVO atual (preserva o .flatdropignore existente no round-trip). Regras:
-    - base de geracao = GIT PURO (uma exclusao so-do-flatdropignore e re-emitida);
-    - LIBERAR pasta que o git esconde: ``!dir/`` + re-excluir os indesejados;
-    - EXCLUIR do lado versionado: colapsa pasta CHEIA em ``dir/`` (a prova de arquivo
-      novo); pasta parcial sai por folha (preserva o irmao mantido).
+    Duas perguntas independentes, dois parametros (DEC-027):
+
+    - ``wants``: ``{rel_arquivo: bool}`` — *este arquivo sobe?*, por FOLHA.
+    - ``locks``: ``{rel_pasta: bool}`` — *arquivo novo aqui sobe?*, por PASTA.
+      ``True`` = trava FECHADA (nao sobe), ``False`` = ABERTA (sobe).
+
+    Ausentes nos dois casos seguem o ESTADO EFETIVO atual dos ignores — e o que preserva o
+    round-trip do ``.flatdropignore`` existente (DEC-016). Uma pasta hoje ignorada volta como
+    fechada; uma pasta hoje liberada por ``!`` volta como aberta.
+
+    Emissao (base de geracao = GIT PURO; exclusao so-do-flatdropignore e re-emitida):
+
+    ==========  ==================  ====================  =========================
+    trava       escondida pelo git  linha da PASTA        linhas dos ARQUIVOS
+    ==========  ==================  ====================  =========================
+    fechada     nao                 ``pasta/*``           ``!pasta/y`` p/ marcado
+    fechada     sim                 (nada)                ``!pasta/y`` p/ marcado
+    aberta      nao                 (nada)                ``pasta/x`` p/ desmarcado
+    aberta      sim                 ``!pasta/*``           ``pasta/x`` p/ desmarcado
+    ==========  ==================  ====================  =========================
+
+    NAO ha colapso automatico: pasta aberta com todos os filhos desmarcados sai por folha,
+    uma linha cada. Quem torna uma pasta a prova de arquivo novo e a trava, nao o gesto nos
+    filhos — era exatamente esse palpite que a DEC-027 removeu.
+
     Preserva linhas fora do bloco gerenciado (round-trip, DEC-016 opcao i).
     """
     root = Path(root)
@@ -583,45 +607,60 @@ def build_flatdropignore(root, cfg: ScanConfig, wants: dict[str, bool],
             return True
         return not full.match_file(rel + "/" if is_dir else rel)
 
+    locks = locks or {}
     leaves, _gd, _b = _walk_leaves(root, cfg, _ignore_probes(root, cfg))
     all_dirs = {"/".join(l.split("/")[:i]) for l in leaves for i in range(1, len(l.split("/")))}
-    gi_dirs = sorted(d for d in all_dirs if not git_in(d, True))  # pastas escondidas pelo GIT
-    want_of = lambda rel: wants.get(rel, full_in(rel))            # default: efetivo atual
+    parent_of = lambda rel: rel.rsplit("/", 1)[0] if "/" in rel else ""
 
-    def nearest_gi(rel: str):
-        best = None
-        for g in gi_dirs:
-            if rel.startswith(g + "/") and (best is None or len(g) > len(best)):
-                best = g
-        return best
+    # Trava ausente: pergunta ao proprio ignore o que ele faria com um arquivo INEXISTENTE.
+    # E a definicao literal da trava ("arquivo novo aqui entra?"), e e a unica sonda que
+    # funciona: "pasta/*" de proposito NAO casa a pasta como diretorio, entao sondar
+    # full_in(d, True) daria "aberta" para toda pasta que o proprio editor fechou.
+    closed_of = lambda d: locks.get(d, not full_in(f"{d}/{FLATDROP_PROBE}"))
 
-    # LIBERAR: pasta git-ignored com alguma folha desejada -> !dir/ + re-exclui indesejados
-    liberate: list[str] = []
-    reexclude: list[str] = []
-    freed: set[str] = set()
-    for g in gi_dirs:
-        under = [l for l in leaves if l.startswith(g + "/")]
-        if any(want_of(l) for l in under) and not any(g.startswith(o + "/") for o in freed):
-            liberate.append(f"!{g}/")
-            freed.add(g)
-            for l in under:
-                if not want_of(l):
-                    reexclude.append(l)
+    def want_of(rel: str) -> bool:
+        """Este arquivo sobe? Explicito vence; senao segue a trava recem-mexida; senao,
+        o estado efetivo de hoje (e o que preserva o round-trip)."""
+        if rel in wants:
+            return wants[rel]
+        d = parent_of(rel)
+        if d and d in locks:      # trava mexida NESTA chamada manda no que nao foi dito
+            return not locks[d]
+        return full_in(rel)
 
-    # EXCLUIR: base git puro; colapsa pasta CHEIA (a prova de arquivo novo)
-    excluded = {l for l in leaves if git_in(l) and not want_of(l) and nearest_gi(l) is None}
-    cand = {"/".join(l.split("/")[:i]) for l in excluded for i in range(1, len(l.split("/")))}
+    folder_lines: list[str] = []
+    file_lines: list[str] = []
 
-    def fully_excluded(d: str) -> bool:
-        under = [l for l in leaves if l.startswith(d + "/")]
-        return bool(under) and all(l in excluded for l in under)
+    # --- linhas da PASTA. Uma por pasta que contem arquivo direto: "pasta/*" NAO alcanca
+    # "pasta/sub/arquivo" (medido), so a subpasta como diretorio. Enquanto ninguem resgata
+    # nada la dentro, a poda basta; assim que um "!" desce, faltaria a linha do nivel de
+    # baixo. Emitir por nivel custa uma linha e fecha o buraco.
+    dirs_com_arquivo = {parent_of(l) for l in leaves if parent_of(l)}
+    for d in sorted(all_dirs):
+        fechada, git_fora = closed_of(d), not git_in(d, True)
+        if fechada and not git_fora and d in dirs_com_arquivo:
+            folder_lines.append(f"{d}/*")
+        elif not fechada and git_fora:
+            folder_lines.append(f"!{d}/*")
 
-    collapsible = {d for d in cand if fully_excluded(d)}
-    maximal = {d for d in collapsible if not any(d != o and d.startswith(o + "/") for o in collapsible)}
-    exclude = [f"{d}/" for d in sorted(maximal)]
-    exclude += [l for l in sorted(excluded) if not any(l.startswith(d + "/") for d in maximal)]
+    # --- linhas dos ARQUIVOS. A pasta MAIS PROXIMA manda: dentro de fechada so aparece o
+    # resgate do que foi marcado; dentro de aberta so aparece a exclusao do desmarcado.
+    for l in sorted(leaves):
+        d = parent_of(l)
+        if not d:                                   # raiz nao tem trava: regra antiga
+            if git_in(l) and not want_of(l):
+                file_lines.append(l)
+            continue
+        if closed_of(d):
+            if want_of(l):
+                file_lines.append(f"!{l}")
+        else:
+            if not want_of(l):
+                file_lines.append(l)
 
-    block = liberate + sorted(set(reexclude)) + exclude
+    # PASTA antes de ARQUIVO, e raso antes de fundo: vale a ULTIMA regra que casa, entao o
+    # resgate precisa vir depois da exclusao que o pegaria (e vice-versa).
+    block = folder_lines + file_lines
     body = "\n".join(block) if block else "# (sem alteracoes)"
     managed = f"{FLATDROP_EDITOR_MARK_A}\n{body}\n{FLATDROP_EDITOR_MARK_B}"
     if existing_text and FLATDROP_EDITOR_MARK_A in existing_text and FLATDROP_EDITOR_MARK_B in existing_text:

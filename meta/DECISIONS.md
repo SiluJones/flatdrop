@@ -825,3 +825,40 @@ entregue e a sessão continua, o chat reentrega o arquivo do dia INTEIRO, com a 
 
 **Consequência.** Os quatro arquivos viraram dois (wo0040), com nota de fusão no topo e nada
 descartado. A regra entrou no `meta/CEREBRO.md` e no `meta/LOG-TEMPLATE.md`.
+
+## DEC-027 — A trava da pasta decide o futuro; o checkbox decide o presente
+**Data:** 2026-07-28 · **Status:** aceita (altera o contrato da DEC-016)
+
+**Contexto.** O editor de `.flatdropignore` tinha **um** controle (o checkbox tri-estado)
+tentando responder **duas** perguntas independentes: *este arquivo sobe?* e *o que aparecer
+aqui depois sobe?*. Pior: o checkbox da pasta nem é uma escolha — `folder_effective_state`
+o **deriva** dos filhos, então "indeterminado" significa "os filhos estão misturados", nunca
+"o autor decidiu algo sobre a pasta". A intenção da pasta não estava perdida no caminho:
+**nunca existiu**. O gerador então adivinhava — colapsava a pasta em `pasta/` quando todos os
+filhos estavam desmarcados — e o palpite errava nos dois sentidos: arquivo novo entrava numa
+pasta parcialmente curada, e uma pasta esvaziada à mão virava exclusão dura sem ninguém pedir.
+
+**Decisão.** Separar os dois controles.
+
+- **Checkbox de arquivo:** *este arquivo sobe?* — como sempre foi.
+- **Checkbox de pasta:** atalho para marcar/desmarcar todos os filhos. **Não influencia a
+  trava** e continua sendo um agregado.
+- **Trava da pasta (controle novo):** *arquivo novo aqui sobe?* — 🔓 aberta (padrão) ou
+  🔒 fechada. É a única informação nova, e não é derivada de nada.
+
+No core, `build_flatdropignore` ganha `locks: {rel_pasta: bool}` ao lado de `wants`, e a
+heurística de colapso é **removida**. Trava ausente = estado efetivo de hoje, o que preserva o
+round-trip sem palpite.
+
+**Consequência (quebra de contrato assumida).** Pasta aberta com todos os filhos desmarcados
+passa a escrever **uma linha por arquivo**, não `pasta/`. É o que o autor pediu explicitamente:
+desmarcar 20 arquivos é desmarcar 20 arquivos; fechar a pasta é outro gesto. O teste
+`test_editor_collapse_blocks_new_files` afirmava o contrário e foi reescrito — o comportamento
+que ele protegia agora se obtém fechando a trava.
+
+**Medido antes de decidir** (0.12.0, varredura real): `pasta/*` + `!pasta/x.md` deixa entrar só
+`x.md` **e mantém arquivo novo fora**; `!pasta/*` abre pasta escondida pelo git e deixa arquivo
+novo entrar; `!pasta/` e `!pasta/*` se comportam igual (padronizado em `/*`, DEC-025). E a
+armadilha do aninhamento: `pasta/*` **não** casa `pasta/sub/arquivo.md` — só `pasta/sub/` como
+diretório. Enquanto ninguém resgata nada lá dentro, a poda resolve; assim que um `!` desce, a
+subpasta precisa da linha dela. Por isso o gerador emite uma linha por nível fechado.

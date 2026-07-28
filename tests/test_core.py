@@ -567,26 +567,35 @@ def _copied(root):
 
 @pytest.mark.skipif(not core.HAS_PATHSPEC, reason="requer pathspec")
 def test_editor_liberate_only_one(tmp_path):
+    # pasta escondida pelo .gitignore, trava ABERTA: !logs/* + exclusao dos outros por nome.
     root = _editor_repo(tmp_path)
     txt = core.build_flatdropignore(str(root), core.ScanConfig(mode="collisions"),
-                                    {"logs/run.md": True})
+                                    {"logs/skip.md": False, "logs/deep/c.md": False},
+                                    locks={"logs": False})
+    assert "!logs/*" in txt
     (root / ".flatdropignore").write_text(txt, encoding="utf-8")
     got = _copied(root)
-    assert "logs/run.md" in got                       # liberado
-    assert "logs/skip.md" not in got                  # re-excluido (nao vazou)
-    assert "logs/deep/c.md" not in got                # re-excluido em profundidade
+    assert "logs/run.md" in got                       # unico filho que segue marcado
+    assert "logs/skip.md" not in got                  # excluido por nome
+    assert "logs/deep/c.md" not in got                # excluido por nome
     assert "docs/a.md" in got                         # nao tocado -> segue incluido
 
 
 @pytest.mark.skipif(not core.HAS_PATHSPEC, reason="requer pathspec")
 def test_editor_exclude_keeps_sibling(tmp_path):
+    # pasta ABERTA (default), um filho desmarcado: so a linha do arquivo, nada sobre a pasta.
     root = _editor_repo(tmp_path)
     txt = core.build_flatdropignore(str(root), core.ScanConfig(mode="collisions"),
-                                    {"docs/a.md": False, "docs/b.md": False})
+                                    {"docs/b.md": False})
+    block = txt.split(core.FLATDROP_EDITOR_MARK_A, 1)[1]
+    assert "docs/b.md" in block
+    assert "docs/*" not in block and "!docs/*" not in block
+    assert "docs/a.md" not in block and "docs/keep.md" not in block
     (root / ".flatdropignore").write_text(txt, encoding="utf-8")
     got = _copied(root)
     assert "docs/keep.md" in got
-    assert "docs/a.md" not in got and "docs/b.md" not in got
+    assert "docs/a.md" in got
+    assert "docs/b.md" not in got
 
 
 @pytest.mark.skipif(not core.HAS_PATHSPEC, reason="requer pathspec")
@@ -595,7 +604,7 @@ def test_editor_roundtrip_preserves_manual(tmp_path):
     existing = ("# regra minha\n*.tmp\n\n"
                 + core.FLATDROP_EDITOR_MARK_A + "\nlogs/x\n" + core.FLATDROP_EDITOR_MARK_B + "\n")
     txt = core.build_flatdropignore(str(root), core.ScanConfig(mode="collisions"),
-                                    {"docs/a.md": False}, existing_text=existing)
+                                    {"docs/a.md": False}, existing_text=existing, locks={})
     assert "# regra minha" in txt and "*.tmp" in txt          # linhas manuais preservadas
     assert txt.count(core.FLATDROP_EDITOR_MARK_A) == 1         # um unico bloco gerenciado
     assert "docs/a.md" in txt
@@ -624,19 +633,39 @@ def test_flatdropignore_alias_txt_applies(tmp_path):
 
 
 @pytest.mark.skipif(not core.HAS_PATHSPEC, reason="requer pathspec")
-def test_editor_collapse_blocks_new_files(tmp_path):
+def test_editor_lock_closed_writes_star(tmp_path):
+    # trava FECHADA em logs/: "logs/*" e nenhuma linha por arquivo.
     for p in ("logs/a.md", "logs/b.md", "keep.md"):
         f = tmp_path / p
         f.parent.mkdir(parents=True, exist_ok=True)
         f.write_text("x", encoding="utf-8")
     (tmp_path / ".gitignore").write_text("", encoding="utf-8")
     cfg = core.ScanConfig(mode="collisions")
-    txt = core.build_flatdropignore(str(tmp_path), cfg, {"logs/a.md": False, "logs/b.md": False})
-    assert "logs/" in txt and "logs/a.md" not in txt  # colapsou em pasta, nao por arquivo
+    txt = core.build_flatdropignore(str(tmp_path), cfg, {}, locks={"logs": True})
+    assert "logs/*" in txt
+    assert "logs/a.md" not in txt and "logs/b.md" not in txt
     (tmp_path / ".flatdropignore").write_text(txt, encoding="utf-8")
     (tmp_path / "logs" / "NOVO.md").write_text("x", encoding="utf-8")  # arquivo novo
     names = {f.rel.as_posix() for f in core.make_plan(str(tmp_path), cfg).files}
-    assert "logs/NOVO.md" not in names  # bloqueado pela regra de pasta
+    assert "logs/NOVO.md" not in names  # bloqueado pela trava
+    assert "logs/a.md" not in names and "logs/b.md" not in names
+    assert "keep.md" in names
+
+
+@pytest.mark.skipif(not core.HAS_PATHSPEC, reason="requer pathspec")
+def test_editor_open_folder_all_unchecked_lists_each(tmp_path):
+    # pasta ABERTA (default) com TODOS os filhos desmarcados: uma linha por arquivo,
+    # nunca "logs/*" — e o adendo da DEC-027, quem fecha a pasta e a trava, nao o gesto.
+    for p in ("logs/a.md", "logs/b.md", "keep.md"):
+        f = tmp_path / p
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text("x", encoding="utf-8")
+    (tmp_path / ".gitignore").write_text("", encoding="utf-8")
+    cfg = core.ScanConfig(mode="collisions")
+    txt = core.build_flatdropignore(str(tmp_path), cfg,
+                                    {"logs/a.md": False, "logs/b.md": False})
+    assert "logs/a.md" in txt and "logs/b.md" in txt
+    assert "logs/*" not in txt
 
 
 @pytest.mark.skipif(not core.HAS_PATHSPEC, reason="requer pathspec")
@@ -647,16 +676,39 @@ def test_editor_roundtrip_preserves_folder_exclusion(tmp_path):
         f.write_text("x", encoding="utf-8")
     (tmp_path / ".gitignore").write_text("", encoding="utf-8")
     cfg = core.ScanConfig(mode="collisions")
-    first = core.build_flatdropignore(str(tmp_path), cfg, {"logs/a.md": False})
+    first = core.build_flatdropignore(str(tmp_path), cfg, {}, locks={"logs": True})
+    assert "logs/*" in first
     (tmp_path / ".flatdropignore").write_text(first, encoding="utf-8")
     existing = (tmp_path / ".flatdropignore").read_text(encoding="utf-8")
-    # usuario mexe SO em docs/a; logs nao entra em wants (nao expandido)
+    # segunda chamada SEM locks: a pasta fechada na primeira volta fechada na segunda
+    # (o default vem do estado efetivo, nao de locks repetido)
     second = core.build_flatdropignore(str(tmp_path), cfg, {"docs/a.md": False}, existing_text=existing)
+    assert "logs/*" in second
     (tmp_path / ".flatdropignore").write_text(second, encoding="utf-8")
     names = {f.rel.as_posix() for f in core.make_plan(str(tmp_path), cfg).files}
     assert "logs/a.md" not in names   # exclusao preservada no round-trip
     assert "docs/a.md" not in names   # nova exclusao aplicada
     assert "docs/keep.md" in names    # irmao preservado
+
+
+@pytest.mark.skipif(not core.HAS_PATHSPEC, reason="requer pathspec")
+def test_editor_nested_closed_emits_line_per_level(tmp_path):
+    # pasta/ e pasta/sub/ fechadas, um arquivo resgatado em pasta/sub/: precisa da linha
+    # de AMBOS os niveis, senao o irmao nao resgatado vaza (armadilha medida na DEC-027).
+    for p in ("pasta/top.md", "pasta/sub/deep.md", "pasta/sub/outro.md"):
+        f = tmp_path / p
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text("x", encoding="utf-8")
+    (tmp_path / ".gitignore").write_text("", encoding="utf-8")
+    cfg = core.ScanConfig(mode="collisions")
+    txt = core.build_flatdropignore(str(tmp_path), cfg, {"pasta/sub/deep.md": True},
+                                    locks={"pasta": True, "pasta/sub": True})
+    assert "pasta/*" in txt and "pasta/sub/*" in txt
+    (tmp_path / ".flatdropignore").write_text(txt, encoding="utf-8")
+    names = {f.rel.as_posix() for f in core.make_plan(str(tmp_path), cfg).files}
+    assert "pasta/sub/deep.md" in names       # resgatado
+    assert "pasta/sub/outro.md" not in names  # irmao fica de fora
+    assert "pasta/top.md" not in names
 
 
 @pytest.mark.skipif(not core.HAS_PATHSPEC, reason="requer pathspec")
