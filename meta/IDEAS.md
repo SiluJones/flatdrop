@@ -217,6 +217,20 @@ Registro do que ESTE projeto observou/mudou além do kit (material que volta par
 - **Descompasso de versão por corte cedo (2026-07-05).** Cortar a 0.3.0 antes de a spec seguinte
   (root_in_name) entrar deixou código à frente do CHANGELOG; resolvido com um patch de acerto (0.3.1).
   Lição: datar a versão só quando o lote de specs do ciclo estiver todo aplicado, ou assumir o patch.
+- **O kit ensina a regra `pasta/*` e não a segue.** O `flatdropignore__template-update` traz o
+  comentário certo («use `pasta/*` (o conteudo), nao `pasta/` (a pasta): sob pasta excluida por
+  inteiro o `!` NAO reinclui») e aplica a forma nova em `meta/workorders/*` — mas escreve
+  `logs/` na forma antiga, duas linhas acima. E o `CEREBRO` manda reincluir com
+  `!analises/_TEMPLATE.md` sem exigir que a pasta esteja como `analises/*`, o que não
+  funcionaria. Sugestão: o kit deveria aplicar a própria regra em TODAS as pastas que emite, e
+  a linha do modelo de análise deveria vir com o par completo (`meta/analises/*` +
+  `!meta/analises/_TEMPLATE.md`). (2026-07-28.)
+- **A regra do `!` depende da ferramenta que consome o arquivo, não só do padrão.** Medido
+  aqui: com `PathSpec` (última regra que casa vence), a negação FUNCIONA mesmo em pasta
+  excluída — quem a mata é a poda de diretório na varredura, que nunca chega a avaliar o `!`.
+  Vale para qualquer ferramenta que faça `os.walk` com poda (é o padrão). O kit poderia dizer
+  «`pasta/*` porque a maioria das ferramentas poda o diretório antes de olhar dentro», que é o
+  motivo real e ensina a generalizar. Ver FIX-011/DEC-025. (2026-07-28.)
 - **Template genérico não deve ser candidato a substituir arquivo vivo refinado — e o protocolo
   de update precisa dizer isso.** A cada template-update, o mesmo atrito: o kit apresenta
   `CLAUDE.md`, `.claude/settings.json`, skills (e, em outros projetos, as skills de nicho — o

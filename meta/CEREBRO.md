@@ -127,6 +127,7 @@ Se aparecerem no mount arquivos com sufixo `__template-update` junto de um `_UPD
 - STATUS é só o agora: item resolvido sai do STATUS e vai para o CHANGELOG (e para o log da sessão). Médio/longo prazo vive no ROADMAP, não no STATUS.
 - IDEAS nunca perde: ideia implementada vai para a seção «Concluídas»; ideia descartada vai para «Descartadas» com o motivo. Assim nunca se reabre discussão já resolvida.
 - DECISIONS cresce devagar: quando passar de ~700 linhas ou uma decisão for substituída, mova as antigas para um arquivo de arquivo morto.
+- A sua cópia não é a fonte da verdade: vale o arquivo que está no repo/mount AGORA, não o que você leu, gerou ou reconstruiu antes nesta conversa. Qualquer artefato que você produziu (um pacote, uma reconstrução, um resumo do estado) envelhece no instante em que alguém aplica alguma coisa. Antes de dizer que algo continua pendente — ou de reentregar trabalho — releia o arquivo vivo. Reentregar o que já foi aplicado custa mais caro que perguntar.
 - Válvula de desvio registrado: os templates e a estrutura deste kit são PONTO DE PARTIDA, não contrato. Se a realidade do projeto não couber neles, adapte — dispense um arquivo que não serve, acrescente seção ou arquivo que falte — e REGISTRE o desvio (o que mudou e por quê) no DECISIONS, marcando-o também na seção «Feedback para o Kit» do IDEAS. Desviar SEM registrar é que é o erro; desviar registrando é como o kit aprende. E não duplique o que a estrutura já cobre.
 
 ## Como o assistente entrega as atualizações dos documentos
@@ -193,12 +194,15 @@ As Instruções do Projeto são lidas em **toda mensagem**: cada palavra é cobr
 
 - **É dever do assistente, não pedido do usuário.** Proponha o refino por conta própria sempre que perceber sinal: regra que você repetidamente descumpre, instrução que nunca se aplicou aqui, atrito recorrente. Se o usuário tiver de pedir, o refino já atrasou.
 - **O assistente decide o que merece texto integral.** As Instruções trazem a regra em forma curta e o CEREBRO guarda a definição completa. Se uma regra é crítica **neste** projeto — ou é justamente a que mais se erra — promova-a de volta ao texto integral nas Instruções, dizendo por quê. Encolher não é a meta; acertar o que fica sempre à vista é.
+- **Personalização genérica migra para os meta/.** O que veio do formulário de montagem serve para PREENCHER os arquivos de contexto; depois de aplicado, não precisa continuar ocupando as Instruções. Proponha mover, deixando nas Instruções a identidade do projeto, o ritual, os gatilhos e a disciplina de entrega.
 - **Corte o que não se aplica.** Princípio ou gatilho que este projeto nunca usou é peso morto — proponha remover, dizendo o que sai.
 - **Especialize o que se aplica.** Troque o exemplo genérico pelo caso real: instrução concreta economiza mais token do que instrução curta e vaga.
 - **Não confunda encurtar com esquecer.** Regra que já evitou um erro real (está no DECISIONS) NÃO sai. Se algo sai, some ao CEREBRO — o CEREBRO é lido sob demanda, as Instruções em toda mensagem: mover é barato, apagar é caro.
 - **Sincronia com o CEREBRO.** Ao mexer no CEREBRO, cheque se as Instruções ainda batem; se divergirem, proponha alinhar.
 - **Teto:** ~6.900 caracteres. Ao propor uma mudança, diga o tamanho antes e depois.
 - **Atrito sem solução local vira feedback ao kit** — registre em «Feedback para o Kit» no IDEAS. É desfecho legítimo do refino, não desculpa para não refinar.
+- **Uma regra por linha, verbo no imperativo, sem preâmbulo.** Prosa explicativa vive aqui no CEREBRO, não nas Instruções.
+- **Não inche.** Antes de acrescentar uma regra às Instruções, pergunte se ela cabe no CEREBRO. Só vai para as Instruções o que precisa ser lembrado em TODO turno.
 - **Registre:** toda mudança de instrução vira uma linha no DECISIONS (o que mudou e por quê) e um item no IDEAS.
 
 ## Bloco de fecho de turno (formato fixo)
@@ -322,4 +326,4 @@ Os arquivos de arranque do Code **não vivem neste arquivo**: são arquivos reai
 
 **Formato:** os comandos são **Skills** em `.claude/skills/<nome>/SKILL.md`, com front-matter (`name`, `description`, `disable-model-invocation: true` — impede o Code de disparar o comando sozinho). O formato `.claude/commands/*.md` é **legado** (DEC-024); não voltar a ele.
 
-*Gerado pelo Kit de Contexto Universal — nicho Desenvolvimento. Merge do template-update v1.87.0 aplicado em 2026-07-28 (DEC-023, DEC-024, DEC-025). Edite à vontade: este arquivo é seu.*
+*Gerado pelo Kit de Contexto Universal — nicho Desenvolvimento. Merges do template-update v1.87.0 e v1.88.0 aplicados em 2026-07-28 (DEC-023, DEC-024, DEC-025). Edite à vontade: este arquivo é seu.*
