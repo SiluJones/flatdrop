@@ -846,3 +846,27 @@ def test_peek_respeita_teto(tmp_path):
     assert any("mais)" in ln for ln in peek_lines)
     named = [ln for ln in peek_lines if "mais)" not in ln]
     assert len(named) == C.TREE_NAME_CAP
+
+
+@pytest.mark.skipif(not core.HAS_PATHSPEC, reason="requer pathspec")
+def test_folder_is_closed_le_o_estado_atual(tmp_path):
+    """A sonda da trava (wo0042) le o estado ATUAL dos ignores, nao um cache proprio."""
+    for p in ("pasta/x.md", "outra/y.md"):
+        f = tmp_path / p
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text("x", encoding="utf-8")
+    (tmp_path / ".gitignore").write_text("escondida/\n", encoding="utf-8")
+    (tmp_path / "escondida").mkdir()
+    (tmp_path / "escondida" / "z.md").write_text("x", encoding="utf-8")
+    cfg = core.ScanConfig(mode="collisions")
+    closed = lambda d: core.folder_is_closed(str(tmp_path), cfg, d)
+
+    assert closed("outra") is False  # pasta comum: arquivo novo entra
+
+    (tmp_path / ".flatdropignore").write_text("pasta/*\n", encoding="utf-8")
+    assert closed("pasta") is True  # travada: arquivo novo nao entra
+
+    (tmp_path / ".flatdropignore").write_text("pasta/*\n!pasta/x.md\n", encoding="utf-8")
+    assert closed("pasta") is True  # resgate de UM arquivo nao abre a pasta (DEC-027)
+
+    assert closed("escondida") is True  # escondida pelo .gitignore: tambem travada

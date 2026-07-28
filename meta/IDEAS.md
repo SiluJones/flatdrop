@@ -233,6 +233,19 @@ Registro do que ESTE projeto observou/mudou além do kit (material que volta par
 - **Descompasso de versão por corte cedo (2026-07-05).** Cortar a 0.3.0 antes de a spec seguinte
   (root_in_name) entrar deixou código à frente do CHANGELOG; resolvido com um patch de acerto (0.3.1).
   Lição: datar a versão só quando o lote de specs do ciclo estiver todo aplicado, ou assumir o patch.
+- **A regra "sua cópia não é a fonte da verdade" está longe do lugar onde ela é quebrada.** No
+  template ela vive em «Regras de higiene»; o erro acontece ao preencher a linha **Estado** do
+  bloco de fecho de turno, dezenas de linhas depois, e nada ali lembra de verificar. Aconteceu
+  aqui em 28/07: o assistente afirmou que uma WO estava pendente **duas horas depois de trazer
+  essa mesma regra do kit** — e havia dois `.txt` no mount dizendo o contrário, não lidos.
+  Sugestão ao KCM: a regra pertence ao **campo**, não ao apêndice. Todo campo do bloco de fecho
+  que afirme estado deveria trazer, na própria descrição, "vem de leitura feita neste turno".
+  Regra sem gatilho no ponto de uso é decoração. (2026-07-28.)
+- **Campo obrigatório em formulário induz confabulação.** O bloco de fecho pede **Estado** em
+  todo turno. Quando não há leitura fresca, a saída de menor atrito é preencher com a memória —
+  e a memória, logo depois de entregar um trabalho, é a *expectativa* de que ele foi aplicado.
+  O formato deveria admitir "não verificado nesta rodada" como resposta de primeira classe, em
+  vez de tratar o campo como sempre-preenchível. (2026-07-28.)
 - **O kit ensina a regra `pasta/*` e não a segue.** O `flatdropignore__template-update` traz o
   comentário certo («use `pasta/*` (o conteudo), nao `pasta/` (a pasta): sob pasta excluida por
   inteiro o `!` NAO reinclui») e aplica a forma nova em `meta/workorders/*` — mas escreve

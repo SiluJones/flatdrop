@@ -1,108 +1,116 @@
 # ANALISE — gerador do editor de `.flatdropignore`
 
-- **Status:** Em discussão
-- **Data:** 2026-07-28 (revisada no mesmo dia após crítica do autor)
+- **Status:** Em discussão — com recomendação fechada (rev. 3, após proposta do autor)
+- **Data:** 2026-07-28
 - **Decisão registrada em:** — (pendente)
 - **Virou:** — (pendente)
 
-## Problema
+## Onde o problema realmente está
 
-O editor grava o bloco gerenciado enumerando **arquivos**, não declarando **intenção sobre a
-pasta**. Um arquivo criado amanhã dentro de uma pasta já curada entra sozinho, sem decisão de
-ninguém. Foi a reclamação da nota de 2026-07-23.
+**A linguagem já resolve tudo.** Quem escreve o `.flatdropignore` na mão — pessoa ou agente —
+consegue expressar qualquer intenção, de forma curta, hoje. Verificado rodando `make_plan` de
+verdade na 0.12.0:
 
-## O que foi medido
-
-Rodando `core.build_flatdropignore` de verdade (código 0.12.0):
-
-| Cenário | Bloco gerado hoje | Arquivo novo amanhã |
+| O que se quer | Como se escreve | Arquivo novo na pasta |
 |---|---|---|
-| pasta parcial: `docs/{a,b,c,d}.md`, quero só `a.md` | `docs/b.md` `docs/c.md` `docs/d.md` | **entra** |
-| pasta escondida pelo git, quero um filho | `!legacy/` + `legacy/y.md` `legacy/z.md` | **entra** |
-| pasta inteira fora | `docs/` | fica fora ✔ |
+| pasta entra, menos um arquivo | `pasta/arquivo.md` | **entra** |
+| pasta não entra, menos um arquivo | `pasta/*` + `!pasta/arquivo.md` | **fica fora** |
+| pasta não entra, ponto | `pasta/*` | fica fora |
+| abrir pasta que o `.gitignore` fechou | `!pasta/*` | entra |
+| abrir pasta do git e tirar um | `!pasta/*` + `pasta/y.md` | entra |
 
-Os dois ramos que curam vazam para dentro. O único à prova de arquivo novo é o que não cura nada.
+Nenhuma dessas linhas precisa de código novo. **O defeito é só do editor da GUI** — ele é a
+única peça incapaz de dizer o que a pessoa quis.
 
-**Raio de impacto:** `core.build_flatdropignore` (~45 linhas) · **1** chamador (`gui.py:375`) ·
-**5** testes em `tests/test_core.py` (`test_editor_liberate_only_one`,
-`test_editor_exclude_keeps_sibling`, `test_editor_roundtrip_preserves_manual`,
-`test_editor_collapse_blocks_new_files`, `test_editor_roundtrip_preserves_folder_exclusion`) ·
-contrato na **DEC-016**. Invariante **DEC-020 não é tocado** (verificado por leitura).
+## Por que o editor não consegue
 
-## A pergunta que decide tudo
+Ele tem **um** controle (o checkbox tri-estado) tentando expressar **duas** coisas independentes:
 
-> **Arquivo novo numa pasta já curada: entra ou fica fora?**
+1. *este arquivo sobe?* — por arquivo;
+2. *o que aparecer aqui depois sobe?* — por pasta.
 
-Não há resposta única. Em `docs/` o autor quer "fica fora"; em `flatdrop/` quer "entra", senão um
-módulo novo some do mount em silêncio. Logo, a forma do padrão tem de sair do **gesto** do autor
-na GUI, não de uma regra fixa.
+E o checkbox da pasta não é uma escolha: é um **agregado** dos filhos. `folder_effective_state`
+devolve `True`/`False`/`None` a partir das folhas — "indeterminado" quer dizer "os filhos estão
+misturados", não "o autor decidiu algo sobre a pasta".
 
-O gesto já diz tudo:
+Correção de uma afirmação anterior desta análise: eu disse que a intenção da pasta "é jogada fora
+no caminho até o gerador". Não é — **ela nunca existiu**. Não há o que plumbar; há um controle a
+criar.
 
-| O que o autor faz na UI | O que ele quis dizer | O que deve ser gravado |
+## Solução recomendada — trava por pasta (proposta do autor, refinada)
+
+Uma coluna nova na árvore do editor, ao lado do nome da pasta: um **botão de trava**, que não é
+checkbox e não se mistura com eles. A trava responde a uma única pergunta, e é literalmente a
+frase do tooltip:
+
+> **"Arquivo novo aqui: entra ou não entra?"**
+
+| Trava | Significado | Gerador escreve |
 |---|---|---|
-| pasta **marcada**, desmarca 1 arquivo | "a pasta entra, menos este" | só `pasta/arquivo.md` — novo **entra** |
-| pasta **desmarcada**, marca 1 arquivo | "a pasta não entra, menos este" | `pasta/*` + `!pasta/arquivo.md` — novo **fica fora** |
-| pasta **desmarcada** inteira | "a pasta não entra" | `pasta/*` — novo **fica fora** |
+| 🔓 **aberta** (padrão) | o que aparecer aqui entra | só os arquivos desmarcados: `pasta/x.md` |
+| 🔒 **fechada** | o que aparecer aqui não entra | `pasta/*` + um `!pasta/y.md` por arquivo marcado |
+| 🔒 **(git)** | fechada pelo `.gitignore`, herdada — não foi o autor | nada (já está fora) |
+| 🔓 **(liberada)** | o autor abriu uma que o git fechava | `!pasta/*` + os desmarcados |
 
-## Opções
+Os checkboxes dos arquivos continuam exatamente como são: dizem apenas *este* sobe ou não. A trava
+cuida do futuro; o checkbox cuida do presente. Nenhuma negação é escrita sem necessidade — em
+pasta aberta o gerador nunca emite `!`, e em pasta fechada nunca lista exclusão.
 
-### B — usar sempre `pasta/*` + `!mantidos`
-Uma troca localizada, sem mexer em assinatura nenhuma. Resolve o vazamento.
-**Limite:** é a linha 2 da tabela aplicada aos três casos. No caso comum oposto — pasta com 20
-arquivos, o autor desmarca **um** — obrigaria a escrever `pasta/*` e 19 negações para trazer o
-resto de volta, e ainda inverteria o default de "novo entra" para "novo fica fora" numa pasta que
-o autor deixou marcada. É a única objeção que existe a B; fora dela, B funciona.
-**Quando escolher B:** se a prioridade for fechar isto sem mexer na fronteira GUI↔core.
+**Por que isto resolve de verdade:** a trava não é derivada de nada. É a única informação que
+faltava, e ela chega ao gerador como um dado próprio, não como palpite sobre os filhos.
 
-### C — a forma sai do gesto (a tabela acima, os três casos)
-Cobre B e mais os outros dois casos. O que falta **não é a regra, é o encanamento**: hoje a GUI
-manda para o gerador só `{arquivo: sim/não}`; o estado da PASTA (o checkbox tri-estado, que a GUI
-já calcula em `core.folder_effective_state`) é jogado fora antes de chegar lá. Preservá-lo é o
-trabalho. Depois disso a regra são três `if`.
-**Custo:** um parâmetro novo no gerador + a GUI preenchendo-o + os 5 testes declarando também a
-intenção da pasta. Sem rede automática na GUI → smoke manual no Windows obrigatório.
+### Verificado antes de recomendar
 
-### D — trocar `pasta/` por `pasta/*` no ramo que já funciona
-Uma linha. Hoje o gerador escreve `docs/`, a forma que a DEC-025 desaconselha, dentro do arquivo
-onde a regra está comentada. **Depois do FIX-011 é só cosmético** — no FlatDrop as duas formas se
-comportam igual. Grátis, não conflita com B nem com C.
+As quatro formas que o gerador passaria a emitir foram medidas na 0.12.0, com varredura real:
 
-## Ponto em aberto que apareceu na revisão
+- `!legacy/*` abre pasta fechada pelo git — e **arquivo novo entra**.
+- `!legacy/*` + `legacy/y.md` abre e tira um — o resto entra.
+- `legacy/*` + `!legacy/x.md` deixa só `x.md` — e **arquivo novo fica fora**. É a garantia central.
+- `!legacy/` e `!legacy/*` se comportam igual; dá para padronizar em `/*` (DEC-025) sem perda.
 
-O FIX-011 tornou `pasta/` e `pasta/*` **equivalentes no FlatDrop**: os dois aceitam `!` por dentro.
-O autor manifestou preferência pelo contrário — que `pasta/` signifique "nunca entra, nem aparece
-na árvore" (exclusão dura, fiel ao git) e só `pasta/*` aceite resgate. As duas posturas são
-defensáveis:
+## Custo e raio de impacto
 
-- **Permissiva (é o estado atual):** faz o que o autor quis dizer; nunca perde arquivo que ele
-  nomeou explicitamente. Custo: some a distinção entre as duas formas, e quem conhece git pode
-  estranhar o comportamento diferente.
-- **Estrita (a preferência declarada):** duas formas com dois significados úteis — uma dura, uma
-  negociável; idêntica ao git, logo previsível para qualquer um. Custo: reintroduz exatamente o
-  caso que gerou a reclamação de 23/07, então só é aceitável se a GUI escrever `pasta/*` sozinha e
-  o `_TREE` disser em qual forma cada pasta está.
+- **GUI:** coluna nova + estado da trava por pasta + leitura do `.gitignore` para pintar a herdada.
+  É o grosso do trabalho. **Não tem rede de testes** (a suíte não cobre tkinter) → smoke manual no
+  Windows deixa de ser opcional.
+- **core:** `build_flatdropignore` ganha a intenção da pasta e passa a ter três ramos claros no
+  lugar da heurística atual. ~45 linhas reescritas.
+- **Testes:** os 5 do editor precisam declarar também a trava. Um deles muda de resposta de
+  propósito: `test_editor_collapse_blocks_new_files` hoje afirma que desmarcar todos os filhos
+  vira `logs/` — isso era o palpite que a trava substitui. Passa a exigir trava fechada.
+  **Essa é a mudança de contrato da DEC-016 e precisa de DEC própria.**
+- **Invariante DEC-020:** não é tocado (`cli.py`, `_build_cli_args`, `_generate_bat`, `_sources`
+  não participam deste caminho).
 
-**Isto não é a mesma decisão do gerador** e não deve entrar na mesma WO. Fica registrado aqui e no
-IDEAS.
+## Detalhes a decidir na WO (não bloqueiam a decisão)
 
-## Recomendação
-
-**D agora** (uma linha, tira a contradição do repo). **C em seguida**, porque é a única que
-responde à pergunta em vez de escolher um lado dela. **B** se o autor quiser fechar hoje, com a
-ressalva no CHANGELOG de que arquivo novo em pasta curada passa a não subir.
+- **Todos os filhos desmarcados com a trava aberta** gera N linhas em vez de um `pasta/*`. É a
+  leitura honesta do gesto. Vale a GUI perguntar uma vez: *"desmarcou tudo — quer fechar a pasta?"*
+- **Pasta aninhada:** a trava da filha vale sobre a da mãe. Caso de borda a testar explicitamente.
+- **Forma:** emitir `pasta/*` e `!pasta/*` em tudo (DEC-025), já que se comportam igual.
 
 ## Riscos
 
-- **Round-trip (DEC-016).** O bloco é reescrito inteiro a cada salvamento. Se um dos dois testes de
-  round-trip precisar mudar, isso é mudança de contrato e pede DEC — não é teste velho.
-- **Perda silenciosa.** Qualquer forma que deixe arquivo novo fora precisa aparecer no `_TREE`.
-  Depois do wo0038 aparece nomeado, mas veja o item do teto (`+N mais`) no IDEAS: pasta grande
-  ainda esconde nomes.
-- **Pasta vazia / só com subpastas.** `pasta/*` casa filhos diretos; é onde eu esperaria o primeiro
-  caso de borda escapar. Teste explícito.
+- **Dois controles na mesma linha** podem confundir. Mitigação: coluna separada, ícone de cadeado,
+  e o tooltip com a frase inteira — não abreviar para "ignorar pasta", que é justamente a
+  ambiguidade de hoje.
+- **Round-trip (DEC-016):** o bloco é reescrito inteiro a cada salvamento; o que está fora dele
+  continua intocado. Os dois testes de round-trip são a rede.
+- **Perda silenciosa:** trava fechada esconde arquivo novo. Só é aceitável porque o `_TREE` agora
+  nomeia o que foi pulado — e é por isso que o teto `(+N mais)` virou frente aberta no IDEAS.
+
+## Alternativas descartadas
+
+- **Sempre `pasta/*` + `!mantidos`** (opção B das revisões anteriores): força trava fechada em toda
+  pasta. Numa pasta de 20 arquivos com um desmarcado, viram 19 negações — e inverte o padrão de
+  "novo entra" onde o autor não pediu isso.
+- **Toggle global "à prova de arquivo novo"**: empurra a decisão para o usuário a cada salvamento,
+  em vez de deixá-la registrada por pasta, que é onde ela varia.
+- **Trocar só `pasta/` por `pasta/*` no gerador** (opção D): cosmético depois do FIX-011; entra de
+  graça junto, mas não resolve nada sozinho.
 
 ## Ponto de decisão
 
-**B, C ou D-agora-C-depois?** E, separadamente, a forma `pasta/` continua permissiva ou volta a ser
-estrita? **A análise para aqui.**
+**Aprova a trava por pasta como desenho?** Se sim, a WO sai em duas partes — core + testes
+primeiro (tem rede), GUI depois (só smoke) — e a mudança de contrato do
+`test_editor_collapse_blocks_new_files` vira DEC. **A análise para aqui.**

@@ -562,6 +562,20 @@ def folder_effective_state(root, cfg: ScanConfig, rel_dir: str, probes=None):
     return None
 
 
+def folder_is_closed(root, cfg: ScanConfig, rel_dir: str, probes=None) -> bool:
+    """A trava desta pasta esta FECHADA? — ou seja: um arquivo NOVO aqui deixaria de subir?
+
+    Usa a MESMA sonda que o ``build_flatdropignore`` usa por dentro (DEC-027): pergunta aos
+    ignores o que eles fariam com um arquivo que nao existe. E o unico jeito honesto de
+    descobrir, porque ``pasta/*`` de proposito nao casa ``pasta/`` como diretorio — sondar a
+    pasta devolveria "aberta" justamente para as que o proprio editor fechou.
+
+    A GUI chama isto ao abrir o editor, para pintar a coluna da trava no estado atual.
+    """
+    base_in, _source = probes or _ignore_probes(Path(root), cfg)
+    return not base_in(f"{rel_dir}/{FLATDROP_PROBE}" if rel_dir else FLATDROP_PROBE, False)
+
+
 def build_flatdropignore(root, cfg: ScanConfig, wants: dict[str, bool],
                          existing_text: str | None = None,
                          locks: dict[str, bool] | None = None) -> str:

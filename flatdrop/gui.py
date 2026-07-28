@@ -193,6 +193,9 @@ class TypePickerDialog(tk.Toplevel):
 
 
 _GLYPH = {True: "☑", False: "☐", None: "▣"}  # checked / unchecked / partial
+# Rotulos da coluna da trava (wo0042). ASCII de proposito: o console do Windows em cp1252 ja
+# nos mordeu uma vez, e este texto tambem aparece em mensagem de erro.
+_LOCK_TXT = {False: "entra", True: "travada"}
 
 
 class FlatDropIgnoreEditor(tk.Toplevel):
@@ -208,8 +211,14 @@ class FlatDropIgnoreEditor(tk.Toplevel):
         self.cfg = cfg
         self.on_saved = on_saved
         self.probes = core._ignore_probes(self.root_dir, cfg)
+        # A dupla (base_in, source): `source` diz DE ONDE veio o ignore, e e como a coluna da
+        # trava distingue "travada por mim" de "travada (git)".
+        self.base_in, self.source = self.probes
         self.st: dict[str, dict] = {}
         self.folder_override: dict[str, bool] = {}
+        # Travas MEXIDAS nesta sessao do editor. O que nao foi tocado nao entra aqui: o core
+        # deriva do estado atual dos ignores, e e assim que o round-trip se preserva.
+        self.locks: dict[str, bool] = {}
         self._build()
         self._populate("", "")
         self.transient(master)
@@ -217,10 +226,14 @@ class FlatDropIgnoreEditor(tk.Toplevel):
 
     # ----- construcao ----- #
     def _build(self):
-        self.tree = ttk.Treeview(self, columns=("chk",), selectmode="browse")
+        self.tree = ttk.Treeview(self, columns=("chk", "lock"), selectmode="browse")
         self.tree.heading("#0", text="Arquivo / pasta")
         self.tree.heading("chk", text="No Projeto")
         self.tree.column("chk", width=90, anchor="center", stretch=False)
+        # Coluna da trava (wo0042/DEC-027): so pastas. Responde "arquivo novo aqui entra?".
+        # E deliberadamente separada do checkbox — sao duas perguntas diferentes.
+        self.tree.heading("lock", text="Arquivo novo")
+        self.tree.column("lock", width=110, anchor="center", stretch=False)
         vsb = ttk.Scrollbar(self, orient="vertical", command=self.tree.yview)
         self.tree.configure(yscrollcommand=vsb.set)
         self.tree.grid(row=0, column=0, sticky="nsew")
@@ -229,7 +242,9 @@ class FlatDropIgnoreEditor(tk.Toplevel):
         bar.grid(row=1, column=0, columnspan=2, sticky="ew")
         ttk.Button(bar, text="Salvar .flatdropignore", command=self._save).pack(side="right")
         ttk.Button(bar, text="Cancelar", command=self.destroy).pack(side="right", padx=6)
-        self.info = ttk.Label(bar, text="", foreground="#888")
+        self.info = ttk.Label(bar, foreground="#888", text=(
+            "Coluna 'No Projeto': este arquivo sobe.  |  Coluna 'Arquivo novo': clique para "
+            "travar a pasta — travada, um arquivo criado depois NAO sobe."))
         self.info.pack(side="left")
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
@@ -258,9 +273,15 @@ class FlatDropIgnoreEditor(tk.Toplevel):
             elif not is_dir and sens:
                 note = "  (barrado: sensivel)"
             name = rel.rsplit("/", 1)[-1] + note
-            iid = self.tree.insert(parent_iid, "end", text=name, values=(_GLYPH[want],))
+            # Arquivo nao tem trava — a coluna fica vazia na linha dele.
+            fechada = core.folder_is_closed(self.root_dir, self.cfg, rel, self.probes) if is_dir else None
+            if is_dir and rel in self.locks:
+                fechada = self.locks[rel]
+            iid = self.tree.insert(parent_iid, "end", text=name,
+                                   values=(_GLYPH[want], self._lock_txt(rel, fechada, is_dir)))
             self.st[iid] = dict(path=rel, is_dir=is_dir, base_in=base_in,
-                                allowed=allowed, sens=sens, loaded=not is_dir, want=want)
+                                allowed=allowed, sens=sens, loaded=not is_dir, want=want,
+                                lock=fechada)
             self._style(iid, want)
             if is_dir:
                 self.tree.insert(iid, "end", text="(carregando...)")
@@ -286,6 +307,17 @@ class FlatDropIgnoreEditor(tk.Toplevel):
         return self.folder_override.get("", None)
 
     # ----- toggle ----- #
+    def _lock_txt(self, rel: str, fechada, is_dir: bool) -> str:
+        """Rotulo da coluna da trava. Diz tambem DE ONDE veio, quando nao foi o autor:
+        pasta escondida pelo .gitignore abre travada, e isso precisa ficar visivel — senao
+        parece que o editor travou sozinho."""
+        if not is_dir:
+            return ""
+        de_git = self.source(rel, True) == "gitignore"
+        if fechada:
+            return "travada (git)" if de_git and rel not in self.locks else _LOCK_TXT[True]
+        return "liberada" if de_git else _LOCK_TXT[False]
+
     def _on_click(self, e):
         region = self.tree.identify("region", e.x, e.y)
         col = self.tree.identify_column(e.x)
@@ -293,6 +325,20 @@ class FlatDropIgnoreEditor(tk.Toplevel):
         if row and region == "cell" and col == "#1":
             self._toggle(row)
             return "break"
+        if row and region == "cell" and col == "#2":
+            self._toggle_lock(row)
+            return "break"
+
+    def _toggle_lock(self, iid):
+        """Vira a trava da pasta. NAO mexe nos checkboxes dos filhos, de proposito: a trava
+        decide o futuro, o checkbox decide o presente (DEC-027)."""
+        s = self.st.get(iid)
+        if not s or not s["is_dir"]:
+            return
+        nova = not bool(s["lock"])
+        s["lock"] = nova
+        self.locks[s["path"]] = nova
+        self.tree.set(iid, "lock", self._lock_txt(s["path"], nova, True))
 
     def _toggle(self, iid):
         if not iid or iid not in self.st:
@@ -372,7 +418,8 @@ class FlatDropIgnoreEditor(tk.Toplevel):
         wants = self._collect_wants()
         target = core.flatdropignore_path(self.root_dir)
         existing = target.read_text(encoding="utf-8") if target.exists() else None
-        text = core.build_flatdropignore(self.root_dir, self.cfg, wants, existing_text=existing)
+        text = core.build_flatdropignore(self.root_dir, self.cfg, wants,
+                                         existing_text=existing, locks=self.locks)
         target.write_text(text, encoding="utf-8")
         if self.on_saved:
             self.on_saved(target)

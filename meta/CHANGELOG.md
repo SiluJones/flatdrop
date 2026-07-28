@@ -10,6 +10,20 @@ _Itens de produto em aberto: trecho de KCM (ler `_TREE.md` → gerar `.flatdropi
 multi-raiz na GUI (decisão A/B pendente), formato de nome "caminho escrito"
 (raiz→pastas→stem), UI-2/UI-3._
 
+## [0.13.0] — 2026-07-28
+
+### Adicionado
+- **Trava por pasta no editor de `.flatdropignore` (DEC-027, wo0041 + wo0042).** Uma coluna
+  nova, só para pastas, responde a única pergunta que a interface não sabia fazer: *arquivo
+  novo aqui entra?* Travada, o gerador escreve `pasta/*` e resgata por `!` o que estiver
+  marcado; aberta, escreve só a exclusão do que foi desmarcado. Pasta escondida pelo
+  `.gitignore` abre como `travada (git)`, e liberá-la escreve `!pasta/*`.
+
+### Mudado
+- **O editor não adivinha mais a intenção da pasta.** Desmarcar todos os filhos de uma pasta
+  aberta agora escreve uma linha por arquivo, e não mais `pasta/`. Fechar a pasta virou um gesto
+  próprio — o da trava. O checkbox da pasta continua sendo o atalho de marcar/desmarcar todos.
+
 ## [0.12.0] — 2026-07-28
 
 ### Corrigido
