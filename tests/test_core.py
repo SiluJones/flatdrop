@@ -695,3 +695,102 @@ def test_is_our_folder_recognizes_suffixed_manifest(tmp_path):
     (dest / "_MANIFEST_proj.md").write_text(
         C.MANIFEST_SIGNATURE + "\n", encoding="utf-8")
     assert core.is_our_folder(dest) is True
+
+
+# --------------------------------------------------------------------------- #
+# FIX-011 / wo0038 — negacao resgata arquivo em pasta ignorada + _TREE nomeia
+# --------------------------------------------------------------------------- #
+def test_negacao_resgata_arquivo_em_pasta_ignorada(tmp_path):
+    """`!meta/legacy/a.md` resgata o arquivo mesmo com `meta/legacy/` ignorada (FIX-011)."""
+    root = tmp_path / "proj"
+    root.mkdir()
+    _tree(root, {
+        "meta/legacy/a.md": "a",
+        "meta/legacy/b.md": "b",
+        ".flatdropignore": "meta/legacy/\n!meta/legacy/a.md\n",
+    })
+    plan = make_plan(root, ScanConfig(mode="collisions"))
+    targets = {f.rel.as_posix() for f in plan.files}
+    assert "meta/legacy/a.md" in targets
+    assert "meta/legacy/b.md" not in targets
+    folder_collapsed = [rel for rel, _reason in plan.skipped_items if rel.endswith("/")]
+    assert "meta/legacy/" not in folder_collapsed
+
+
+def test_pasta_ignorada_sem_negacao_continua_podada(tmp_path):
+    """Sem `!` apontando para dentro, a pasta ignorada segue podada (guarda o FIX-001)."""
+    root = tmp_path / "proj"
+    root.mkdir()
+    _tree(root, {
+        "meta/legacy/a.md": "a",
+        "meta/legacy/b.md": "b",
+        ".flatdropignore": "meta/legacy/\n",
+    })
+    plan = make_plan(root, ScanConfig(mode="collisions"))
+    targets = {f.rel.as_posix() for f in plan.files}
+    assert "meta/legacy/a.md" not in targets
+    assert "meta/legacy/b.md" not in targets
+    rels = [rel for rel, _reason in plan.skipped_items]
+    assert "meta/legacy/" in rels
+    assert "meta/legacy/a.md" not in rels  # podada: nunca visitada folha a folha
+    assert "meta/legacy/b.md" not in rels
+
+
+def test_tree_nomeia_pulados_do_autor(tmp_path):
+    """Arquivo pulado por ignore do autor sai NOMEADO no _TREE.md, nao so contado."""
+    root = tmp_path / "proj"
+    root.mkdir()
+    _tree(root, {
+        "docs/a.md": "a",
+        "docs/b.md": "b",
+        "docs/c.md": "c",
+        ".flatdropignore": "docs/*\n",
+    })
+    dest = tmp_path / "out" / "proj"
+    cfg = ScanConfig(mode="collisions", write_tree=True, name_meta_with_folder=False)
+    res = execute_plan(make_plan(root, cfg), dest, cfg)
+    body = (res.dest / C.TREE_NAME).read_text(encoding="utf-8")
+    assert "[pulados por flatdropignore: a.md, b.md, c.md]" in body
+    assert "[pulados: flatdropignore x3]" not in body
+
+
+def test_tree_espia_pasta_ignorada(tmp_path):
+    """Pasta ignorada pelo autor ganha uma espiada rasa nos filhos diretos."""
+    root = tmp_path / "proj"
+    root.mkdir()
+    _tree(root, {
+        "docs/a.md": "a",
+        "docs/b.md": "b",
+        ".flatdropignore": "docs/\n",
+    })
+    dest = tmp_path / "out" / "proj"
+    cfg = ScanConfig(mode="collisions", write_tree=True, name_meta_with_folder=False)
+    res = execute_plan(make_plan(root, cfg), dest, cfg)
+    body = (res.dest / C.TREE_NAME).read_text(encoding="utf-8")
+    lines = body.splitlines()
+    idx = next(i for i, ln in enumerate(lines) if "docs/  [ignorada: flatdropignore]" in ln)
+    assert "a.md" in lines[idx + 1]
+    assert "b.md" in lines[idx + 2]
+
+
+def test_peek_respeita_teto(tmp_path):
+    """A espiada rasa respeita C.TREE_NAME_CAP e agrega o resto em '(+N mais)'."""
+    root = tmp_path / "proj"
+    root.mkdir()
+    files = {f"docs/d{i:02d}.md": "x" for i in range(C.TREE_NAME_CAP + 5)}
+    files[".flatdropignore"] = "docs/\n"
+    _tree(root, files)
+    dest = tmp_path / "out" / "proj"
+    cfg = ScanConfig(mode="collisions", write_tree=True, name_meta_with_folder=False)
+    res = execute_plan(make_plan(root, cfg), dest, cfg)
+    body = (res.dest / C.TREE_NAME).read_text(encoding="utf-8")
+    lines = body.splitlines()
+    idx = next(i for i, ln in enumerate(lines) if "docs/  [ignorada: flatdropignore]" in ln)
+    peek_lines = []
+    for ln in lines[idx + 1:]:
+        if not ln.strip():
+            break
+        peek_lines.append(ln)
+    assert any("mais)" in ln for ln in peek_lines)
+    named = [ln for ln in peek_lines if "mais)" not in ln]
+    assert len(named) == C.TREE_NAME_CAP

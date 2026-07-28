@@ -10,6 +10,21 @@ _Itens de produto em aberto: trecho de KCM (ler `_TREE.md` → gerar `.flatdropi
 multi-raiz na GUI (decisão A/B pendente), formato de nome "caminho escrito"
 (raiz→pastas→stem), UI-2/UI-3._
 
+## [0.12.0] — 2026-07-28
+
+### Corrigido
+- **A negação `!` volta a resgatar arquivo dentro de pasta ignorada (FIX-011, wo0038).**
+  `_scan` podava o diretório antes de descer, então a negação nunca era avaliada — o motor
+  de padrões já liberava o arquivo, mas a varredura não chegava até ele. Agora a poda
+  consulta os prefixos alcançados por algum `!` e desce nesses casos; o custo extra só
+  aparece quando o autor de fato escreveu uma negação.
+
+### Adicionado
+- **O `_TREE.md` passa a dizer O QUE foi ignorado (wo0038).** Arquivo pulado por ignore do
+  autor sai **nomeado** (até `TREE_NAME_CAP`, depois `(+N mais)`) em vez de virar contagem;
+  pasta ignorada pelo autor ganha uma **espiada rasa** nos filhos diretos. Ruído estrutural
+  (`node_modules`, `.git`, tipo, sensível) segue colapsado/agregado.
+
 ## [0.11.0] — 2026-07-20
 
 ### Adicionado

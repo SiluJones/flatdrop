@@ -398,15 +398,44 @@ def _make_spec(lines: list[str]):
     return None
 
 
+def _negated_dir_prefixes(lines: list[str]) -> frozenset[str]:
+    """Pastas (relativas, posix) que alguma negacao ``!`` alcanca.
+
+    ``!meta/legacy/GOT.md`` devolve ``{'meta', 'meta/legacy'}``. E o insumo do FIX-011:
+    o ``_scan`` NAO poda uma pasta ignorada quando ha um ``!`` apontando para dentro dela —
+    com a pasta podada, a negacao nunca chegaria a ser avaliada.
+
+    Conservador de proposito: ao encontrar um segmento com curinga (``*``, ``?``, ``[``),
+    para de acumular. Errar para o lado de DESCER e barato; errar para o lado de podar
+    esconde arquivo que o autor pediu.
+    """
+    dirs: set[str] = set()
+    for ln in lines:
+        s = ln.strip()
+        if not s.startswith("!"):
+            continue
+        p = s[1:].strip().lstrip("/").rstrip("/")
+        parts = [x for x in p.split("/") if x and x != "."]
+        acc: list[str] = []
+        for seg in parts[:-1]:            # so os DIRETORIOS do caminho, nunca a folha
+            if any(ch in seg for ch in "*?["):
+                break
+            acc.append(seg)
+            dirs.add("/".join(acc))
+    return frozenset(dirs)
+
+
 def _build_ignore_specs(root: Path, cfg: ScanConfig):
-    """(full, gi, fd): ``full`` = decisão (gitignore + flatdropignore, este por último
-    p/ ter a palavra final); ``gi``/``fd`` = só p/ atribuir o motivo e detectar liberação."""
+    """(full, gi, fd, negated): ``full`` = decisão (gitignore + flatdropignore, este por
+    último p/ ter a palavra final); ``gi``/``fd`` = só p/ atribuir o motivo e detectar
+    liberação; ``negated`` = pastas alcançadas por alguma negação ``!`` (FIX-011)."""
     if not HAS_PATHSPEC:
-        return None, None, None
+        return None, None, None, frozenset()
     gi_lines, fd_lines = _collect_ignore_lines(root, cfg)
     if not gi_lines and not fd_lines:
-        return None, None, None
-    return _make_spec(gi_lines + fd_lines), _make_spec(gi_lines), _make_spec(fd_lines)
+        return None, None, None, frozenset()
+    return (_make_spec(gi_lines + fd_lines), _make_spec(gi_lines), _make_spec(fd_lines),
+            _negated_dir_prefixes(gi_lines + fd_lines))
 
 
 def _ignore_status(rel: str, full, gi, fd) -> tuple[bool, str, bool]:
@@ -434,7 +463,7 @@ def _ignore_probes(root: Path, cfg: ScanConfig):
     """(base_in, source): dizem, por caminho, se ele iria ao Projeto com os ignores
     atuais e qual a fonte do ignore. Pastas sao sondadas com barra final (semantica
     gitignore de diretorio) — sem isso, `dist/` nao casa a string `dist`."""
-    full, gi, fd = _build_ignore_specs(root, cfg)
+    full, gi, fd, _negated = _build_ignore_specs(root, cfg)
 
     def base_in(rel: str, is_dir: bool) -> bool:
         if full is None:
@@ -542,7 +571,7 @@ def build_flatdropignore(root, cfg: ScanConfig, wants: dict[str, bool],
     Preserva linhas fora do bloco gerenciado (round-trip, DEC-016 opcao i).
     """
     root = Path(root)
-    full, gi, _fd = _build_ignore_specs(root, cfg)
+    full, gi, _fd, _negated = _build_ignore_specs(root, cfg)
 
     def git_in(rel: str, is_dir: bool = False) -> bool:   # baseline SO do git
         if gi is None:
@@ -629,7 +658,7 @@ def _scan(
     pastas colapsadas (uma entrada cada, rel terminando em "/"). Alimenta o _TREE.md
     no modo "full"; independe do teto de 8 amostras de skipped_samples.
     """
-    full_spec, gi_spec, fd_spec = _build_ignore_specs(root, cfg)
+    full_spec, gi_spec, fd_spec, negated_dirs = _build_ignore_specs(root, cfg)
     candidates: list[tuple[Path, PurePath, int]] = []
     skipped: dict[str, int] = {
         "gitignore": 0,
@@ -670,7 +699,11 @@ def _scan(
                 note("ignore_padrão (pasta)", rel_sub + "/")
                 continue
             ign, src, _ = _ignore_status(rel_sub + "/", full_spec, gi_spec, fd_spec)
-            if ign:
+            # FIX-011: pasta com um "!" apontando para dentro NAO e podada. Podada, a
+            # negacao nunca seria avaliada — o motor liberaria o arquivo, mas a varredura
+            # nao chegaria ate ele. Aqui a gente desce e decide arquivo a arquivo (o custo
+            # extra so aparece quando o autor de fato escreveu uma negacao).
+            if ign and rel_sub not in negated_dirs:
                 note(f"{src} (pasta)", rel_sub + "/")
                 continue
             kept.append(d)
@@ -1133,8 +1166,33 @@ def _tree_label(reason: str) -> str:
     return _TREE_REASON_LABEL.get(reason, reason)
 
 
+def _peek_children(abs_dir: Path) -> list[str]:
+    """Nomes dos filhos DIRETOS de uma pasta ignorada, ate ``C.TREE_NAME_CAP``.
+
+    Leitura RASA (sem recursao) e so para pasta ignorada pelo AUTOR: o lixo estrutural
+    (``node_modules``, ``.git``) segue colapsado sem custo. E o insumo que faltava para o
+    autor — ou o chat — decidir o que liberar com ``!`` (wo0038). Falha de leitura devolve
+    lista vazia: a arvore volta ao comportamento antigo em vez de quebrar.
+    """
+    try:
+        entries = sorted(
+            os.scandir(abs_dir),
+            key=lambda e: (not e.is_dir(follow_symlinks=False), e.name.lower()),
+        )
+    except OSError:
+        return []
+    out = [
+        (e.name + "/" if e.is_dir(follow_symlinks=False) else e.name)
+        for e in entries[:C.TREE_NAME_CAP]
+    ]
+    resto = len(entries) - C.TREE_NAME_CAP
+    if resto > 0:
+        out.append(f"(+{resto} mais)")
+    return out
+
+
 def _tree_node() -> dict:
-    return {"children": {}, "files": [], "collapsed": None, "skipped": []}
+    return {"children": {}, "files": [], "collapsed": None, "skipped": [], "peek": []}
 
 
 def _tree_get_node(root_node: dict, parts: tuple[str, ...]) -> dict:
@@ -1161,6 +1219,10 @@ def _tree_render(node: dict, indent: int, mode: str, lines: list[str]) -> None:
         if kind == "dir":
             if data["collapsed"]:
                 lines.append(f"{prefix}{name}/  [ignorada: {data['collapsed']}]")
+                # Espiada rasa (wo0038): so pasta ignorada pelo AUTOR traz nomes — e o
+                # que se precisa saber para liberar um item com "!".
+                for peek in data.get("peek", []):
+                    lines.append(f"{prefix}  {peek}")
             else:
                 lines.append(f"{prefix}{name}/")
                 _tree_render(data, indent + 1, mode, lines)
@@ -1173,11 +1235,24 @@ def _tree_render(node: dict, indent: int, mode: str, lines: list[str]) -> None:
             lines.append(f"{prefix}{name}  [pulado: {data}]")
 
     if mode == "summary" and node["skipped"]:
+        # Motivo do AUTOR sai NOMEADO ate o teto; o resto (tipo, embutido, sensivel) segue
+        # so agregado — e ruido, nao alvo de "!". Modo "full" ja lista folha por folha.
+        named: dict[str, list[str]] = {}
         counts: dict[str, int] = {}
-        for _, label in node["skipped"]:
-            counts[label] = counts.get(label, 0) + 1
-        agg = ", ".join(f"{label} x{n}" for label, n in sorted(counts.items()))
-        lines.append(f"{prefix}[pulados: {agg}]")
+        for name, label in node["skipped"]:
+            if label in C.TREE_NAMED_REASONS:
+                named.setdefault(label, []).append(name)
+            else:
+                counts[label] = counts.get(label, 0) + 1
+        for label, names in sorted(named.items()):
+            names = sorted(names)          # sem isto o teto guardaria um subconjunto aleatorio
+            shown = names[:C.TREE_NAME_CAP]
+            resto = len(names) - len(shown)
+            sufixo = f" (+{resto} mais)" if resto else ""
+            lines.append(f"{prefix}[pulados por {label}: {', '.join(shown)}{sufixo}]")
+        if counts:
+            agg = ", ".join(f"{label} x{n}" for label, n in sorted(counts.items()))
+            lines.append(f"{prefix}[pulados: {agg}]")
 
 
 def write_tree(dest: Path, plan: FlattenPlan, cfg: ScanConfig) -> Path:
@@ -1189,22 +1264,27 @@ def write_tree(dest: Path, plan: FlattenPlan, cfg: ScanConfig) -> Path:
     ("summary" agrega por pasta; "full" mostra folha a folha).
 
     A arvore e montada a partir de plan.files (copiados) e plan.skipped_items
-    (pulados, ja em memoria) — nenhuma nova varredura de disco.
+    (pulados, ja em memoria). A UNICA leitura de disco e a espiada rasa nos filhos
+    diretos de cada pasta ignorada pelo AUTOR (wo0038): sem recursao, limitada por
+    C.TREE_NAME_CAP, e tolerante a falha (devolve vazio).
     """
     folder_items = [(rel, reason) for rel, reason in plan.skipped_items if rel.endswith("/")]
     file_items = [(rel, reason) for rel, reason in plan.skipped_items if not rel.endswith("/")]
 
     root_node = _tree_node()
 
-    # Pastas colapsadas: uma entrada cada, sem interior.
+    # Pastas colapsadas: uma entrada cada, sem interior — mas a ignorada pelo AUTOR ganha
+    # uma espiada RASA nos filhos diretos, para nao esconder o que se pode querer liberar.
     for rel, reason in folder_items:
         parts = rel[:-1].split("/")
+        label = _tree_label(reason)
         parent = _tree_get_node(root_node, tuple(parts[:-1]))
         parent["children"][parts[-1]] = {
             "children": {},
             "files": [],
-            "collapsed": _tree_label(reason),
+            "collapsed": label,
             "skipped": [],
+            "peek": _peek_children(plan.root / rel[:-1]) if label in C.TREE_NAMED_REASONS else [],
         }
 
     # Arquivos copiados (com rename, se houve).

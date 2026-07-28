@@ -791,3 +791,20 @@ colapsando a pasta podada sem dizer o que havia dentro. Os dois viraram item ati
 são a próxima frente de trabalho — na frente do multi-raiz. Enquanto isso: **não salvar o
 `.flatdropignore` pelo editor da GUI**, sob pena de o bloco `# >>> flatdrop-editor` reescrever
 os padrões na forma antiga.
+
+## FIX-011 — A negação `!` não resgatava arquivo dentro de pasta ignorada
+**Data:** 2026-07-28
+
+- **Sintoma:** `meta/legacy/` + `!meta/legacy/GOT.md` no `.flatdropignore` não trazia o
+  arquivo; o `_TREE` mostrava só `meta/legacy/  [ignorada: flatdropignore]`, e o editor da
+  GUI, ao salvar, caía no fallback de listar arquivo a arquivo.
+- **Causa raiz:** não era o motor de padrões. `core._scan` **poda diretórios in-place**
+  antes de descer (`dirnames[:] = kept`, herança do FIX-001); com a pasta podada, o `!`
+  nunca chega a ser avaliado. Medido em DEC-025: `match_file` devolve *não ignorado* para o
+  arquivo negado — quem o perde é a poda.
+- **Solução:** `_negated_dir_prefixes` calcula, dos ignores coletados, as pastas alcançadas
+  por alguma negação; a poda só descarta a pasta se ela **não** estiver nesse conjunto.
+  Conservador com curinga: na dúvida, desce. O custo extra só existe quando há `!`.
+- **Lição:** poda ≠ filtro. Otimização que corta a árvore antes de decidir muda a semântica,
+  não só a performance — e o sintoma aparece longe da causa. A convenção `pasta/*` (DEC-025)
+  continua valendo como cinto e suspensório, mas deixou de ser obrigatória.

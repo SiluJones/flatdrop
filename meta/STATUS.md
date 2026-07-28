@@ -133,9 +133,10 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
    liberar. Listar os filhos de pasta ignorada **por ignore do autor**, seguindo a colapsar o
    lixo estrutural (`node_modules`, `.git`, `__pycache__`). Insumo pronto: `skipped_items`.
    **PRÓXIMA frente, à frente do multi-raiz (decisão do autor, 2026-07-28).**
-5. **Editor de `.flatdropignore` deve gravar `pasta/*`** em vez de `pasta/` + fallback por
-   arquivo (causa raiz em DEC-025). Enquanto não entra: **não salvar o `.flatdropignore` pela
-   GUI** — o bloco `# >>> flatdrop-editor` reescreveria a forma antiga e quebraria o `!`.
+5. **Editor de `.flatdropignore` deveria gravar `pasta/*` + `!mantido`** em vez de listar a
+   pasta parcial por folha. Depois do FIX-011 (0.12.0) deixou de ser bloqueio — o `!` funciona
+   nas duas formas —, mas a lista por folha continua não sendo à prova de arquivo novo. Mexe na
+   maquinaria de round-trip (DEC-016/spec0020): **pede análise antes da WO**.
 6. **Multi-raiz na GUI** (selecionar N pastas, prefixar cada uma com sua raiz). Decisão A/B
    ainda pendente (recomendação: B). **Adiada por decisão do autor (2026-07-28).**
 7. **UI-2** (polimento de layout) e **UI-3** (presets "só docs"/"só código", lembrar
@@ -149,10 +150,9 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
 
 ## Riscos / pontos de atenção
 
-- **Um comportamento aberto (não é regressão): o `!` não resgata arquivo dentro de pasta
-  ignorada.** Causa raiz medida em **DEC-025** — `core._scan` poda o diretório casado antes de
-  descer, então a negação nunca é avaliada. Contornado por convenção (`pasta/*`); a correção de
-  produto é o item 5 do backlog. O `.flatdropignore` da raiz já está na forma nova.
+- ~~O `!` não resgata arquivo dentro de pasta ignorada.~~ **RESOLVIDO na 0.12.0 (FIX-011,
+  wo0038).** A poda passou a consultar as pastas alcançadas por negação. A convenção `pasta/*`
+  (DEC-025) segue recomendada, mas deixou de ser obrigatória.
 - **`meta/DECISIONS.md` passou de 700 linhas** (793 com DEC-023/024/025). O arquivamento em
   `DECISIONS-archive.md` está pendente **de propósito**: fazer agora, no meio da mudança de
   vocabulário, mexeria nas mesmas referências duas vezes. Fazer depois do commit da migração.

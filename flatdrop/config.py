@@ -25,6 +25,14 @@ MANIFEST_SIGNATURE = "<!-- flatdrop-manifest v1 -->"
 TREE_NAME = "_TREE.md"
 TREE_SIGNATURE = "<!-- flatdrop-tree v1 -->"
 
+# Quantos nomes o _TREE.md lista antes de agregar o resto ("+N mais"), tanto para
+# arquivos pulados por ignore DO AUTOR quanto para a espiada rasa numa pasta ignorada.
+TREE_NAME_CAP = 10
+
+# Motivos que saem NOMEADOS no _TREE.md. So o ignore do autor entra: e o unico que ele
+# pode querer liberar com "!". Ruido estrutural (tipo, embutido, sensivel) segue agregado.
+TREE_NAMED_REASONS = ("gitignore", "flatdropignore")
+
 # Limite de tamanho do nome de arquivo gerado. O Windows aceita até 255, mas
 # deixamos folga para sufixos de contador e para não estourar caminhos longos.
 MAX_NAME_LEN = 200
