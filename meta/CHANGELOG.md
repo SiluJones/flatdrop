@@ -10,6 +10,15 @@ _Itens de produto em aberto: trecho de KCM (ler `_TREE.md` → gerar `.flatdropi
 multi-raiz na GUI (decisão A/B pendente), formato de nome "caminho escrito"
 (raiz→pastas→stem), UI-2/UI-3._
 
+## [0.14.0] — 2026-07-28
+
+### Mudado
+- **O `_TREE.md` passa a mostrar a FAIXA de uma pasta grande, não só o começo (wo0043).** No
+  lugar do teto simples (`10 nomes + "+29 mais"`), sai uma amostra com as primeiras e as
+  últimas posições e o meio contado: `... (+29 no meio, 39 no total) ...`. Numa coleção
+  ordenada por data é o último nome que diz até onde ela vai — e era exatamente ele que sumia.
+  O `_TREE` orienta; o índice completo de uma pasta grande é trabalho do editor da GUI.
+
 ## [0.13.0] — 2026-07-28
 
 ### Adicionado

@@ -128,10 +128,8 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
    `%APPDATA%`/`~/.config`); só-GUI, DEC-020 blinda o `.bat`. Depois: Recentes virou botão
    compacto (0.9.1, spec0032) e **FIX-010** devolveu as preferências ao abrir pelo atalho
    (0.10.1, spec0035). 9 testes em `test_settings.py`.
-4. **Teto de nomes do `_TREE` (`+N mais`) esconde as pastas grandes.** A parte de nomear o que
-   foi ignorado saiu na 0.12.0 (wo0038), mas com teto global de 10: `meta/workorders/` mostra 10
-   e esconde 29 — e são os 29 que interessam para escolher o que liberar. Despejar tudo inunda o
-   `_TREE`. Forma ainda não decidida (ver IDEAS). Vale para a GUI também. **Próxima frente.**
+4. ~~Teto de nomes do `_TREE`.~~ **RESOLVIDO na 0.14.0 (wo0043)** — amostra com as duas pontas
+   e o meio contado.
 5. **Editor de `.flatdropignore` deveria gravar `pasta/*` + `!mantido`** em vez de listar a
    pasta parcial por folha. Depois do FIX-011 (0.12.0) deixou de ser bloqueio — o `!` funciona
    nas duas formas —, mas a lista por folha continua não sendo à prova de arquivo novo. Mexe na
@@ -151,6 +149,23 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
 
 ## Riscos / pontos de atenção
 
+- 🔴 **BUG ABERTO (0.13.0): o editor não convive com regras escritas FORA do bloco gerenciado.**
+  Reproduzido em sandbox e no `.flatdropignore` real deste repo. Três defeitos, uma causa:
+  1. **Duplicação.** Salvar sem mexer em nada copia para dentro do bloco as linhas que já
+     existiam fora dele (aqui: `meta/workorders/*` e `INSTRUCOES-DO-PROJETO.md` aparecem duas
+     vezes). A curadoria manual vira sombra de uma cópia gerada.
+  2. **Destravar não funciona.** Se a trava vem de uma linha manual fora do bloco, destravar na
+     GUI só faz o gerador *omitir* a linha do bloco — a de fora continua lá, a pasta segue
+     travada, e ao reabrir o editor a trava volta. O clique é desfeito em silêncio.
+  3. **Marcar um arquivo excluído por linha manual também não tem efeito**, pela mesma razão:
+     o bloco não emite o `!` que precisaria vencer a linha de fora.
+  **Causa raiz:** o gerador usa como referência o **git puro**, não "tudo o que já existe menos
+  o meu bloco". Quem só lê o `.gitignore` não enxerga a curadoria manual do próprio
+  `.flatdropignore`, então não sabe nem que precisa corrigi-la. Agravado por não haver garantia
+  de que o bloco fique por ÚLTIMO no arquivo (vale a última regra que casa).
+  **Contorno até a correção:** manter a curadoria manual OU usar o editor, não os dois no mesmo
+  arquivo. **Análise com o desenho da correção:**
+  `meta/analises/260728-ANALISE-bloco-gerenciado-vs-manual.md`.
 - ~~O `!` não resgata arquivo dentro de pasta ignorada.~~ **RESOLVIDO na 0.12.0 (FIX-011,
   wo0038).** A poda passou a consultar as pastas alcançadas por negação. A convenção `pasta/*`
   (DEC-025) segue recomendada, mas deixou de ser obrigatória.

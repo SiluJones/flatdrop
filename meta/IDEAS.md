@@ -25,15 +25,14 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
 > foi ignorado** e **editor gravar `pasta/*`**) passam à frente do multi-raiz por decisão do
 > autor: nasceram de atrito real de uso (notas de 23 e 24/07) e são a próxima sessão.
 
-- **O teto de nomes do `_TREE` esconde justamente as pastas grandes.** Depois do wo0038 a árvore
-  nomeia até `TREE_NAME_CAP` (10) e agrega o resto: `meta/workorders/` sai com 10 nomes e
-  `(+29 mais)` — e são os 29 que a pessoa precisaria ver para escolher o que liberar. Despejar
-  tudo também não serve (uma pasta de 100 arquivos inunda o `_TREE`). Caminhos a considerar:
-  primeiros N + últimos N (dá a faixa e a ordem); teto por pasta em vez de global; teto maior
-  quando a pasta é o alvo de um `!`; ou uma lista completa fora do `_TREE`, num arquivo à parte
-  que só a pasta grande gera. Vale também levar isso à GUI, para o editor mostrar a pasta inteira
-  quando ela vier de um ignore do autor. **Ainda sem forma decidida — o teto atual não serve.**
-  (Autor, 2026-07-28.)
+- **O editor e a curadoria manual do `.flatdropignore` não convivem.** Bug aberto da 0.13.0,
+  detalhado no STATUS e na análise. Fica aqui a ideia que nasceu do diagnóstico: o bloco
+  gerenciado deveria ser tratado como um **diff contra tudo o que já existe** — emite linha
+  só quando o estado desejado diverge do que os outros arquivos e a parte manual já fazem —,
+  e o gerador deveria **garantir que o bloco fique por último** no arquivo, senão uma linha
+  manual abaixo dele vence em silêncio. Também vale a GUI **mostrar de onde vem** cada trava
+  herdada (`travada (git)` já existe; falta `travada (manual)`), porque hoje o autor não tem
+  como saber que aquela trava não é dele. (2026-07-28.)
 - **`pasta/` deveria voltar a ser exclusão DURA?** O FIX-011 tornou `pasta/` e `pasta/*`
   equivalentes no FlatDrop: os dois aceitam `!` por dentro. O autor prefere o contrário — `pasta/`
   significando "nunca entra, nem aparece na árvore" e só `pasta/*` aceitando resgate, que é o
@@ -125,6 +124,12 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
 
 ## Concluídas
 
+- **O teto de nomes do `_TREE` esconde justamente as pastas grandes.** **RESOLVIDO na 0.14.0
+  (wo0043) — amostra com as duas pontas.** Depois do wo0038 a árvore nomeava até
+  `TREE_NAME_CAP` (10) e agregava o resto: `meta/workorders/` saía com 10 nomes e
+  `(+29 mais)` — e eram os 29 que a pessoa precisaria ver para escolher o que liberar. A
+  0.14.0 troca o teto simples por uma amostra com as primeiras e as últimas posições e o
+  meio contado (`... (+29 no meio, 39 no total) ...`). (Autor, 2026-07-28.)
 - **[KCM — entregue] Claude lê o `_TREE.md` e dita o `.flatdropignore`.** Bloco de KCM
   portável (material externo, não é código do repo) + exemplo no README; habilitado pela
   spec0011. Fecha o ciclo `_TREE → flatdropignore → mount melhor`, sobretudo liberando via
@@ -233,6 +238,23 @@ Registro do que ESTE projeto observou/mudou além do kit (material que volta par
 - **Descompasso de versão por corte cedo (2026-07-05).** Cortar a 0.3.0 antes de a spec seguinte
   (root_in_name) entrar deixou código à frente do CHANGELOG; resolvido com um patch de acerto (0.3.1).
   Lição: datar a versão só quando o lote de specs do ciclo estiver todo aplicado, ou assumir o patch.
+- **Faltou no kit uma regra sobre artefato gerado que convive com edição humana.** Este projeto
+  tropeçou duas vezes no mesmo padrão — um bloco gerado dentro de um arquivo que a pessoa também
+  edita à mão (o `.flatdropignore`; antes, o apêndice do CEREBRO). É um padrão comum o bastante
+  para virar princípio: **o artefato gerado precisa (i) saber o que existe fora dele, (ii) ter
+  precedência definida por posição, e (iii) nunca duplicar o que já está lá.** Nenhuma dessas
+  três aparece no kit hoje, e as três foram violadas de uma vez. (2026-07-28.)
+- **Sugestão de fluxo: a análise devia ser oferecida ANTES da WO, não depois do erro.** As três
+  correções desta sessão que exigiram redesenho (gerador, trava, este bug) tinham em comum uma
+  pergunta de produto não formulada. O CEREBRO já traz «Análise antes do compromisso», mas o
+  gatilho é subjetivo («mudança não-trivial»). Um gatilho mais afiado, que teria pegado os três:
+  **mudar o formato de um artefato que outra pessoa (ou o futuro você) vai ler ou editar pede
+  análise, mesmo quando o diff é pequeno.** (2026-07-28.)
+- **O `_UPDATE-PROMPT` deveria pedir o estado do repo, não só o pacote.** Em todo update o
+  assistente precisa saber o que está aplicado, e a única fonte confiável é o repo — que ele só
+  vê pelo mount. Se o prompt do kit terminasse com uma linha do tipo «antes de comparar, liste o
+  mount e diga em que versão/commit o projeto está», o erro de 28/07 (afirmar que uma WO estava
+  pendente) teria sido impossível de cometer em silêncio. (2026-07-28.)
 - **A regra "sua cópia não é a fonte da verdade" está longe do lugar onde ela é quebrada.** No
   template ela vive em «Regras de higiene»; o erro acontece ao preencher a linha **Estado** do
   bloco de fecho de turno, dezenas de linhas depois, e nada ali lembra de verificar. Aconteceu

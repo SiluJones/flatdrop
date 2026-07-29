@@ -1219,6 +1219,23 @@ def _tree_label(reason: str) -> str:
     return _TREE_REASON_LABEL.get(reason, reason)
 
 
+def _tree_amostra(nomes: list[str]) -> list[str]:
+    """Amostra legivel de uma lista longa: as PRIMEIRAS e as ULTIMAS, com o meio contado.
+
+    Recebe a lista JA ORDENADA. Ate ``HEAD + TAIL`` nomes devolve tudo; acima disso devolve
+    as duas pontas e uma linha no meio com quantos ficaram de fora e o total. E o que permite
+    a quem le o _TREE saber a FAIXA da colecao — o teto simples (wo0038) mostrava so o comeco,
+    entao uma pasta de 39 workorders parecia parar no decimo.
+    """
+    n = len(nomes)
+    if n <= C.TREE_NAME_HEAD + C.TREE_NAME_TAIL:
+        return nomes
+    meio = n - C.TREE_NAME_HEAD - C.TREE_NAME_TAIL
+    return (nomes[:C.TREE_NAME_HEAD]
+            + [f"... (+{meio} no meio, {n} no total) ..."]
+            + nomes[-C.TREE_NAME_TAIL:])
+
+
 def _peek_children(abs_dir: Path) -> list[str]:
     """Nomes dos filhos DIRETOS de uma pasta ignorada, ate ``C.TREE_NAME_CAP``.
 
@@ -1234,14 +1251,8 @@ def _peek_children(abs_dir: Path) -> list[str]:
         )
     except OSError:
         return []
-    out = [
-        (e.name + "/" if e.is_dir(follow_symlinks=False) else e.name)
-        for e in entries[:C.TREE_NAME_CAP]
-    ]
-    resto = len(entries) - C.TREE_NAME_CAP
-    if resto > 0:
-        out.append(f"(+{resto} mais)")
-    return out
+    nomes = [(e.name + "/" if e.is_dir(follow_symlinks=False) else e.name) for e in entries]
+    return _tree_amostra(nomes)
 
 
 def _tree_node() -> dict:
@@ -1298,11 +1309,10 @@ def _tree_render(node: dict, indent: int, mode: str, lines: list[str]) -> None:
             else:
                 counts[label] = counts.get(label, 0) + 1
         for label, names in sorted(named.items()):
-            names = sorted(names)          # sem isto o teto guardaria um subconjunto aleatorio
-            shown = names[:C.TREE_NAME_CAP]
-            resto = len(names) - len(shown)
-            sufixo = f" (+{resto} mais)" if resto else ""
-            lines.append(f"{prefix}[pulados por {label}: {', '.join(shown)}{sufixo}]")
+            # ordenar e obrigatorio: a amostra le as duas PONTAS, e ponta de lista
+            # desordenada nao quer dizer nada.
+            amostra = _tree_amostra(sorted(names))
+            lines.append(f"{prefix}[pulados por {label}: {', '.join(amostra)}]")
         if counts:
             agg = ", ".join(f"{label} x{n}" for label, n in sorted(counts.items()))
             lines.append(f"{prefix}[pulados: {agg}]")

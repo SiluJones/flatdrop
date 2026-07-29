@@ -29,6 +29,13 @@ TREE_SIGNATURE = "<!-- flatdrop-tree v1 -->"
 # arquivos pulados por ignore DO AUTOR quanto para a espiada rasa numa pasta ignorada.
 TREE_NAME_CAP = 10
 
+# Amostra de lista longa no _TREE.md (wo0043): quantos nomes das PRIMEIRAS e das ULTIMAS
+# posicoes aparecem, com o meio contado entre eles. Ver so o comeco esconde a faixa — e numa
+# pasta de arquivos datados e o ultimo nome que diz ate onde a colecao vai. A soma dos dois
+# e o orcamento de nomes por pasta; nao vale subir sem medir o inchaco no mount.
+TREE_NAME_HEAD = 6
+TREE_NAME_TAIL = 4
+
 # Motivos que saem NOMEADOS no _TREE.md. So o ignore do autor entra: e o unico que ele
 # pode querer liberar com "!". Ruido estrutural (tipo, embutido, sensivel) segue agregado.
 TREE_NAMED_REASONS = ("gitignore", "flatdropignore")

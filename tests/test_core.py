@@ -826,10 +826,10 @@ def test_tree_espia_pasta_ignorada(tmp_path):
 
 
 def test_peek_respeita_teto(tmp_path):
-    """A espiada rasa respeita C.TREE_NAME_CAP e agrega o resto em '(+N mais)'."""
+    """A espiada rasa amostra as duas pontas (wo0043) em vez de um teto simples."""
     root = tmp_path / "proj"
     root.mkdir()
-    files = {f"docs/d{i:02d}.md": "x" for i in range(C.TREE_NAME_CAP + 5)}
+    files = {f"docs/d{i:02d}.md": "x" for i in range(C.TREE_NAME_HEAD + C.TREE_NAME_TAIL + 5)}
     files[".flatdropignore"] = "docs/\n"
     _tree(root, files)
     dest = tmp_path / "out" / "proj"
@@ -843,9 +843,44 @@ def test_peek_respeita_teto(tmp_path):
         if not ln.strip():
             break
         peek_lines.append(ln)
-    assert any("mais)" in ln for ln in peek_lines)
-    named = [ln for ln in peek_lines if "mais)" not in ln]
-    assert len(named) == C.TREE_NAME_CAP
+    assert any("no meio" in ln and "no total" in ln for ln in peek_lines)
+    named = [ln for ln in peek_lines if "no total" not in ln]
+    assert len(named) == C.TREE_NAME_HEAD + C.TREE_NAME_TAIL
+
+
+def test_tree_amostra_curta_devolve_tudo():
+    """Lista com HEAD + TAIL nomes sai inteira, sem a linha do meio."""
+    nomes = [f"n{i:02d}" for i in range(C.TREE_NAME_HEAD + C.TREE_NAME_TAIL)]
+    assert core._tree_amostra(nomes) == nomes
+
+
+def test_tree_amostra_longa_mostra_as_duas_pontas():
+    """39 nomes ordenados: primeiro e ultimo aparecem, o total aparece, e sobram HEAD+TAIL nomes."""
+    nomes = [f"n{i:02d}" for i in range(39)]
+    amostra = core._tree_amostra(nomes)
+    assert amostra[0] == nomes[0]
+    assert amostra[-1] == nomes[-1]
+    meio = [ln for ln in amostra if "no total" in ln]
+    assert len(meio) == 1
+    assert "39 no total" in meio[0]
+    nomeados = [x for x in amostra if x not in meio]
+    assert len(nomeados) == C.TREE_NAME_HEAD + C.TREE_NAME_TAIL
+
+
+def test_tree_pasta_grande_mostra_faixa(tmp_path):
+    """Ponta a ponta: pasta com 39 arquivos ignorada mostra o primeiro, o ultimo e o total."""
+    root = tmp_path / "proj"
+    root.mkdir()
+    files = {f"pasta/f{i:02d}.md": "x" for i in range(39)}
+    files[".flatdropignore"] = "pasta/*\n"
+    _tree(root, files)
+    dest = tmp_path / "out" / "proj"
+    cfg = ScanConfig(mode="collisions", write_tree=True, name_meta_with_folder=False)
+    res = execute_plan(make_plan(root, cfg), dest, cfg)
+    body = (res.dest / C.TREE_NAME).read_text(encoding="utf-8")
+    assert "f00.md" in body
+    assert "f38.md" in body
+    assert "no total" in body
 
 
 @pytest.mark.skipif(not core.HAS_PATHSPEC, reason="requer pathspec")
