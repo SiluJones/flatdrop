@@ -623,6 +623,33 @@ def _split_managed(text: str) -> tuple[str, str, str]:
     return pre, bloco, pos
 
 
+def backslash_patterns(root, cfg: ScanConfig) -> list[tuple[str, str]]:
+    """(arquivo, linha) de todo padrao escrito com contrabarra nos .flatdropignore da arvore.
+
+    Sintaxe .gitignore usa SO barra normal: a contrabarra e caractere de escape, nao
+    separador de caminho. "pasta\\arquivo.json" nao casa nada — e o arquivo sobe ao mount
+    achando que foi ignorado. E falha silenciosa: ninguem ve a regra deixar de valer.
+
+    So linha de REGRA conta (comentario e linha vazia, nao), e so o .flatdropignore — o
+    .gitignore e do git e nao cabe a esta ferramenta opinar sobre ele. A ferramenta AVISA e
+    aponta a linha; corrigir e da pessoa, porque trocar "\\" por "/" caladamente mudaria a
+    semantica de um arquivo que outras ferramentas tambem leem.
+    """
+    achados: list[tuple[str, str]] = []
+    for dirpath, dirnames, filenames in os.walk(root, followlinks=False):
+        dirnames[:] = [d for d in dirnames if d not in cfg.dir_ignores]
+        for nome in C.FLATDROPIGNORE_NAMES:
+            if nome not in filenames:
+                continue
+            alvo = Path(dirpath) / nome
+            rel = alvo.relative_to(root).as_posix()
+            for ln in _read_ignore_lines(alvo):
+                if ln.strip() and not ln.lstrip().startswith("#") and "\\" in ln:
+                    achados.append((rel, ln.strip()))
+            break  # mesma precedencia de _collect_ignore_lines: o primeiro nome vence
+    return achados
+
+
 def rules_after_block(text: str) -> list[str]:
     """Linhas de REGRA escritas depois do bloco gerenciado (violam a anatomia normativa).
 

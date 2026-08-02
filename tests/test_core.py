@@ -1004,3 +1004,24 @@ def test_bloco_vai_para_o_fim_e_avisa(tmp_path):
     linhas = [ln for ln in out.splitlines() if ln.strip()]
     assert linhas[-1] == core.FLATDROP_EDITOR_MARK_B      # o bloco e o ultimo conteudo
     assert linhas[0] == "logs/*"                          # a regra do autor subiu, intacta
+
+
+def test_backslash_patterns_denuncia_linha_manual(tmp_path):
+    """Padrao com contrabarra nao casa nada e precisa ser apontado (wo0047)."""
+    (tmp_path / "static").mkdir()
+    (tmp_path / "static" / "a.json").write_text("x\n", encoding="utf-8")
+    (tmp_path / ".flatdropignore").write_text(
+        "# comentario com \\ nao conta\n"
+        "static/*\n"
+        "!static\\a.json\n",
+        encoding="utf-8")
+    achados = core.backslash_patterns(tmp_path, core.ScanConfig())
+    assert achados == [(".flatdropignore", "!static\\a.json")]
+
+
+def test_backslash_patterns_vazio_quando_tudo_certo(tmp_path):
+    """Arquivo bem escrito nao gera aviso — o aviso so aparece quando ha o que consertar."""
+    (tmp_path / "static").mkdir()
+    (tmp_path / "static" / "a.json").write_text("x\n", encoding="utf-8")
+    (tmp_path / ".flatdropignore").write_text("static/*\n!static/a.json\n", encoding="utf-8")
+    assert core.backslash_patterns(tmp_path, core.ScanConfig()) == []

@@ -214,6 +214,10 @@ class FlatDropIgnoreEditor(tk.Toplevel):
         # A dupla (base_in, source): `source` diz DE ONDE veio o ignore, e e como a coluna da
         # trava distingue "travada por mim" de "travada (git)".
         self.base_in, self.source = self.probes
+        # Aviso na ABERTURA, nao no salvamento: a pessoa veio aqui justamente para decidir o
+        # que sobe, e uma regra que nao casa nada torna a tela mentirosa antes de qualquer
+        # clique. Nao bloqueia — o arquivo continua utilizavel.
+        self._avisar_contrabarra()
         self.st: dict[str, dict] = {}
         self.folder_override: dict[str, bool] = {}
         # Travas MEXIDAS nesta sessao do editor. O que nao foi tocado nao entra aqui: o core
@@ -313,10 +317,19 @@ class FlatDropIgnoreEditor(tk.Toplevel):
         parece que o editor travou sozinho."""
         if not is_dir:
             return ""
-        de_git = self.source(rel, True) == "gitignore"
+        # De onde veio a trava. A sonda e de ARQUIVO INEXISTENTE, nao de diretorio: a forma
+        # "pasta/*" (DEC-025) nao casa a pasta como diretorio, entao source(rel, True)
+        # devolve "" justamente nos casos que interessam aqui.
+        origem = self.source(f"{rel}/{core.FLATDROP_PROBE}", False)
         if fechada:
-            return "travada (git)" if de_git and rel not in self.locks else _LOCK_TXT[True]
-        return "liberada" if de_git else _LOCK_TXT[False]
+            if rel in self.locks:                 # o autor acabou de fechar: e dele
+                return _LOCK_TXT[True]
+            if origem == "gitignore":
+                return "travada (git)"
+            if origem == "flatdropignore":
+                return "travada (manual)"
+            return _LOCK_TXT[True]
+        return "liberada" if origem == "gitignore" else _LOCK_TXT[False]
 
     def _on_click(self, e):
         region = self.tree.identify("region", e.x, e.y)
@@ -413,6 +426,19 @@ class FlatDropIgnoreEditor(tk.Toplevel):
             if not s["is_dir"]:
                 wants[s["path"]] = bool(s["want"])
         return wants
+
+    def _avisar_contrabarra(self) -> None:
+        """Denuncia padrao com "\\" nos .flatdropignore da arvore — ele nao casa nada."""
+        achados = core.backslash_patterns(self.root_dir, self.cfg)
+        if not achados:
+            return
+        amostra = "\n".join(f"  {arq}: {ln}" for arq, ln in achados[:10])
+        extra = f"\n  ... (+{len(achados) - 10})" if len(achados) > 10 else ""
+        messagebox.showwarning(
+            "FlatDrop — padrao com contrabarra",
+            "Sintaxe .flatdropignore usa SO barra normal ('/'). A contrabarra e caractere "
+            "de escape, entao estas linhas NAO casam nada e o arquivo sobe assim mesmo:\n\n"
+            f"{amostra}{extra}\n\nTroque '\\' por '/' nessas linhas.")
 
     def _save(self):
         wants = self._collect_wants()
