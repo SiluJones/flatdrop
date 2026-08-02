@@ -16,6 +16,7 @@ from __future__ import annotations
 import hashlib
 import os
 import shutil
+import subprocess
 import sys
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -1272,6 +1273,63 @@ def _resolve_dest(dest: Path, cfg: ScanConfig) -> tuple[Path, bool, list[str]]:
     return dest, False, warnings
 
 
+def _git(root: Path, *args: str) -> str | None:
+    """Roda um comando git na raiz e devolve a saida limpa, ou None se nao der.
+
+    Silencioso de proposito: sem git instalado, fora de repositorio, timeout ou erro, o
+    manifesto simplesmente nao ganha as linhas. Nada aqui pode impedir um achatamento.
+    """
+    try:
+        p = subprocess.run(["git", "-C", str(root), *args], capture_output=True,
+                           text=True, timeout=5, encoding="utf-8", errors="replace")
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return p.stdout.strip() if p.returncode == 0 else None
+
+
+def git_snapshot(root) -> tuple[str | None, str | None]:
+    """(commit, resumo do status) da raiz — FOTO do momento, nao estado atual.
+
+    Existe porque o mount e uma copia achatada e nao leva o ``.git`` junto: sem estas duas
+    linhas, quem le o mount nao tem como saber em que commit o projeto esta, e acaba
+    perguntando ou — pior — respondendo de memoria.
+
+    - commit: ``%h %ad %s`` com ``--date=short``. A data do COMMIT ao lado da hora de
+      geracao do manifesto diz de cara se o mount e o commit ou trabalho posterior a ele.
+    - status: RESUMO numerico, nunca a listagem. ``git status`` verboso e ruido e vaza nome
+      de arquivo pessoal nao rastreado — o mount vai para uma conversa.
+    """
+    root = Path(root)
+    if not (root / ".git").exists():
+        return None, None
+    commit = _git(root, "log", "-1", "--format=%h %ad %s", "--date=short")
+    branch = _git(root, "rev-parse", "--abbrev-ref", "HEAD")
+    porcelain = _git(root, "status", "--porcelain=v1", "--branch")
+    if porcelain is None:
+        return commit, None
+    modificados = nao_rastreados = 0
+    frente = ""
+    for ln in porcelain.splitlines():
+        if ln.startswith("##"):
+            if "[ahead " in ln:
+                frente = " · " + ln.split("[ahead ", 1)[1].split("]")[0].split(",")[0] \
+                    .strip() + " commit(s) a frente de origin"
+            continue
+        if ln.startswith("??"):
+            nao_rastreados += 1
+        else:
+            modificados += 1
+    partes = [f"branch {branch or '?'}"]
+    if modificados or nao_rastreados:
+        if modificados:
+            partes.append(f"{modificados} modificado(s)")
+        if nao_rastreados:
+            partes.append(f"{nao_rastreados} nao rastreado(s)")
+    else:
+        partes.append("limpo")
+    return commit, " · ".join(partes) + frente
+
+
 def write_manifest(dest: Path, plan: FlattenPlan, cfg: ScanConfig) -> Path:
     """Escreve _MANIFEST.md: assinatura + metadados + mapa origem→nome plano.
 
@@ -1289,6 +1347,13 @@ def write_manifest(dest: Path, plan: FlattenPlan, cfg: ScanConfig) -> Path:
         for d in plan.sources:
             lines.append(f"  - {d}")
     lines.append(f"- **Gerado em:** {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    # Estado do repo: FOTO da hora acima, nao estado atual. Rotulado assim de proposito —
+    # quem le o mount precisa saber que o dado envelhece como todo o resto (wo0048).
+    _commit, _status = git_snapshot(plan.root)
+    if _commit:
+        lines.append(f"- **Git (foto da geração) — último commit:** `{_commit}`")
+    if _status:
+        lines.append(f"- **Git (foto da geração) — status:** {_status}")
     lines.append(f"- **Modo de renomeação:** {cfg.mode} · separador `{cfg.sep}`")
     lines.append(f"- **Arquivos:** {len(plan.files)}")
     lines.append(f"- **Tamanho total:** {human_size(plan.total_bytes)}")

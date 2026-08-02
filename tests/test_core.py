@@ -1,5 +1,6 @@
 """Testes da lógica central. Rode com: pytest -q  (a partir da raiz do repo)."""
 
+import subprocess
 from pathlib import Path, PurePath
 
 import pytest
@@ -1025,3 +1026,75 @@ def test_backslash_patterns_vazio_quando_tudo_certo(tmp_path):
     (tmp_path / "static" / "a.json").write_text("x\n", encoding="utf-8")
     (tmp_path / ".flatdropignore").write_text("static/*\n!static/a.json\n", encoding="utf-8")
     assert core.backslash_patterns(tmp_path, core.ScanConfig()) == []
+
+
+def _git_disponivel():
+    try:
+        return subprocess.run(["git", "--version"], capture_output=True, timeout=5).returncode == 0
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
+def test_git_snapshot_sem_repositorio(tmp_path):
+    """Pasta que nao e repo nao ganha as linhas — e nao quebra nada (wo0048)."""
+    assert core.git_snapshot(tmp_path) == (None, None)
+
+
+@pytest.mark.skipif(not _git_disponivel(), reason="git nao instalado no ambiente")
+def test_git_snapshot_repo_limpo(tmp_path):
+    """Repo sem alteracao pendente sai como 'limpo', e o commit traz hash, data e assunto."""
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "config", "user.email", "t@t"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "config", "user.name", "t"], cwd=tmp_path, check=True)
+    (tmp_path / "a.md").write_text("x\n", encoding="utf-8")
+    subprocess.run(["git", "add", "."], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "-qm", "primeiro"], cwd=tmp_path, check=True)
+    commit, status = core.git_snapshot(tmp_path)
+    assert commit and commit.endswith("primeiro")
+    assert len(commit.split()) >= 3          # hash + data + assunto
+    assert status and "limpo" in status
+
+
+@pytest.mark.skipif(not _git_disponivel(), reason="git nao instalado no ambiente")
+def test_git_snapshot_conta_sem_listar(tmp_path):
+    """O status e RESUMO: conta, e nao expoe nome de arquivo nao rastreado."""
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "config", "user.email", "t@t"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "config", "user.name", "t"], cwd=tmp_path, check=True)
+    (tmp_path / "a.md").write_text("x\n", encoding="utf-8")
+    subprocess.run(["git", "add", "."], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "-qm", "primeiro"], cwd=tmp_path, check=True)
+    (tmp_path / "a.md").write_text("y\n", encoding="utf-8")
+    (tmp_path / "segredo-pessoal.txt").write_text("z\n", encoding="utf-8")
+    _commit, status = core.git_snapshot(tmp_path)
+    assert "1 modificado(s)" in status and "1 nao rastreado(s)" in status
+    assert "segredo-pessoal" not in status
+
+
+@pytest.mark.skipif(not _git_disponivel(), reason="git nao instalado no ambiente")
+def test_manifesto_traz_as_duas_linhas(tmp_path):
+    """As linhas aparecem no manifesto, rotuladas como foto (wo0048).
+
+    Desvio da WO (registrado no relatorio de aplicacao): a assinatura de make_plan/execute_plan
+    na WO era (origem, dest, cfg) / (plan, cfg) — a real, conferida nos testes existentes
+    (ex.: test_execute_writes_manifest_and_marks_folder), e make_plan(root, cfg) /
+    execute_plan(plan, dest, cfg), e o manifesto pode sair com sufixo (_MANIFEST_<pasta>.md),
+    por isso o glob em vez do nome fixo.
+    """
+    origem = tmp_path / "src"
+    origem.mkdir()
+    (origem / "a.md").write_text("x\n", encoding="utf-8")
+    subprocess.run(["git", "init", "-q"], cwd=origem, check=True)
+    subprocess.run(["git", "config", "user.email", "t@t"], cwd=origem, check=True)
+    subprocess.run(["git", "config", "user.name", "t"], cwd=origem, check=True)
+    subprocess.run(["git", "add", "."], cwd=origem, check=True)
+    subprocess.run(["git", "commit", "-qm", "primeiro"], cwd=origem, check=True)
+    dest = tmp_path / "out"
+    cfg = core.ScanConfig()
+    plan = core.make_plan(origem, cfg)
+    res = core.execute_plan(plan, dest, cfg)
+    manifests = list(res.dest.glob("_MANIFEST*.md"))
+    assert len(manifests) == 1
+    texto = manifests[0].read_text(encoding="utf-8")
+    assert "Git (foto da geração) — último commit:" in texto
+    assert "Git (foto da geração) — status:" in texto
