@@ -55,7 +55,10 @@ Itens em aberto vêm de `IDEAS.md`; ao concluir, registre em `CHANGELOG.md`.
 - [x] **Negação `!` dentro de pasta ignorada** (FIX-011, wo0038, 0.12.0): a poda passou a consultar as pastas alcançadas por alguma negação antes de descartá-las. Era o bug mais antigo em aberto.
 - [x] **Trava por pasta no editor** (DEC-027, wo0041 + wo0042, 0.13.0): a coluna «Arquivo novo» responde *arquivo novo aqui entra?* — a única intenção da pasta que a interface nunca soube capturar.
 - [x] **Amostra do `_TREE`** (wo0043, 0.14.0): pasta grande sai com as primeiras e as últimas posições e o meio contado, no lugar do teto simples.
-- [ ] 🔴 **Bug do bloco gerenciado × curadoria manual** (aberto na 0.13.0). O gerador compara com o **git puro** e é cego para as linhas manuais do próprio `.flatdropignore`: duplica ao salvar, e destravar/marcar não tem efeito quando a regra vem de fora do bloco. Correção desenhada em 4 passos em `meta/analises/260728-ANALISE-bloco-gerenciado-vs-manual.md`; **começa por duas perguntas ao autor**, não por código. Enquanto não fechar, este repo edita o `.flatdropignore` à mão.
+- [x] **Bug do bloco gerenciado × curadoria manual** (aberto na 0.13.0, **fechado na 0.15.0** —
+      FIX-012, wo0045 + wo0046). A base de comparação virou a curadoria manual em vez do git puro,
+      o bloco passou a ser um diff e vai sempre para o fim do arquivo. A convenção que faltava
+      virou a DEC-029. Com isso, editor e edição manual convivem no mesmo `.flatdropignore`.
 - [ ] **Multi-raiz na GUI**: selecionar N pastas de uma vez, prefixando cada uma com o nome da sua raiz (a core já suporta multi-fonte; falta a UI de N raízes). **Adiada** — decisão A/B do autor; gatilho de retorno em `IDEAS.md` › Adiadas.
 - [x] **Fullpath com pasta-raiz** (spec0013 + spec0014): flag `root_in_name` inclui o nome do projeto no nome de cada arquivo, no modo fullpath. Formato final: stem + caminho invertido + raiz no fim.
 - [x] **FIX-005** (`conftest.py` na raiz para `pytest` puro achar o pacote) — spec0016.

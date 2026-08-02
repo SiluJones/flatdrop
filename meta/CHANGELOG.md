@@ -8,7 +8,14 @@ versionamento conforme [SemVer](https://semver.org/lang/pt-BR/).
 
 _Itens de produto em aberto: multi-raiz na GUI (decisão A/B pendente), formato de nome
 "caminho escrito" (raiz→pastas→stem), UI-2/UI-3, saída da CLI ASCII-safe — todos com gatilho
-de retorno em `IDEAS.md` › Adiadas. Frente aberta: a correção do editor × curadoria manual._
+de retorno em `IDEAS.md` › Adiadas. Decisão em aberto: `pasta/*` + `!mantido` no gerador do
+editor (`meta/analises/260728-ANALISE-gerador-flatdropignore.md`)._
+
+## [0.15.0] — 2026-08-02
+
+> Duas sessões num só corte de versão: a documentação e o ambiente de trabalho em 01/08, o código
+> em 02/08. **92 testes verdes** (79 → 82 → 86 → 88 → 92, um degrau por WO). Fecha o único bug
+> aberto do projeto.
 
 ### Documentação e ambiente de trabalho — 2026-08-01
 
@@ -16,7 +23,24 @@ de retorno em `IDEAS.md` › Adiadas. Frente aberta: a correção do editor × c
 > rodada nesta sessão (último número verificado: 79 verdes em 2026-07-29, relatados pelo Code na
 > wo0043). Mesmo critério do merge de 2026-07-28, que também não cortou versão.
 
-#### Adicionado
+### Adicionado
+- **O `_MANIFEST` passa a carregar o estado do repositório git (wo0048).** Duas linhas logo abaixo
+  de «Gerado em»: o último commit (`%h %ad %s`, data curta) e um **resumo** do status (branch,
+  contagem de modificados e não rastreados, commits à frente de `origin`). Rotuladas como **foto
+  da geração**, porque é o que são. Motivo: o mount é uma cópia achatada e não leva o `.git`, então
+  quem lê o mount não tinha como saber em que commit o projeto está — perguntava, ou respondia de
+  memória. Resumo e nunca listagem: `git status` verboso é ruído e vazaria nome de arquivo pessoal
+  não rastreado para dentro de uma conversa. Falha de git é silenciosa: nada impede o achatamento.
+- **Rótulo `travada (manual)` na coluna «Arquivo novo» (wo0047).** A trava que vem de uma linha
+  escrita à mão no `.flatdropignore` deixa de parecer trava do próprio autor. Ganhou importância
+  com a wo0046: agora que destravar funciona de verdade sobre linha manual, é preciso saber que
+  aquela trava não é sua antes de mexer. A sonda é de **arquivo inexistente**, não de diretório —
+  `pasta/*` de propósito não casa a pasta como diretório (DEC-025/DEC-027).
+- **Aviso de padrão com contrabarra (wo0047).** Ao abrir o editor, o FlatDrop denuncia toda linha
+  de regra escrita com `\` e aponta arquivo e linha. Em sintaxe `.gitignore` a contrabarra é
+  **escape**, não separador: o padrão não casa nada e o arquivo sobe achando que foi ignorado —
+  falha silenciosa que custou ao autor arrastar arquivos à mão. Avisa e aponta; **não normaliza**,
+  porque trocar `\` por `/` calado mudaria a semântica de um arquivo que o git também lê.
 - **O Claude Code passa a gravar o relatório de trabalho em arquivo (DEC-028).** Ao fechar
   qualquer tarefa, o mesmo relatório que vai para o chat é escrito em
   `../AAMMDD-HHMM-code-flatdrop.txt`, na pasta-pai do repo. Motivo concreto: copiá-lo do console
@@ -29,7 +53,16 @@ de retorno em `IDEAS.md` › Adiadas. Frente aberta: a correção do editor × c
   ideia adiada sem gatilho é ideia perdida. Seis itens migraram para lá; quatro que já estavam
   entregues foram para «Concluídas» com a versão em que saíram.
 
-#### Mudado
+### Mudado
+- **O bloco gerenciado do `.flatdropignore` virou um *diff* (wo0046, FIX-012).** A base de
+  comparação deixou de ser o git puro e passou a ser *gitignore + curadoria manual, sem o próprio
+  bloco*. Emite-se só o que diverge dessa baseline. **Consequência visível: num arquivo curado à
+  mão, o bloco fica quase vazio — está certo, não "sumiu".**
+- **O bloco é sempre reescrito no FIM do arquivo (wo0046).** Posição fixa, não caso-a-caso: vale a
+  última regra que casa, então bloco no fim é o que dá ao editor a palavra final sobre o que ele
+  mostra na tela. **Move-se o próprio bloco, nunca o texto do autor** — o que estava depois dele
+  sobe, na ordem em que estava, e a GUI pergunta antes, porque isso inverte a precedência daquelas
+  regras.
 - **Merge do template-update do KCM v1.95.0 (DEC-028).** Treze novidades adotadas no `CEREBRO.md`,
   no `CLAUDE.md`, nas duas skills, no `.claude/settings.json` e no `.flatdropignore`; sete choques
   resolvidos a favor do arquivo vivo, quatro deles devolvidos como feedback ao kit. Boa parte das
@@ -43,7 +76,18 @@ de retorno em `IDEAS.md` › Adiadas. Frente aberta: a correção do editor × c
   compromisso», «WO nunca vai sozinha» e o bloco de fecho de turno; sai o vocabulário
   **pré-DEC-023**, que ainda mandava escrever `meta/specs/AAMMDD-specNNNN-desc.md`.
 
-#### Corrigido
+### Corrigido
+- **O editor não convivia com regra escrita fora do bloco (FIX-012, wo0045 + wo0046).** Três
+  sintomas, uma causa: salvar duplicava dentro do bloco o que já estava fora; destravar uma pasta
+  fechada à mão era desfeito em silêncio; e marcar um arquivo trazia as duplicatas junto. O
+  gerador era cego para a curadoria manual e, sendo cego, não sabia que havia algo a corrigir.
+- **Os marcadores do bloco eram procurados por substring (wo0045).** Um comentário que
+  *mencionasse* o marcador — documentando a própria convenção — fazia o gerador cortar na menção:
+  o bloco novo entrava no meio da frase, o antigo sobrava no fim, e a linha truncada perdia o `#`
+  e virava padrão ativo. Agora o marcador é uma **linha inteira**, e arquivo com dois blocos
+  **recusa salvar** em vez de adivinhar. Medido: 35 linhas viravam 42, com dois blocos.
+- **O `.flatdropignore` crescia uma linha em branco a cada salvamento** (wo0045) — o `lstrip` do
+  trecho final só limpava um lado.
 - **Registro pendente da leva 0.12.0–0.14.0 (wo0044).** Duas docstrings de `flatdrop/core.py`
   (`_peek_children` e `write_tree`) ainda citavam `C.TREE_NAME_CAP` como o limite, que a 0.14.0
   substituiu por `TREE_NAME_HEAD`/`TREE_NAME_TAIL`; o cabeçalho do `meta/STATUS.md` ainda declarava

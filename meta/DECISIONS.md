@@ -912,3 +912,67 @@ era novidade externa a avaliar: era conteúdo próprio voltando generalizado.
 - As Instruções do Projeto ganharam 629 caracteres (5.514 → 6.143), dentro do teto novo (6.900 +
   550 do Modo Code). Na mesma passada corrigiu-se um resto **pré-DEC-023**: a seção do Modo Code
   ainda dizia `meta/specs/` e `AAMMDD-specNNNN-desc.md`.
+
+## FIX-012 — o editor não convivia com regra escrita fora do bloco gerenciado
+**Data:** 2026-08-02 · **Aberto em:** 0.13.0 · **Corrigido em:** 0.15.0 (wo0045 + wo0046)
+
+**Sintomas.** Três, num `.flatdropignore` com curadoria manual fora do bloco: (1) salvar sem mexer
+em nada copiava para dentro do bloco linhas que já existiam fora; (2) destravar uma pasta fechada
+por linha manual não tinha efeito — o gerador só omitia a linha do bloco, a de fora continuava, e
+ao reabrir a trava estava lá; (3) marcar um arquivo dentro dessa pasta trazia as duplicatas junto.
+
+**Causa raiz.** A base de comparação era o **git puro**, herança de quando o bloco era o arquivo
+inteiro. O gerador comparava o estado desejado com o que o `.gitignore` faria e era cego para a
+curadoria manual do próprio `.flatdropignore`. **Sendo cego, não sabia que havia algo a corrigir:**
+não duplicava de propósito (não via a linha de fora) e não emitia o `!` de destravamento (não via
+o que precisava vencer).
+
+**Correção.** A baseline passou a ser *gitignore + flatdropignore **sem** o bloco*
+(`_collect_ignore_lines(..., skip_managed_root=True)`), e a emissão passou a escrever **apenas o
+que diverge** dela — a tabela de quatro casos virou uma regra só. O bloco é um *diff*, nunca uma
+cópia. Junto veio a posição fixa: o bloco é sempre reescrito no fim do arquivo.
+
+**Defeito irmão, encontrado ao medir (wo0045).** Os marcadores eram procurados por **substring**:
+um comentário que citasse o marcador fazia o corte acontecer na citação — bloco injetado no meio da
+frase, bloco antigo sobrando no fim, linha truncada virando padrão ativo. Medido com o
+`.flatdropignore` deste repo, escrito no dia anterior pelo próprio assistente: 35 linhas viravam
+42. Corrigido junto: marcador é linha inteira, e arquivo ambíguo **recusa salvar**.
+
+**Por que a suíte não pegou.** Nenhum dos 8 testes do editor tinha linha manual fora do bloco.
+Fechado: os testes novos cobrem os três sintomas, o marcador citado e a estabilidade textual.
+
+**Consequência a não estranhar.** Num arquivo curado à mão, o bloco gerenciado fica quase vazio.
+É o comportamento certo — não há nada a corrigir —, mas parece que sumiu.
+
+## DEC-029 — a anatomia normativa do `.flatdropignore`
+**Data:** 2026-08-02 · **Status:** aceita · **Spec:**
+`meta/specs/260802-spec-anatomia-flatdropignore.md`
+
+**Contexto.** O FIX-012 tratou o problema como bug de algoritmo. Era metade: **o arquivo nunca teve
+uma anatomia declarada**, então cada lado inventou a sua — o gerador supôs que o bloco era o
+arquivo inteiro, o autor escreveu regra fora do bloco, e o assistente chegou a citar os marcadores
+dentro de um comentário *para documentar a convenção*. A convenção existia na cabeça do autor (ele
+já a usava no KCM); não existia escrita em lugar nenhum, e o que não está escrito não pode ser
+garantido.
+
+**Decisão — cinco regras.** (1) Comentário fica FORA do bloco. (2) Regra fica DENTRO. (3) Existe
+UM bloco, e só um. (4) O bloco é sempre o ÚLTIMO conteúdo do arquivo. (5) Os marcadores não se
+citam em comentário.
+
+**O corolário é o objetivo, não um detalhe:** respeitadas as cinco, **editor visual e edição
+manual podem ser usados livremente no mesmo arquivo**. A convenção não é restrição a mais — é o
+que revoga o contorno «ou um, ou outro» que vigorava desde a 0.13.0.
+
+**Duas obrigações que ela impõe à ferramenta**, e que valem para qualquer gerador do gênero:
+**recusar, não adivinhar** (ambiguidade para o salvamento, porque reescrever é a única operação
+irreversível) e **normalizar só o que é seu** (mover o próprio bloco é legítimo; mover o texto da
+pessoa, não — e quando a normalização mudar o resultado efetivo de alguma regra dela, avisar).
+
+**Alternativas descartadas.** *Deixar a convenção implícita e só corrigir o algoritmo* — foi o que
+se tentou em 28/07, e o resultado foi o assistente violando a convenção ao documentá-la.
+*Normalizar tudo automaticamente* (mover texto do autor, trocar `\` por `/`) — descartada: muda
+semântica de um arquivo que outras ferramentas também leem.
+
+**Consequência.** As cinco regras foram enviadas ao KCM como acréscimo ao princípio «artefato
+gerado que convive com edição humana», que a v1.89.0 já tinha levado deste projeto. Princípio sem
+forma testável não impede o erro — este caso é a prova.

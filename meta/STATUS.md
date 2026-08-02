@@ -3,94 +3,51 @@
 Estado atual do projeto. Atualize ao fim de cada sessão de trabalho (rolante: o
 resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
 
-> **Mudanças nesta revisão (2026-08-01) — meta apenas, nenhuma linha de produto tocada:**
-> merge do template-update do KCM **v1.95.0** (**DEC-028**) e curadoria do registro. Higiene
-> aplicada, item a item:
+> **Mudanças nesta revisão (2026-08-02) — a sessão mais densa do projeto até aqui:**
 >
-> - O **cabeçalho estava desatualizado**: declarava 0.11.0, 68 testes e data de 28/07, enquanto o
->   corpo já falava de 0.12.0–0.14.0. Corrigido — a divergência nasceu de o Code fazer *append* e
->   ninguém reescrever o topo. Agora **0.14.0**.
-> - **Saíram por já estarem resolvidos** (o desfecho vive no CHANGELOG/DECISIONS): as seis notas
->   datadas de julho (spec0021, spec0024, spec0027, spec0028, specs 0031–0033), o item 1 do
->   backlog (*trecho de KCM* — o `ROADMAP` e o `IDEAS` já o davam por **entregue**; só o STATUS
->   ainda o chamava de «PRIMEIRA tarefa da próxima conversa»), os itens 2, 3 e 4, o risco do
->   backup (resolvido em 21/07) e a linha do FIX-011.
-> - **Ficou o que ainda é o agora:** o bug do bloco gerenciado, o registro pendente da wo0044 e os
->   pontos de atenção que seguem valendo. O que era «adiado» virou item com **gatilho de retorno**
->   em `IDEAS.md` › Adiadas, em vez de morar aqui sem prazo.
-> - **Suíte não rodada nesta sessão.** O número abaixo é o relatado pelo Claude Code em 29/07.
+> - **O único bug aberto fechou** (FIX-012, wo0045 + wo0046). A seção «🔴 Bug aberto» saiu daqui:
+>   o desfecho vive no `CHANGELOG` 0.15.0 e no `DECISIONS`.
+> - **Saiu também a seção «Registro pendente — wo0044»**, aplicada em 02/08 às 11:26.
+> - **Entraram três comportamentos novos** (git no manifesto, `travada (manual)`, aviso de
+>   contrabarra) e **uma convenção**: a anatomia normativa do `.flatdropignore` (DEC-029).
+> - **Ficou o que ainda é o agora:** a validação visual pendente no Windows, a decisão em aberto
+>   do gerador (`pasta/*` + `!mantido`) e os pontos de atenção que seguem valendo.
+> - **Números lidos nesta revisão**, não previstos: 92 verdes e commit `9d8e62f`, dos quatro
+>   relatórios de aplicação e do manifesto das 16:50.
 
-- **Versão:** **0.14.0** no `__init__.py` (amostra do `_TREE` — wo0043). `[Não lançado]` no
-  CHANGELOG traz o registro desta sessão (documentação/ambiente, sem corte de versão) e os itens
-  de produto em aberto.
-- **Data:** 2026-08-01
-- **Commit:** `e772d45` (wo0043) é o último **conhecido**, relatado pelo Code em 29/07 — o mount é
-  uma cópia achatada e não tem `.git`, então o chat não consegue conferir. Quando o `_MANIFEST`
-  passar a gravar `git log -1` (ideia ativa), este campo deixa de depender de relato.
-- **Fase:** F1 (MVP) OK · F2 (robustez/conveniência) **quase concluída** — restam multi-raiz na
-  GUI (adiada), UI-2/UI-3 e o bug abaixo · F3 (gerador de `.bat` + multi-fonte na GUI) OK · F4
-  (distribuição) não iniciada — ver `ROADMAP.md`.
+- **Versão:** **0.15.0** no `__init__.py` — fecha o bug do bloco gerenciado e abre o estado do git
+  no manifesto.
+- **Data:** 2026-08-02
+- **Commit:** `9d8e62f` (wo0048), branch `main`, **limpo** e com push feito. **Este campo deixou de
+  depender de relato:** desde a wo0048 o `_MANIFEST` traz `git log -1` e o resumo do `git status`
+  como foto do momento da geração — leia de lá, e só peça se o manifesto for de uma versão
+  anterior.
+- **Fase:** F1 (MVP) OK · F2 (robustez/conveniência) **concluída no que estava em aberto** —
+  restam apenas itens adiados com gatilho (multi-raiz na GUI, UI-2/UI-3) · F3 (gerador de `.bat` +
+  multi-fonte na GUI) OK · F4 (distribuição) não iniciada — ver `ROADMAP.md`.
 - **Situação geral:** em uso real, **estável**, em **stand-by** por decisão do autor. Fluxo do
   monorepo `cinzeiro` coberto de ponta a ponta (GUI, CLI e `.bat`). Modo Claude Code em operação;
-  **WOs 0001–0043 aplicadas e commitadas** (as 0001–0037 mantêm o nome `spec00NN`, anteriores à
-  DEC-023). **79 testes verdes** (relatado em 29/07, não reconferido). **Um bug aberto**, com
-  contorno conhecido e correção já desenhada.
+  **WOs 0001–0049 aplicadas e commitadas** (as 0001–0037 mantêm o nome `spec00NN`, anteriores à
+  DEC-023). **92 testes verdes.** **Nenhum bug aberto** — o da 0.13.0 fechou na 0.15.0.
+- **Contorno revogado:** o «use a curadoria manual OU o editor, nunca os dois» **não vale mais**.
+  Respeitada a anatomia normativa (DEC-029), os dois convivem no mesmo arquivo.
 
-## 🔴 Bug aberto — o editor não convive com regras escritas FORA do bloco gerenciado
+## ⏳ Pendente de validação visual no Windows
 
-Aberto na 0.13.0. Reproduzido em sandbox e visível no `.flatdropignore` deste próprio repo.
-Três sintomas, uma causa:
+O ambiente do Claude Code não tem display do Windows, então a **lógica** dos três foi exercitada e
+passou, mas **ninguém viu a tela**. É o primeiro gesto de quem retomar, e leva cinco minutos:
 
-1. **Duplicação.** Salvar sem mexer em nada copia para dentro do bloco linhas que já existiam fora
-   dele. A curadoria manual vira sombra de uma cópia gerada.
-2. **Destravar não funciona** quando a trava vem de linha manual: o gerador só *omite* a linha do
-   bloco; a de fora continua, a pasta segue travada, e ao reabrir o editor a trava voltou. O
-   clique é desfeito em silêncio.
-3. **Marcar arquivo excluído por linha manual** também não tem efeito, pela mesma razão.
+1. **`travada (manual)`** — abrir o editor num projeto com pasta fechada por linha manual e
+   conferir a coluna «Arquivo novo». (`source(pasta/__flatdrop_arquivo_novo__)` já devolve
+   `flatdropignore` corretamente — o que falta é ver o rótulo.)
+2. **Aviso de contrabarra** — pôr uma linha com `\` num `.flatdropignore`, abrir o editor: o
+   aviso deve aparecer com arquivo e linha; corrigir para `/` e reabrir: sem aviso.
+3. **`askyesno` de regra depois do bloco** — escrever uma regra depois do marcador de fechamento
+   e salvar: deve perguntar antes de mover o bloco para o fim.
 
-**Causa raiz:** o gerador compara o estado desejado com o **git puro** e é cego para a curadoria
-manual do próprio `.flatdropignore` — sendo cego, não sabe nem que existe algo a corrigir.
-Agravante: nada garante que o bloco fique por **último**, e vale a última regra que casa.
-**Por que a suíte não pegou:** nenhum dos 8 testes do editor tem linha manual fora do bloco.
-
-**Contorno em vigor:** num mesmo arquivo, use a curadoria manual **ou** o editor, nunca os dois.
-**Este repo está no modo manual — não use o editor aqui até a correção.**
-
-**A correção está desenhada em 4 passos** em
-`meta/analises/260728-ANALISE-bloco-gerenciado-vs-manual.md`, com riscos e estimativa. Não foi
-implementada de propósito: mexe na coleta de ignores e estica o contrato de round-trip da DEC-016.
-**Ela começa por duas perguntas ao autor, não por código:**
-
-- **Aprova o desenho (passos 1–4)?**
-- **O passo 3 (garantir que o bloco fique por último) MOVE o que estiver depois dele, ou só AVISA?**
-  Mover é melhor UX e mexe em texto que não é da ferramenta; avisar é risco zero e pior de usar.
-  **Terceira opção, aberta pela regra nova do CEREBRO (DEC-028):** mover **o próprio bloco** para
-  o fim — a ferramenta mexendo no que é dela — sem tocar no texto da pessoa.
-
-**Consequência que o autor precisa saber antes de aprovar:** depois da correção, o bloco gerenciado
-**deste repo** fica quase vazio, porque tudo já está na parte manual. É o comportamento certo, mas
-vai parecer que sumiu — tem de estar no CHANGELOG.
-
-**Entra na mesma frente (não abrir outra):** detectar ou normalizar **contrabarra** em padrão
-manual — sintaxe `.gitignore` usa só barra normal, então um padrão escrito com `\` não casa nada e
-o arquivo sobe achando que foi ignorado. Medido: o gerador daqui só emite `/`, logo o caso veio de
-edição manual. Só faz sentido depois que o gerador enxergar o que está fora do bloco.
-
-## 📋 Registro pendente — wo0044 (primeira tarefa; canal dos meta neste ciclo = CHAT)
-
-Nada disto está no repo. Âncoras e texto exato em
-`meta/workorders/260801-wo0044-registro-pendente.md`.
-
-1. **Logs.** `logs/2026-07-28.md` cobre só a primeira sessão do dia — acrescentar as sessões de
-   wo0038 → wo0042 como `## Sessão N` (DEC-026) e criar `logs/2026-07-29.md` (wo0043 + handoff).
-2. **Duas docstrings de `flatdrop/core.py`** (`_peek_children` e `write_tree`) ainda citam
-   `C.TREE_NAME_CAP` como o limite, substituído na 0.14.0 por `TREE_NAME_HEAD`/`TREE_NAME_TAIL`.
-3. **`meta/workorders/_TEMPLATE.md`:** conferir se existe — nem o `_MANIFEST` nem o `_TREE`
-   respondem — e criar a partir do modelo do kit se faltar.
-4. **`.flatdropignore` da raiz** está modificado e não commitado; a versão nova (DEC-028) entra
-   junto.
-5. `python -m pytest -q`, `git diff`, commit sem acento e **`git push`** — a conversa seguinte lê o
-   repo, então o que não subiu não existe.
+E, no mesmo passo, o smoke da wo0045: salvar sem mexer em nada e conferir que o arquivo **não**
+ganhou linha em branco no fim; duplicar o bloco à mão e conferir que o salvamento **recusa** com
+mensagem e não escreve nada.
 
 ## ✅ O que funciona (além do MVP)
 
@@ -109,17 +66,20 @@ Nada disto está no repo. Âncoras e texto exato em
 
 ## Qualidade / testes
 
-- **79 testes** relatados verdes em 2026-07-29 (Code, wo0043). Rodar da raiz: `pytest -q` (o
-  `conftest.py` resolve o import — FIX-005) ou `python -m pytest -q`.
-- A distribuição por arquivo não é reconferida desde 21/07 (68 testes); os 11 novos vieram das
-  wo0038 e wo0041–0043, em `test_core.py`.
+- **92 testes verdes** em 2026-08-02 (79 → 82 → 86 → 88 → 92, um degrau por WO). Rodar da raiz:
+  `pytest -q` (o `conftest.py` resolve o import — FIX-005) ou `python -m pytest -q`.
+- A distribuição por arquivo não é reconferida desde 21/07 (68 testes); os 24 posteriores estão em
+  `test_core.py`.
 - A GUI **não** é coberta pela suíte (tkinter fora do CI) → smoke manual no Windows.
-- **Lacuna conhecida:** nenhum dos 8 testes do editor exercita linha manual fora do bloco
-  gerenciado. É o que deixou o bug passar — a WO da correção precisa fechar essa lacuna.
+- **A lacuna que deixou o bug passar foi fechada:** os testes do editor agora exercitam linha
+  manual fora do bloco, destravar sobre linha manual, marcador citado em comentário e
+  **estabilidade textual** (salvar 2× dá texto idêntico, não só regras equivalentes).
+- **Lacuna que fica:** os quatro testes de git pulam sozinhos onde não houver `git` instalado —
+  verde num ambiente sem git não prova nada sobre a wo0048.
 
 ## Em aberto (produto) — backlog curto, na ordem sugerida
 
-1. **A correção do bug do bloco gerenciado**, começando pelas duas perguntas acima.
+1. **Validar na tela os três comportamentos novos** (seção «Pendente de validação visual»).
 2. **Editor deve gravar `pasta/*` + `!mantido`** em vez de listar a pasta parcial por folha.
    Depois do FIX-011 deixou de ser bloqueio, mas a lista por folha continua não sendo à prova de
    arquivo novo. **Análise em discussão:** `meta/analises/260728-ANALISE-gerador-flatdropignore.md`

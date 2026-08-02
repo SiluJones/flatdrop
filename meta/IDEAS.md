@@ -148,6 +148,9 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
   dispensar `chcp 65001` nos `.bat` e evitar de vez problemas de code page. Baixo custo.
   **Adiada** desde a Fase 2. **Volta quando** aparecer pela terceira vez num smoke — já apareceu duas
   (`UnicodeEncodeError` no `↳` sob cp1252, na wo0043 e antes). O custo é baixo; o que falta é a vez.
+  **GATILHO DISPARADO em 2026-08-02:** terceira ocorrência, no smoke da wo0048 — o traceback saiu
+  DEPOIS de o manifesto já estar no disco, então não corrompe resultado, mas assusta. Esta ideia
+  volta para «Ativas» na próxima curadoria do chat.
 
 - **Formato de nome "caminho escrito" (`raiz__pastas__stem.ext`).** Um seletor de
   formato do nome, alternativo ao `root_in_name` atual. Em vez de stem na frente,
@@ -168,6 +171,16 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
   **Volta quando** a wo0044 estiver commitada — a migração acabou, o bloqueio saiu. (2026-07-28.)
 
 ## Concluídas
+
+- **O editor deve conviver com regra escrita à mão.** **ENTREGUE na 0.15.0** (FIX-012, wo0045 +
+  wo0046): o bloco virou um diff contra a curadoria manual e vai sempre para o fim. Junto veio a
+  **anatomia normativa** (DEC-029), que é o que de fato revoga o «ou um, ou outro».
+- **Contrabarra em padrão deveria ser detectada.** **ENTREGUE na 0.15.0** (wo0047): o editor avisa
+  na abertura e aponta arquivo e linha. Confirmado por medição que o gerador nunca emitiu `\` — as
+  linhas vinham sempre de edição manual, e por isso a ferramenta **avisa em vez de normalizar**.
+- **FlatDrop grava o estado do repo no `_MANIFEST`.** **ENTREGUE na 0.15.0** (wo0048), com os três
+  refinos do autor: `%h %ad %s --date=short`, status **resumido** (nunca listagem, para não virar
+  ruído nem vazar nome de arquivo não rastreado) e o rótulo «foto da geração».
 
 - **`_TREE` deve nomear o conteúdo útil das pastas ignoradas.** Hoje a árvore colapsa a pasta
   numa linha (`meta/legacy/  [ignorada: flatdropignore]`) e não diz o que havia dentro — então

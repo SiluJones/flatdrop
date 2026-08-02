@@ -241,3 +241,18 @@ primeiras `TREE_NAME_HEAD` posições, o meio **contado**, e as últimas `TREE_N
 teto simples (`N nomes + «(+M mais)»`), que escondia justamente o fim da coleção — e numa coleção
 ordenada por data é o último nome que diz até onde ela vai. Orienta; **não indexa**: para saber se
 um arquivo nomeado existe, a resposta é o editor da GUI, não a árvore.
+
+**Anatomia normativa.** As cinco regras que tornam o `.flatdropignore` editável pelas duas mãos
+(DEC-029): comentário fora do bloco · regra dentro · um bloco só · bloco sempre no fim · marcador
+não se cita em comentário. Não é estilo: é o que revoga o contorno «ou o editor, ou a mão». Quem
+as respeita pode alternar à vontade entre a GUI e o editor de texto.
+
+**Baseline (do gerador).** O que o `.flatdropignore` faria **sem o próprio bloco gerenciado** —
+`gitignore` + a curadoria manual do autor. É contra ela que o bloco é um *diff* desde a 0.15.0
+(FIX-012). Antes a base era o **git puro**, e era essa cegueira que fazia o bloco duplicar o que já
+estava fora e falhar em destravar o que uma linha manual tinha fechado.
+
+**Foto da geração.** Rótulo dos dados de git que o `_MANIFEST` passou a carregar na 0.15.0
+(wo0048): último commit e resumo do `git status` **no instante em que o mount foi gerado** — não o
+estado atual. O rótulo é parte do dado: ao lado da hora de geração, que já estava no manifesto, ele
+diz o quanto envelheceu.
