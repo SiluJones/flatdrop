@@ -325,10 +325,16 @@ def _rebase_all(lines: list[str], base: str) -> list[str]:
     return out
 
 
-def _collect_ignore_lines(root: Path, cfg: ScanConfig) -> tuple[list[str], list[str]]:
+def _collect_ignore_lines(root: Path, cfg: ScanConfig,
+                          skip_managed_root: bool = False) -> tuple[list[str], list[str]]:
     """Junta as linhas (rebaseadas) de todos os .gitignore e .flatdropignore da árvore.
 
     Devolve (gitignore_lines, flatdropignore_lines), cada um em ordem raso->fundo.
+
+    ``skip_managed_root=True`` ignora o BLOCO GERENCIADO do .flatdropignore da RAIZ. E a
+    baseline do editor: "tudo o que ja existe MENOS o que eu mesmo escrevi da ultima vez".
+    Sem ela o gerador se compararia com o proprio resultado anterior e nunca saberia o que
+    a curadoria manual ja faz (wo0046).
     """
     gi_by: list[tuple[int, list[str]]] = []
     fd_by: list[tuple[int, list[str]]] = []
@@ -343,7 +349,12 @@ def _collect_ignore_lines(root: Path, cfg: ScanConfig) -> tuple[list[str], list[
             gi_by.append((depth, _rebase_all(_read_ignore_lines(cur / ".gitignore"), base)))
         for _fdname in C.FLATDROPIGNORE_NAMES:
             if _fdname in filenames:
-                fd_by.append((depth, _rebase_all(_read_ignore_lines(cur / _fdname), base)))
+                _linhas = _read_ignore_lines(cur / _fdname)
+                if skip_managed_root and base == "":
+                    _pre, _bloco, _pos = _split_managed("\n".join(_linhas))
+                    if _bloco:
+                        _linhas = (_pre + "\n" + _pos).splitlines()
+                fd_by.append((depth, _rebase_all(_linhas, base)))
                 break  # precedencia: o primeiro nome encontrado no diretorio vence
     gi_lines: list[str] = []
     for _, lines in sorted(gi_by, key=lambda t: t[0]):
@@ -425,13 +436,13 @@ def _negated_dir_prefixes(lines: list[str]) -> frozenset[str]:
     return frozenset(dirs)
 
 
-def _build_ignore_specs(root: Path, cfg: ScanConfig):
+def _build_ignore_specs(root: Path, cfg: ScanConfig, skip_managed_root: bool = False):
     """(full, gi, fd, negated): ``full`` = decisão (gitignore + flatdropignore, este por
     último p/ ter a palavra final); ``gi``/``fd`` = só p/ atribuir o motivo e detectar
     liberação; ``negated`` = pastas alcançadas por alguma negação ``!`` (FIX-011)."""
     if not HAS_PATHSPEC:
         return None, None, None, frozenset()
-    gi_lines, fd_lines = _collect_ignore_lines(root, cfg)
+    gi_lines, fd_lines = _collect_ignore_lines(root, cfg, skip_managed_root)
     if not gi_lines and not fd_lines:
         return None, None, None, frozenset()
     return (_make_spec(gi_lines + fd_lines), _make_spec(gi_lines), _make_spec(fd_lines),
@@ -612,6 +623,21 @@ def _split_managed(text: str) -> tuple[str, str, str]:
     return pre, bloco, pos
 
 
+def rules_after_block(text: str) -> list[str]:
+    """Linhas de REGRA escritas depois do bloco gerenciado (violam a anatomia normativa).
+
+    Comentario e linha vazia nao contam — so o que o matcher leria como padrao. Existe
+    porque o bloco passa a ser reescrito sempre no FIM (wo0046): se havia regra depois
+    dele, a precedencia dessa regra se inverte, e isso e mudanca de comportamento que a
+    ferramenta nao pode fazer calada. A core devolve a lista; quem avisa e a GUI.
+    """
+    _pre, bloco, pos = _split_managed(text)
+    if not bloco:
+        return []
+    return [ln for ln in pos.splitlines()
+            if ln.strip() and not ln.lstrip().startswith("#")]
+
+
 def build_flatdropignore(root, cfg: ScanConfig, wants: dict[str, bool],
                          existing_text: str | None = None,
                          locks: dict[str, bool] | None = None) -> str:
@@ -627,16 +653,16 @@ def build_flatdropignore(root, cfg: ScanConfig, wants: dict[str, bool],
     round-trip do ``.flatdropignore`` existente (DEC-016). Uma pasta hoje ignorada volta como
     fechada; uma pasta hoje liberada por ``!`` volta como aberta.
 
-    Emissao (base de geracao = GIT PURO; exclusao so-do-flatdropignore e re-emitida):
+    Emissao (wo0046) — o bloco e um DIFF contra a BASELINE, que e "gitignore + curadoria
+    manual do proprio .flatdropignore, sem o bloco". Uma regra so, em vez da tabela de
+    quatro casos que existia quando a base era o git puro:
 
-    ==========  ==================  ====================  =========================
-    trava       escondida pelo git  linha da PASTA        linhas dos ARQUIVOS
-    ==========  ==================  ====================  =========================
-    fechada     nao                 ``pasta/*``           ``!pasta/y`` p/ marcado
-    fechada     sim                 (nada)                ``!pasta/y`` p/ marcado
-    aberta      nao                 (nada)                ``pasta/x`` p/ desmarcado
-    aberta      sim                 ``!pasta/*``           ``pasta/x`` p/ desmarcado
-    ==========  ==================  ====================  =========================
+        para cada pasta e cada arquivo, se o estado desejado e o que a baseline JA faz,
+        nao se escreve nada; se diverge, escreve-se a linha que corrige — inclusive
+        ``!pasta/*`` para ABRIR o que a parte manual ou o git fecharam.
+
+    Consequencia visivel: num arquivo curado a mao, o bloco fica quase vazio. E o certo —
+    nao ha nada a corrigir —, e nao "sumiu".
 
     NAO ha colapso automatico: pasta aberta com todos os filhos desmarcados sai por folha,
     uma linha cada. Quem torna uma pasta a prova de arquivo novo e a trava, nao o gesto nos
@@ -645,17 +671,23 @@ def build_flatdropignore(root, cfg: ScanConfig, wants: dict[str, bool],
     Preserva linhas fora do bloco gerenciado (round-trip, DEC-016 opcao i).
     """
     root = Path(root)
-    full, gi, _fd, _negated = _build_ignore_specs(root, cfg)
+    full, _gi, _fd, _negated = _build_ignore_specs(root, cfg)
+    base, _bg, _bf, _bn = _build_ignore_specs(root, cfg, skip_managed_root=True)
 
-    def git_in(rel: str, is_dir: bool = False) -> bool:   # baseline SO do git
-        if gi is None:
+    def _in(spec, rel: str, is_dir: bool = False) -> bool:
+        if spec is None:
             return True
-        return not gi.match_file(rel + "/" if is_dir else rel)
+        return not spec.match_file(rel + "/" if is_dir else rel)
 
-    def full_in(rel: str, is_dir: bool = False) -> bool:  # estado EFETIVO atual
-        if full is None:
-            return True
-        return not full.match_file(rel + "/" if is_dir else rel)
+    def full_in(rel: str, is_dir: bool = False) -> bool:
+        """Estado EFETIVO de hoje (com o bloco) — e o que preserva o round-trip."""
+        return _in(full, rel, is_dir)
+
+    def base_in(rel: str, is_dir: bool = False) -> bool:
+        """BASELINE: gitignore + curadoria manual, SEM o bloco. E contra isto que o bloco
+        e um diff. Era o git puro ate a wo0046, e por isso o gerador duplicava o que ja
+        estava fora do bloco e nao emitia o "!" que venceria uma linha manual."""
+        return _in(base, rel, is_dir)
 
     locks = locks or {}
     leaves, _gd, _b = _walk_leaves(root, cfg, _ignore_probes(root, cfg))
@@ -686,27 +718,33 @@ def build_flatdropignore(root, cfg: ScanConfig, wants: dict[str, bool],
     # nada la dentro, a poda basta; assim que um "!" desce, faltaria a linha do nivel de
     # baixo. Emitir por nivel custa uma linha e fecha o buraco.
     dirs_com_arquivo = {parent_of(l) for l in leaves if parent_of(l)}
+    # "arquivo novo aqui entra?" perguntado dos DOIS lados: o que eu quero x o que a
+    # baseline ja faz. Iguais -> nenhuma linha. E a definicao de diff.
+    base_fechada = lambda d: not base_in(f"{d}/{FLATDROP_PROBE}")
     for d in sorted(all_dirs):
-        fechada, git_fora = closed_of(d), not git_in(d, True)
-        if fechada and not git_fora and d in dirs_com_arquivo:
+        quero, ja_e = closed_of(d), base_fechada(d)
+        if quero == ja_e:
+            continue
+        if quero and d in dirs_com_arquivo:
             folder_lines.append(f"{d}/*")
-        elif not fechada and git_fora:
-            folder_lines.append(f"!{d}/*")
+        elif not quero:
+            folder_lines.append(f"!{d}/*")   # abre o que a parte manual (ou o git) fechou
 
     # --- linhas dos ARQUIVOS. A pasta MAIS PROXIMA manda: dentro de fechada so aparece o
     # resgate do que foi marcado; dentro de aberta so aparece a exclusao do desmarcado.
     for l in sorted(leaves):
         d = parent_of(l)
-        if not d:                                   # raiz nao tem trava: regra antiga
-            if git_in(l) and not want_of(l):
-                file_lines.append(l)
+        quero = want_of(l)
+        # o que a baseline JA faz com este arquivo, considerando as linhas de PASTA que
+        # esta mesma geracao acabou de emitir (elas vem antes e valem para o que esta dentro)
+        ja_e = base_in(l)
+        if d and f"{d}/*" in folder_lines:
+            ja_e = False
+        elif d and f"!{d}/*" in folder_lines:
+            ja_e = True
+        if quero == ja_e:
             continue
-        if closed_of(d):
-            if want_of(l):
-                file_lines.append(f"!{l}")
-        else:
-            if not want_of(l):
-                file_lines.append(l)
+        file_lines.append(f"!{l}" if quero else l)
 
     # PASTA antes de ARQUIVO, e raso antes de fundo: vale a ULTIMA regra que casa, entao o
     # resgate precisa vir depois da exclusao que o pegaria (e vice-versa).
@@ -716,8 +754,13 @@ def build_flatdropignore(root, cfg: ScanConfig, wants: dict[str, bool],
     if existing_text and existing_text.strip():
         pre, bloco, pos = _split_managed(existing_text)
         if bloco:
-            pre, pos = pre.rstrip("\n"), pos.strip("\n")
-            return "\n".join(p for p in (pre, managed, pos) if p) + "\n"
+            # Posicao FIXA: o bloco e sempre o ultimo conteudo do arquivo. Vale a ultima
+            # regra que casa, entao bloco no fim = o editor tem a palavra final sobre o que
+            # ele mostra na tela. Move-se o PROPRIO bloco, nunca o texto do autor — o que
+            # estava depois dele sobe, na ordem em que estava. Se isso inverter a
+            # precedencia de alguma regra, quem avisa e a GUI (ver rules_after_block).
+            antes = "\n".join(p for p in (pre.rstrip("\n"), pos.strip("\n")) if p)
+            return (antes + "\n\n" + managed + "\n") if antes else managed + "\n"
         return existing_text.rstrip("\n") + "\n\n" + managed + "\n"
     return managed + "\n"
 

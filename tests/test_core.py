@@ -948,3 +948,59 @@ def test_salvar_duas_vezes_nao_acumula_linha_em_branco(tmp_path):
     (tmp_path / ".flatdropignore").write_text(t1, encoding="utf-8")
     t2 = core.build_flatdropignore(tmp_path, cfg, {}, existing_text=t1)
     assert t1 == t2
+
+
+def _repo_com_curadoria_manual(tmp_path):
+    """Arvore minima com regra manual FORA do bloco — o caso que o gerador nao enxergava."""
+    (tmp_path / "logs").mkdir()
+    (tmp_path / "meta").mkdir()
+    for rel in ("logs/a.md", "logs/b.md", "meta/x.md", "INSTRUCOES.md", "run.py"):
+        (tmp_path / rel).write_text("x\n", encoding="utf-8")
+    (tmp_path / ".gitignore").write_text("__pycache__/\n", encoding="utf-8")
+    texto = ("# comentario do autor\n"
+             "logs/*\nmeta/*\nINSTRUCOES.md\n"
+             "# >>> flatdrop-editor\n# (sem alteracoes)\n# <<<\n")
+    (tmp_path / ".flatdropignore").write_text(texto, encoding="utf-8")
+    return texto
+
+
+def _bloco(texto):
+    _pre, bloco, _pos = core._split_managed(texto)
+    return [ln for ln in bloco.splitlines()[1:-1]]
+
+
+def test_bloco_nao_duplica_curadoria_manual(tmp_path):
+    """Salvar sem mexer em nada nao copia para dentro o que ja esta fora (wo0046)."""
+    texto = _repo_com_curadoria_manual(tmp_path)
+    out = core.build_flatdropignore(tmp_path, core.ScanConfig(), {}, existing_text=texto)
+    assert _bloco(out) == ["# (sem alteracoes)"]
+
+
+def test_destravar_vence_linha_manual(tmp_path):
+    """Destravar pasta fechada a mao emite o "!" que a vence — antes era desfeito calado."""
+    texto = _repo_com_curadoria_manual(tmp_path)
+    out = core.build_flatdropignore(tmp_path, core.ScanConfig(), {},
+                                    existing_text=texto, locks={"logs": False})
+    assert _bloco(out) == ["!logs/*"]
+
+
+def test_marcar_arquivo_em_pasta_fechada_a_mao(tmp_path):
+    """So o resgate do arquivo marcado, sem as duplicatas da pasta (wo0046)."""
+    texto = _repo_com_curadoria_manual(tmp_path)
+    out = core.build_flatdropignore(tmp_path, core.ScanConfig(), {"logs/a.md": True},
+                                    existing_text=texto, locks={"logs": True})
+    assert _bloco(out) == ["!logs/a.md"]
+
+
+def test_bloco_vai_para_o_fim_e_avisa(tmp_path):
+    """Regra depois do bloco: o bloco sobe para o fim e rules_after_block a denuncia."""
+    (tmp_path / "logs").mkdir()
+    (tmp_path / "logs" / "a.md").write_text("x\n", encoding="utf-8")
+    (tmp_path / "run.py").write_text("x\n", encoding="utf-8")
+    texto = "# >>> flatdrop-editor\n!logs/*\n# <<<\nlogs/*\n"
+    (tmp_path / ".flatdropignore").write_text(texto, encoding="utf-8")
+    assert core.rules_after_block(texto) == ["logs/*"]
+    out = core.build_flatdropignore(tmp_path, core.ScanConfig(), {}, existing_text=texto)
+    linhas = [ln for ln in out.splitlines() if ln.strip()]
+    assert linhas[-1] == core.FLATDROP_EDITOR_MARK_B      # o bloco e o ultimo conteudo
+    assert linhas[0] == "logs/*"                          # a regra do autor subiu, intacta

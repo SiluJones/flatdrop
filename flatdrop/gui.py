@@ -418,6 +418,20 @@ class FlatDropIgnoreEditor(tk.Toplevel):
         wants = self._collect_wants()
         target = core.flatdropignore_path(self.root_dir)
         existing = target.read_text(encoding="utf-8") if target.exists() else None
+        depois = core.rules_after_block(existing or "")
+        if depois:
+            # O bloco vai para o FIM (anatomia normativa). Regra que estava depois dele
+            # passa a valer ANTES — inversao de precedencia, mudanca de comportamento que
+            # o autor precisa autorizar.
+            amostra = "\n".join(f"  {ln}" for ln in depois[:10])
+            extra = f"\n  ... (+{len(depois) - 10})" if len(depois) > 10 else ""
+            if not messagebox.askyesno(
+                    "FlatDrop — regras depois do bloco",
+                    f"{target}\n\nEstas regras estao DEPOIS do bloco gerenciado:\n"
+                    f"{amostra}{extra}\n\nO bloco sera movido para o fim do arquivo, entao "
+                    "elas passam a valer ANTES dele — o bloco ganha a palavra final.\n\n"
+                    "Continuar?"):
+                return
         try:
             text = core.build_flatdropignore(self.root_dir, self.cfg, wants,
                                              existing_text=existing, locks=self.locks)
