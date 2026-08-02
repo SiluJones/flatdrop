@@ -418,8 +418,16 @@ class FlatDropIgnoreEditor(tk.Toplevel):
         wants = self._collect_wants()
         target = core.flatdropignore_path(self.root_dir)
         existing = target.read_text(encoding="utf-8") if target.exists() else None
-        text = core.build_flatdropignore(self.root_dir, self.cfg, wants,
-                                         existing_text=existing, locks=self.locks)
+        try:
+            text = core.build_flatdropignore(self.root_dir, self.cfg, wants,
+                                             existing_text=existing, locks=self.locks)
+        except core.FlatdropIgnoreAmbiguo as err:
+            # Recusa consciente: reescrever um arquivo com dois blocos apagaria conteudo do
+            # autor. A janela fica aberta para ele corrigir o arquivo e tentar de novo.
+            messagebox.showerror(
+                "FlatDrop — .flatdropignore ambiguo",
+                f"{target}\n\n{err}\n\nNada foi salvo.")
+            return
         target.write_text(text, encoding="utf-8")
         if self.on_saved:
             self.on_saved(target)

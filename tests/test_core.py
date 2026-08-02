@@ -905,3 +905,46 @@ def test_folder_is_closed_le_o_estado_atual(tmp_path):
     assert closed("pasta") is True  # resgate de UM arquivo nao abre a pasta (DEC-027)
 
     assert closed("escondida") is True  # escondida pelo .gitignore: tambem travada
+
+
+def test_marcador_citado_em_comentario_nao_corta_o_bloco(tmp_path):
+    """Marcador mencionado num comentario nao pode ser confundido com o bloco (wo0045)."""
+    (tmp_path / "logs").mkdir()
+    (tmp_path / "logs" / "a.md").write_text("x\n", encoding="utf-8")
+    (tmp_path / "README.md").write_text("x\n", encoding="utf-8")
+    texto = (
+        '# Regra vai DENTRO do bloco "# >>> flatdrop-editor" e nada depois do "# <<<".\n'
+        "logs/*\n"
+        "# >>> flatdrop-editor\n"
+        "# (sem alteracoes)\n"
+        "# <<<\n"
+    )
+    (tmp_path / ".flatdropignore").write_text(texto, encoding="utf-8")
+    out = core.build_flatdropignore(tmp_path, core.ScanConfig(), {}, existing_text=texto)
+    assert out.count(core.FLATDROP_EDITOR_MARK_A) == 2   # o do comentario + o bloco real
+    assert out.splitlines()[0] == texto.splitlines()[0]  # comentario intacto, nao cortado
+    assert out.splitlines()[1] == "logs/*"
+
+
+def test_dois_blocos_recusa_salvar(tmp_path):
+    """Arquivo ambiguo para o salvamento em vez de adivinhar qual bloco vale (wo0045)."""
+    (tmp_path / "README.md").write_text("x\n", encoding="utf-8")
+    texto = ("# >>> flatdrop-editor\n# (sem alteracoes)\n# <<<\n"
+             "# >>> flatdrop-editor\n# (sem alteracoes)\n# <<<\n")
+    (tmp_path / ".flatdropignore").write_text(texto, encoding="utf-8")
+    with pytest.raises(core.FlatdropIgnoreAmbiguo):
+        core.build_flatdropignore(tmp_path, core.ScanConfig(), {}, existing_text=texto)
+
+
+def test_salvar_duas_vezes_nao_acumula_linha_em_branco(tmp_path):
+    """Estabilidade TEXTUAL, nao so das regras: o lstrip antigo deixava o arquivo crescer."""
+    (tmp_path / "logs").mkdir()
+    (tmp_path / "logs" / "a.md").write_text("x\n", encoding="utf-8")
+    (tmp_path / "README.md").write_text("x\n", encoding="utf-8")
+    texto = "# cabecalho\nlogs/*\n# >>> flatdrop-editor\n# (sem alteracoes)\n# <<<\n"
+    (tmp_path / ".flatdropignore").write_text(texto, encoding="utf-8")
+    cfg = core.ScanConfig()
+    t1 = core.build_flatdropignore(tmp_path, cfg, {}, existing_text=texto)
+    (tmp_path / ".flatdropignore").write_text(t1, encoding="utf-8")
+    t2 = core.build_flatdropignore(tmp_path, cfg, {}, existing_text=t1)
+    assert t1 == t2

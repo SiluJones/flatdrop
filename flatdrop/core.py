@@ -576,6 +576,42 @@ def folder_is_closed(root, cfg: ScanConfig, rel_dir: str, probes=None) -> bool:
     return not base_in(f"{rel_dir}/{FLATDROP_PROBE}" if rel_dir else FLATDROP_PROBE, False)
 
 
+class FlatdropIgnoreAmbiguo(ValueError):
+    """O arquivo tem mais de um bloco gerenciado — reescrever destruiria conteudo.
+
+    Levantado em vez de adivinhar qual bloco vale. A anatomia normativa (spec de
+    2026-08-02) admite UM bloco: dois sao ambiguidade, e o editor recusa salvar.
+    """
+
+
+def _split_managed(text: str) -> tuple[str, str, str]:
+    """(pre, bloco, pos) de um .flatdropignore, cortando pelos marcadores.
+
+    O marcador e uma LINHA cujo conteudo, sem espacos, e igual ao marcador — nunca uma
+    substring no meio de um texto. A versao antiga usava ``text.split(MARK)``, entao um
+    comentario que CITASSE o marcador (documentando a propria convencao) fazia o corte
+    acontecer no comentario: o bloco novo entrava no meio da frase, o bloco antigo sobrava
+    no fim e o resto da linha truncada virava padrao ativo. Medido em 2026-08-02.
+
+    Sem bloco: devolve (texto, "", ""). Mais de um marcador de abertura ou de fechamento:
+    levanta ``FlatdropIgnoreAmbiguo`` — recusar e melhor que destruir.
+    """
+    linhas = text.splitlines()
+    abre = [i for i, ln in enumerate(linhas) if ln.strip() == FLATDROP_EDITOR_MARK_A]
+    fecha = [i for i, ln in enumerate(linhas) if ln.strip() == FLATDROP_EDITOR_MARK_B]
+    if len(abre) > 1 or len(fecha) > 1:
+        raise FlatdropIgnoreAmbiguo(
+            f"{len(abre)} marcadores de abertura e {len(fecha)} de fechamento; "
+            "esperado 1 de cada. Deixe um unico bloco no fim do arquivo e salve de novo."
+        )
+    if not abre or not fecha or fecha[0] < abre[0]:
+        return text, "", ""
+    pre = "\n".join(linhas[:abre[0]])
+    bloco = "\n".join(linhas[abre[0]:fecha[0] + 1])
+    pos = "\n".join(linhas[fecha[0] + 1:])
+    return pre, bloco, pos
+
+
 def build_flatdropignore(root, cfg: ScanConfig, wants: dict[str, bool],
                          existing_text: str | None = None,
                          locks: dict[str, bool] | None = None) -> str:
@@ -677,11 +713,11 @@ def build_flatdropignore(root, cfg: ScanConfig, wants: dict[str, bool],
     block = folder_lines + file_lines
     body = "\n".join(block) if block else "# (sem alteracoes)"
     managed = f"{FLATDROP_EDITOR_MARK_A}\n{body}\n{FLATDROP_EDITOR_MARK_B}"
-    if existing_text and FLATDROP_EDITOR_MARK_A in existing_text and FLATDROP_EDITOR_MARK_B in existing_text:
-        pre = existing_text.split(FLATDROP_EDITOR_MARK_A)[0].rstrip("\n")
-        pos = existing_text.split(FLATDROP_EDITOR_MARK_B, 1)[1].lstrip("\n")
-        return "\n".join(p for p in (pre, managed, pos) if p) + "\n"
     if existing_text and existing_text.strip():
+        pre, bloco, pos = _split_managed(existing_text)
+        if bloco:
+            pre, pos = pre.rstrip("\n"), pos.strip("\n")
+            return "\n".join(p for p in (pre, managed, pos) if p) + "\n"
         return existing_text.rstrip("\n") + "\n\n" + managed + "\n"
     return managed + "\n"
 
