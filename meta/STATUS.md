@@ -3,190 +3,148 @@
 Estado atual do projeto. Atualize ao fim de cada sessão de trabalho (rolante: o
 resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
 
-> **Mudanças nesta revisão (2026-07-28) — atualização de meta, sem tocar em código:**
-> merge do **template-update do KCM v1.87.0**. Três decisões novas: **DEC-023** (vocabulário —
-> `meta/specs/` vira `meta/workorders/`, o delta aplicável passa a se chamar **WO**, a próxima
-> é `wo0038`; os 37 arquivos existentes mudam de pasta e **mantêm o nome**, e nenhuma
-> referência histórica é reescrita), **DEC-024** (comandos do Code viram **Skills** em
-> `.claude/skills/`; o apêndice de arranque sai do `CEREBRO.md`) e **DEC-025** (no
-> `.flatdropignore`, pasta se escreve `pasta/*`, nunca `pasta/` — causa raiz medida: `_scan`
-> poda o diretório antes de descer, então o `!` dentro dele nunca é avaliado). Atualizados:
-> `CEREBRO.md`, `CLAUDE.md`, as duas skills, `.gitignore`, `.flatdropignore`, `meta/README.md`,
-> GLOSSARY, IDEAS, DECISIONS e as Instruções do Projeto. **Nada de código mudou** — a suíte não
-> foi rodada nesta sessão (último número verificado: 68 verdes em 2026-07-21).
+> **Mudanças nesta revisão (2026-08-01) — meta apenas, nenhuma linha de produto tocada:**
+> merge do template-update do KCM **v1.95.0** (**DEC-028**) e curadoria do registro. Higiene
+> aplicada, item a item:
 >
-> _Notas de revisão anteriores (DEC-022/spec0036 em 20/07 e a higiene de 21/07 — backup,
-> contagem de testes, backlog) foram absorvidas: o desfecho vive no `CHANGELOG` 0.11.0/0.10.1,
-> em DEC-022/FIX-010 e nas seções abaixo._
+> - O **cabeçalho estava desatualizado**: declarava 0.11.0, 68 testes e data de 28/07, enquanto o
+>   corpo já falava de 0.12.0–0.14.0. Corrigido — a divergência nasceu de o Code fazer *append* e
+>   ninguém reescrever o topo. Agora **0.14.0**.
+> - **Saíram por já estarem resolvidos** (o desfecho vive no CHANGELOG/DECISIONS): as seis notas
+>   datadas de julho (spec0021, spec0024, spec0027, spec0028, specs 0031–0033), o item 1 do
+>   backlog (*trecho de KCM* — o `ROADMAP` e o `IDEAS` já o davam por **entregue**; só o STATUS
+>   ainda o chamava de «PRIMEIRA tarefa da próxima conversa»), os itens 2, 3 e 4, o risco do
+>   backup (resolvido em 21/07) e a linha do FIX-011.
+> - **Ficou o que ainda é o agora:** o bug do bloco gerenciado, o registro pendente da wo0044 e os
+>   pontos de atenção que seguem valendo. O que era «adiado» virou item com **gatilho de retorno**
+>   em `IDEAS.md` › Adiadas, em vez de morar aqui sem prazo.
+> - **Suíte não rodada nesta sessão.** O número abaixo é o relatado pelo Claude Code em 29/07.
 
-- **Versão:** 0.11.0 no `__init__.py` (spec0036/DEC-022: nomear `_MANIFEST`/`_TREE` com o
-  nome da pasta). `[Não lançado]` no CHANGELOG só tem itens de produto em aberto.
-- **Data:** 2026-07-28
-- **Fase:** F1 (MVP) OK · F2 (robustez/conveniência) OK — **C (persistência) e D (editor
-  de `.flatdropignore`) fechados**; em aberto só **multi-raiz na GUI** e **UI-2/UI-3**
-  (polimento, opcionais) · F3 (gerador de `.bat` + multi-fonte na GUI) OK · F4
-  (distribuição: `.exe`, single-file, contagem de tokens) não iniciada — ver `ROADMAP.md`.
-- **Situação geral:** em uso real, **estável**, em **pausa** (2026-07-21). Fluxo do monorepo
-  `cinzeiro` coberto de ponta a ponta (GUI, CLI e `.bat`). Modo Claude Code em operação;
-  **WOs 0001–0037 aplicadas e commitadas** (nomeadas `spec00NN`, anteriores à DEC-023; agora em `meta/workorders/`). **68 testes verdes**; nenhum bug aberto. Esta
-  leva (0.8.0–0.11.0): atalho "abrir GUI" semeia navegação (0.8.0), gerar atalho da UI +
-  Recentes compacto + layout em duas colunas (0.9.0–0.10.0), FIX-010 persistência de
-  preferências + padrões de fábrica (0.10.1), e nomeação dos meta com o nome da pasta
-  (0.11.0).
-- **Decisão pendente (bloqueia a próxima frente):** **multi-raiz na GUI** não tem versão
-  "só-GUI, zero-toque" — a core já aceita N fontes, mas a CLI só tem `--root` + N
-  `--also-md-from` (fontes só-`.md`). Ou (**B**) a GUI roda N raízes e o botão "Gerar
-  .bat…" fica **desabilitado** no modo multi-raiz (o `.bat` nunca mente; caminho protegido
-  intocado), ou (**A**) cria-se um flag aditivo `--add-root` e o `.bat` passa a codificar N
-  raízes — o que **toca o caminho protegido** e, por DEC-020, exige aval consciente do
-  autor + prova de que todo `.bat` de raiz única segue idêntico. **Recomendação: B.**
-  Nada foi desenhado; a spec de design só começa depois dessa escolha.
-- **(2026-07-15, spec0021 aplicada) Editor de `.flatdropignore` (Fase 2-D) fechado:**
-  glifo da pasta correto já na visão colapsada (`core.folder_effective_state`, FIX-007).
-- **(2026-07-15, spec0024 aplicada) Item C — persistência entregue:** `flatdrop/settings.py`
-  grava config + recentes (só-GUI; DEC-020 blinda o `.bat`). Versão **0.6.0**,
-  **58 testes verdes**. Próxima = multi-raiz na GUI.
-- **(2026-07-16, spec0027 aplicada) Force-include por caminho exato entregue (DEC-021):**
-  `++caminho` no `.flatdropignore` resgata arquivo barrado por ignore embutido (vence tudo
-  menos sensível); `.bat` intocado. Versão **0.7.0**, **62 testes**.
-- **(2026-07-16, spec0028 aplicada) FIX-008:** o nome volta a renomear ao trocar de raiz
-  (regressão da persistência corrigida). Versão **0.7.1**. Próxima = multi-raiz na GUI.
-- **(2026-07-20, specs 0031–0033 aplicadas) Leva de conveniências de GUI, 0.9.0 → 0.9.2,
-  66 testes verdes.** spec0031: menu **Ferramentas → "Gerar atalho da UI…"** gera o `.bat`
-  que abre a interface (gerador NOVO e separado; RUN `.bat` intocado, DEC-020) — 1 teste
-  novo (65 → 66). spec0032: **Recentes** compacto como botão **"Recentes ▾"** na linha da
-  Raiz. spec0033/**FIX-009**: sub-frame na linha da Raiz tira a coluna global morta que o
-  botão criava (grade de volta a 3 colunas). Pendências de smoke manual no Windows e dois
-  prints candidatos a README (menu Ferramentas; linha da Raiz corrigida). Próxima = multi-
-  raiz na GUI (decisão A/B do autor antes de desenhar).
+- **Versão:** **0.14.0** no `__init__.py` (amostra do `_TREE` — wo0043). `[Não lançado]` no
+  CHANGELOG traz o registro desta sessão (documentação/ambiente, sem corte de versão) e os itens
+  de produto em aberto.
+- **Data:** 2026-08-01
+- **Commit:** `e772d45` (wo0043) é o último **conhecido**, relatado pelo Code em 29/07 — o mount é
+  uma cópia achatada e não tem `.git`, então o chat não consegue conferir. Quando o `_MANIFEST`
+  passar a gravar `git log -1` (ideia ativa), este campo deixa de depender de relato.
+- **Fase:** F1 (MVP) OK · F2 (robustez/conveniência) **quase concluída** — restam multi-raiz na
+  GUI (adiada), UI-2/UI-3 e o bug abaixo · F3 (gerador de `.bat` + multi-fonte na GUI) OK · F4
+  (distribuição) não iniciada — ver `ROADMAP.md`.
+- **Situação geral:** em uso real, **estável**, em **stand-by** por decisão do autor. Fluxo do
+  monorepo `cinzeiro` coberto de ponta a ponta (GUI, CLI e `.bat`). Modo Claude Code em operação;
+  **WOs 0001–0043 aplicadas e commitadas** (as 0001–0037 mantêm o nome `spec00NN`, anteriores à
+  DEC-023). **79 testes verdes** (relatado em 29/07, não reconferido). **Um bug aberto**, com
+  contorno conhecido e correção já desenhada.
 
-## O que funciona (além do MVP)
+## 🔴 Bug aberto — o editor não convive com regras escritas FORA do bloco gerenciado
 
-- **CLI** (`python run.py <opções>`): mesma core da GUI. Sem args abre a GUI.
-- **GUI repaginada (UI-1):** modal "Escolher tipos…" (checklist categorizado +
-  busca + marcar/limpar por grupo + adicionar custom); tela compacta (resumo
-  "Tipos: N de M"); abre **maximizada**.
-- **`_TREE.md` opcional na saída (spec0011):** árvore da origem ao lado do
-  `_MANIFEST.md` — copiados (renomeados marcados), pulados com o motivo, e pastas
-  ignoradas colapsadas em UMA linha, sem recursão. Desligado por padrão (checkbox
-  GUI + `--tree` CLI, serializado no `.bat`). Detalhe dos pulados via
-  `--tree-detail summary|full`. É o par visual do `.flatdropignore`.
-- **`root_in_name` (spec0013 + spec0014):** flag opcional — no modo fullpath e em
-  fonte única, inclui o nome do projeto no nome de cada arquivo. Formato final:
-  stem + caminho invertido + raiz no fim (`app/routes/page.tsx` sob `meuapp` →
-  `page__routes__app__meuapp.tsx`; `README.md` → `README__meuapp.md`). Só no nome
-  planejado; `rel` do manifesto/tree fica real. CLI `--root-in-name`; checkbox na
-  GUI serializada no `.bat`.
-- **Gerador de `.bat` na GUI:** "Gerar .bat…" serializa a config da tela num `.bat`
-  ASCII (reproduz a seleção do modal via `--add-ext`/`--exclude-ext`).
-- **Multi-fonte ao vivo na GUI:** toggle "Também incluir todos os `.md` a partir de
-  [raiz]" vale no Pré-visualizar/Executar (FIX-004).
-- **`.flatdropignore` + `.gitignore` aninhado (DEC-014):** ignore próprio por
-  projeto, aninhado, com `!` para liberar o que o `.gitignore` bloqueia. Palavra
-  final sobre o `.gitignore`. **Criável à mão ou pelo editor visual da GUI** (Fase 2-D,
-  entregue na 0.4.0 — spec0018; gerador corrigido na 0.5.1 — spec0020, FIX-006).
-  Aceita nomes alternativos (`.flatdropignore.txt`, `flatdropignore.txt`) e vai ao
-  mount como o `.gitignore` (spec0019, DEC-018).
-- **Allowlist expandida (DEC-013):** documentos aceitos pelo Projeto, Godot e várias
-  linguagens/config. Imagens/áudio/vídeo fora.
-- **Multi-fonte com manifesto único** (`make_plan_sources`) + `--also-md-from`.
-- **Filtros de execução:** `only_ext`/`exclude_ext`/`add_ext`, `only_folder`/`folder_match`.
-- **5 `.bat` do cinzeiro** (ASCII) + **launcher `flatdrop-ui.bat`**.
-- **Downloads resolvido de verdade** (Known Folder / XDG) — FIX-002.
-- Poda de pastas **visível** (contador + amostra + aviso) na GUI e CLI — FIX-001.
+Aberto na 0.13.0. Reproduzido em sandbox e visível no `.flatdropignore` deste próprio repo.
+Três sintomas, uma causa:
+
+1. **Duplicação.** Salvar sem mexer em nada copia para dentro do bloco linhas que já existiam fora
+   dele. A curadoria manual vira sombra de uma cópia gerada.
+2. **Destravar não funciona** quando a trava vem de linha manual: o gerador só *omite* a linha do
+   bloco; a de fora continua, a pasta segue travada, e ao reabrir o editor a trava voltou. O
+   clique é desfeito em silêncio.
+3. **Marcar arquivo excluído por linha manual** também não tem efeito, pela mesma razão.
+
+**Causa raiz:** o gerador compara o estado desejado com o **git puro** e é cego para a curadoria
+manual do próprio `.flatdropignore` — sendo cego, não sabe nem que existe algo a corrigir.
+Agravante: nada garante que o bloco fique por **último**, e vale a última regra que casa.
+**Por que a suíte não pegou:** nenhum dos 8 testes do editor tem linha manual fora do bloco.
+
+**Contorno em vigor:** num mesmo arquivo, use a curadoria manual **ou** o editor, nunca os dois.
+**Este repo está no modo manual — não use o editor aqui até a correção.**
+
+**A correção está desenhada em 4 passos** em
+`meta/analises/260728-ANALISE-bloco-gerenciado-vs-manual.md`, com riscos e estimativa. Não foi
+implementada de propósito: mexe na coleta de ignores e estica o contrato de round-trip da DEC-016.
+**Ela começa por duas perguntas ao autor, não por código:**
+
+- **Aprova o desenho (passos 1–4)?**
+- **O passo 3 (garantir que o bloco fique por último) MOVE o que estiver depois dele, ou só AVISA?**
+  Mover é melhor UX e mexe em texto que não é da ferramenta; avisar é risco zero e pior de usar.
+  **Terceira opção, aberta pela regra nova do CEREBRO (DEC-028):** mover **o próprio bloco** para
+  o fim — a ferramenta mexendo no que é dela — sem tocar no texto da pessoa.
+
+**Consequência que o autor precisa saber antes de aprovar:** depois da correção, o bloco gerenciado
+**deste repo** fica quase vazio, porque tudo já está na parte manual. É o comportamento certo, mas
+vai parecer que sumiu — tem de estar no CHANGELOG.
+
+**Entra na mesma frente (não abrir outra):** detectar ou normalizar **contrabarra** em padrão
+manual — sintaxe `.gitignore` usa só barra normal, então um padrão escrito com `\` não casa nada e
+o arquivo sobe achando que foi ignorado. Medido: o gerador daqui só emite `/`, logo o caso veio de
+edição manual. Só faz sentido depois que o gerador enxergar o que está fora do bloco.
+
+## 📋 Registro pendente — wo0044 (primeira tarefa; canal dos meta neste ciclo = CHAT)
+
+Nada disto está no repo. Âncoras e texto exato em
+`meta/workorders/260801-wo0044-registro-pendente.md`.
+
+1. **Logs.** `logs/2026-07-28.md` cobre só a primeira sessão do dia — acrescentar as sessões de
+   wo0038 → wo0042 como `## Sessão N` (DEC-026) e criar `logs/2026-07-29.md` (wo0043 + handoff).
+2. **Duas docstrings de `flatdrop/core.py`** (`_peek_children` e `write_tree`) ainda citam
+   `C.TREE_NAME_CAP` como o limite, substituído na 0.14.0 por `TREE_NAME_HEAD`/`TREE_NAME_TAIL`.
+3. **`meta/workorders/_TEMPLATE.md`:** conferir se existe — nem o `_MANIFEST` nem o `_TREE`
+   respondem — e criar a partir do modelo do kit se faltar.
+4. **`.flatdropignore` da raiz** está modificado e não commitado; a versão nova (DEC-028) entra
+   junto.
+5. `python -m pytest -q`, `git diff`, commit sem acento e **`git push`** — a conversa seguinte lê o
+   repo, então o que não subiu não existe.
+
+## ✅ O que funciona (além do MVP)
+
+- **CLI** (`python run.py <opções>`) e **GUI** sobre a mesma core; sem args abre a GUI.
+- **`_MANIFEST.md` + `_TREE.md`** na saída, opcionalmente nomeados com o nome da pasta (DEC-022).
+  O `_TREE` diz o que foi pulado e por quê, com **amostra** nas pastas grandes (0.14.0).
+- **`.flatdropignore` + `.gitignore` aninhado** (DEC-014), com `!` para liberar o que o git
+  esconde — funcionando também **dentro de pasta ignorada** desde o FIX-011 (0.12.0).
+- **Editor visual de `.flatdropignore`** na GUI, com **trava por pasta** (DEC-027) — sujeito ao
+  bug acima.
+- **Force-include por caminho exato** (`++caminho`, DEC-021), que resgata arquivo barrado por
+  ignore embutido (vence tudo menos «sensível»).
+- **Gerador de `.bat`** e **multi-fonte ao vivo** na GUI; **persistência** de config e recentes
+  (só-GUI, DEC-020); `root_in_name`; filtros de execução; Downloads resolvido de verdade (FIX-002);
+  poda de pastas visível (FIX-001).
 
 ## Qualidade / testes
 
-- **68 testes pytest passando** (conferido em 2026-07-21). Rodar da raiz:
-  **`pytest -q`** (o `conftest.py` na raiz resolve o import — FIX-005) ou
-  `python -m pytest -q`.
-- Distribuição: `test_core.py` 48 (MVP + FIX-001 + filtros/multi-fonte/Downloads +
-  `.flatdropignore` + `_TREE.md` + `root_in_name` + editor/spec0018 + aliases/spec0019 +
-  gerador corrigido/spec0020 + nomeação dos meta/spec0036) · `test_settings.py` 9
-  (persistência, spec0024 + FIX-010) · `test_cli.py` 7 · `test_force_include.py` 4
-  (force-include `++`, DEC-021).
+- **79 testes** relatados verdes em 2026-07-29 (Code, wo0043). Rodar da raiz: `pytest -q` (o
+  `conftest.py` resolve o import — FIX-005) ou `python -m pytest -q`.
+- A distribuição por arquivo não é reconferida desde 21/07 (68 testes); os 11 novos vieram das
+  wo0038 e wo0041–0043, em `test_core.py`.
 - A GUI **não** é coberta pela suíte (tkinter fora do CI) → smoke manual no Windows.
+- **Lacuna conhecida:** nenhum dos 8 testes do editor exercita linha manual fora do bloco
+  gerenciado. É o que deixou o bug passar — a WO da correção precisa fechar essa lacuna.
 
 ## Em aberto (produto) — backlog curto, na ordem sugerida
 
-1. **Trecho de KCM: "Claude lê o `_TREE.md` → dita o `.flatdropignore`".** Conteúdo
-   portável (não é código do FlatDrop): ensina o Claude de qualquer Projeto que usa
-   FlatDrop a ler o `_TREE.md` (que mostra o motivo de cada exclusão) e devolver um
-   `.flatdropignore` pronto — sobretudo para **liberar via `!` o que o `.gitignore`
-   esconde**. Entregável: um bloco de KCM + exemplo no README. Rápido; destrava o
-   fluxo que o `_TREE.md` já habilita. **PRIMEIRA tarefa da próxima conversa.**
-2. ~~**Editor de `.flatdropignore` na GUI (= Fase 2-D).**~~ **ENTREGUE (0.4.0,
-   spec0018; nomes alternativos + vai ao mount na 0.5.0, spec0019; gerador corrigido —
-   colapso de pasta cheia, base git-pura no round-trip, checkbox indeterminado ao
-   expandir — na 0.5.1, spec0020, FIX-006).** Modal `FlatDropIgnoreEditor` (árvore lazy,
-   checkbox binário Opção B, tri-state por pasta, sinaliza o que o `.gitignore` esconde)
-   + `annotate_children` / `build_flatdropignore` no core. Bloco gerenciado no
-   round-trip. 3 testes (spec0018) + 2 (spec0019) + 2 (spec0020) novos. Falta só o
-   smoke manual da GUI no Windows (a suíte não cobre tkinter).
-3. ~~**C — Persistir configurações + pastas recentes** na GUI.~~ **ENTREGUE (0.6.0,
-   spec0024):** `flatdrop/settings.py` grava config + recentes (JSON em
-   `%APPDATA%`/`~/.config`); só-GUI, DEC-020 blinda o `.bat`. Depois: Recentes virou botão
-   compacto (0.9.1, spec0032) e **FIX-010** devolveu as preferências ao abrir pelo atalho
-   (0.10.1, spec0035). 9 testes em `test_settings.py`.
-4. ~~Teto de nomes do `_TREE`.~~ **RESOLVIDO na 0.14.0 (wo0043)** — amostra com as duas pontas
-   e o meio contado.
-5. **Editor de `.flatdropignore` deveria gravar `pasta/*` + `!mantido`** em vez de listar a
-   pasta parcial por folha. Depois do FIX-011 (0.12.0) deixou de ser bloqueio — o `!` funciona
-   nas duas formas —, mas a lista por folha continua não sendo à prova de arquivo novo. Mexe na
-   maquinaria de round-trip (DEC-016/spec0020). **Análise escrita e em discussão:**
-   `meta/analises/260728-ANALISE-gerador-flatdropignore.md` — três opções (B, C, D), a decisão
-   depende de responder "arquivo novo em pasta curada entra ou fica fora?". Aguarda o autor.
-6. **Multi-raiz na GUI** (selecionar N pastas, prefixar cada uma com sua raiz). Decisão A/B
-   ainda pendente (recomendação: B). **Adiada por decisão do autor (2026-07-28).**
-7. **UI-2** (polimento de layout) e **UI-3** (presets "só docs"/"só código", lembrar
-   última seleção).
-8. **Formato "caminho escrito"** (`raiz__pastas__stem.ext`) como seletor de formato
-   do nome — útil para empilhar por raiz, não para o Claude achar por nome. Espera.
-9. Aviso mais visível quando o pathspec está ausente (destaque na GUI).
-10. Saída da CLI ASCII-safe (`->`/`*`). ~~Botão "Gerar atalho da UI".~~ **ENTREGUE (0.9.0,
-   spec0031):** menu **Ferramentas → "Gerar atalho da UI…"** (gerador NOVO e separado; o
-   RUN `.bat` ficou intocado, DEC-020).
+1. **A correção do bug do bloco gerenciado**, começando pelas duas perguntas acima.
+2. **Editor deve gravar `pasta/*` + `!mantido`** em vez de listar a pasta parcial por folha.
+   Depois do FIX-011 deixou de ser bloqueio, mas a lista por folha continua não sendo à prova de
+   arquivo novo. **Análise em discussão:** `meta/analises/260728-ANALISE-gerador-flatdropignore.md`
+   — três opções (B, C, D); a decisão depende de responder *arquivo novo em pasta curada entra ou
+   fica fora?*.
+3. **FlatDrop grava o estado do repo no `_MANIFEST`** (`git log -1` + resumo de `git status`, como
+   foto do momento da geração). Apaga uma ressalva inteira do lado do chat.
+4. **Mostrar a REGRA de ignore que casou**, não só a contagem por motivo.
+5. Aviso mais visível quando o `pathspec` está ausente.
+6. Adiadas, com gatilho de retorno em `IDEAS.md`: multi-raiz na GUI, `pasta/` como exclusão dura,
+   UI-2/UI-3, saída da CLI ASCII-safe, formato «caminho escrito».
 
 ## Riscos / pontos de atenção
 
-- 🔴 **BUG ABERTO (0.13.0): o editor não convive com regras escritas FORA do bloco gerenciado.**
-  Reproduzido em sandbox e no `.flatdropignore` real deste repo. Três defeitos, uma causa:
-  1. **Duplicação.** Salvar sem mexer em nada copia para dentro do bloco as linhas que já
-     existiam fora dele (aqui: `meta/workorders/*` e `INSTRUCOES-DO-PROJETO.md` aparecem duas
-     vezes). A curadoria manual vira sombra de uma cópia gerada.
-  2. **Destravar não funciona.** Se a trava vem de uma linha manual fora do bloco, destravar na
-     GUI só faz o gerador *omitir* a linha do bloco — a de fora continua lá, a pasta segue
-     travada, e ao reabrir o editor a trava volta. O clique é desfeito em silêncio.
-  3. **Marcar um arquivo excluído por linha manual também não tem efeito**, pela mesma razão:
-     o bloco não emite o `!` que precisaria vencer a linha de fora.
-  **Causa raiz:** o gerador usa como referência o **git puro**, não "tudo o que já existe menos
-  o meu bloco". Quem só lê o `.gitignore` não enxerga a curadoria manual do próprio
-  `.flatdropignore`, então não sabe nem que precisa corrigi-la. Agravado por não haver garantia
-  de que o bloco fique por ÚLTIMO no arquivo (vale a última regra que casa).
-  **Contorno até a correção:** manter a curadoria manual OU usar o editor, não os dois no mesmo
-  arquivo. **Análise com o desenho da correção:**
-  `meta/analises/260728-ANALISE-bloco-gerenciado-vs-manual.md`.
-- ~~O `!` não resgata arquivo dentro de pasta ignorada.~~ **RESOLVIDO na 0.12.0 (FIX-011,
-  wo0038).** A poda passou a consultar as pastas alcançadas por negação. A convenção `pasta/*`
-  (DEC-025) segue recomendada, mas deixou de ser obrigatória.
-- **`meta/DECISIONS.md` passou de 700 linhas** (793 com DEC-023/024/025). O arquivamento em
-  `DECISIONS-archive.md` está pendente **de propósito**: fazer agora, no meio da mudança de
-  vocabulário, mexeria nas mesmas referências duas vezes. Fazer depois do commit da migração.
-- Nenhum bug de código aberto. (FIX-005 resolvido pelo `conftest.py`; FIX-008 corrigido na
-  spec0028 — falta só o smoke manual de confirmação no Windows.)
-- **Backup do repositório — RESOLVIDO em 2026-07-21 (era o risco nº 1 da pausa).** O remoto
-  já existia (`origin` → `github.com:SiluJones/flatdrop.git`, SSH), mas a `main` local **não
-  o rastreava** e estava **3 commits à frente** (layout em duas colunas, DEC-022/FIX-010 e o
-  fechamento da spec0037) — a leva 0.10.0–0.11.0 só existia no disco. `git push -u origin
-  main` enviou tudo e amarrou o tracking, então daqui em diante o `git status` avisa sozinho
-  quando houver commit local não enviado. O repositório é a memória do projeto (specs,
-  DECISIONS, CHANGELOG, logs). **Hábito para o retorno: `git push` antes de fechar a
-  sessão.**
-- O `_TREE.md` deste projeto mostra `Pulados: 0` (sem `.flatdropignore` nem arquivos
-  pulados por tipo aqui) — a diferença `summary`×`full` e as linhas `[pulado: …]` só
-  aparecem "ao vivo" num projeto com `.env`/`.flatdropignore`. Coberto por testes.
-- O fix do Downloads e a GUI só foram exercidos por estrutura/lógica no sandbox (sem
-  Windows no ambiente do chat); a validação final é o smoke manual no PC.
+- **`meta/DECISIONS.md` passou de 700 linhas** (864, 38 entradas). O arquivamento em
+  `DECISIONS-archive.md` estava adiado **de propósito** durante a migração de vocabulário — o
+  bloqueio caiu: fazer depois do commit da wo0044.
+- **`.claude/settings.json` agora permite escrita fora do repo** (`additionalDirectories: ["../"]`)
+  para o relatório do Code na pasta-pai (DEC-028). Concessão estreita e deliberada; se a escrita
+  for negada, o Code diz e segue.
+- O fix do Downloads e a GUI só são exercidos por estrutura/lógica no sandbox (sem Windows no
+  ambiente do chat); a validação final é o smoke manual no PC.
 - A estimativa de tokens segue grosseira (`bytes/4`) e não vale para binários.
-- `.flatdropignore` faz uma passada extra na árvore para coletar os ignores
-  (aceitável; fundível numa passada depois, se virar gargalo).
+- `.flatdropignore` faz uma passada extra na árvore para coletar os ignores (aceitável; fundível
+  numa passada depois, se virar gargalo).
+- **Hábito da pausa:** `git push` antes de fechar a sessão. O remoto
+  (`github.com:SiluJones/flatdrop.git`) rastreia a `main` desde 21/07, então o `git status` avisa
+  sozinho quando houver commit local não enviado.

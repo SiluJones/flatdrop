@@ -202,7 +202,7 @@ problema, critérios de aceite verificáveis, decisões de design, fora-de-escop
 **`spec0001`–`spec0037` (nomes antigos).** As 37 WOs anteriores à DEC-023. **Mantiveram o
 nome** e apenas mudaram de pasta para `meta/workorders/`; toda referência histórica no
 STATUS/CHANGELOG/DECISIONS/logs segue válida e não é reescrita. A numeração continua:
-a próxima é `wo0038`.
+a próxima é `wo0044`.
 
 **Poda de diretório (`_scan`).** `core._scan` descarta o diretório casado por ignore
 **antes de descer** (`dirnames[:] = kept`, herança do FIX-001). Consequência: um `!` dentro
@@ -221,3 +221,23 @@ o walker poda o diretório e um `!pasta/arquivo` posterior nunca chega a ser ava
 FIX-011 (0.12.0) as duas formas aceitam resgate** — a poda passou a consultar as negações antes
 de descartar a pasta. A convenção `pasta/*` (DEC-025) segue recomendada por ser explícita e
 compatível com quem lê o arquivo como se fosse `.gitignore`.
+**Trava por pasta.** O controle do editor de `.flatdropignore` (coluna «Arquivo novo») que
+responde *arquivo novo aqui entra?* — 🔓 aberta ou 🔒 fechada. É a **única** informação do editor
+que não é derivada de nada: o checkbox da pasta é agregado dos filhos e diz o presente; a trava
+diz o futuro. Fechada, o gerador escreve `pasta/*` e resgata por `!` o que estiver marcado;
+aberta, escreve só a exclusão do que foi desmarcado. Pasta escondida pelo `.gitignore` abre como
+`travada (git)`. Ver DEC-027.
+
+**Bloco gerenciado.** O trecho do `.flatdropignore` entre `# >>> flatdrop-editor` e `# <<<`. É
+**território da ferramenta**: o editor o reescreve inteiro a cada salvamento, então comentário
+escrito lá dentro some. Regra vai dentro; explicação vai acima do bloco; **nada** vai depois do
+`# <<<` (vale a última regra que casa, e o que vier depois vence o bloco em silêncio). Enquanto
+durar o bug aberto da 0.13.0, o gerador é **cego** para as linhas fora do bloco — daí o contorno
+«ou curadoria manual, ou editor, nunca os dois no mesmo arquivo».
+
+**Amostra do `_TREE`.** Como uma pasta grande aparece na árvore desde a 0.14.0 (wo0043): as
+primeiras `TREE_NAME_HEAD` posições, o meio **contado**, e as últimas `TREE_NAME_TAIL` —
+`file01.md … file06.md, ... (+29 no meio, 39 no total) ..., file36.md … file39.md`. Substituiu o
+teto simples (`N nomes + «(+M mais)»`), que escondia justamente o fim da coleção — e numa coleção
+ordenada por data é o último nome que diz até onde ela vai. Orienta; **não indexa**: para saber se
+um arquivo nomeado existe, a resposta é o editor da GUI, não a árvore.

@@ -17,7 +17,7 @@ Leia `meta/CEREBRO.md` → `meta/CONTEXT.md` → `meta/STATUS.md` antes de agir.
 - Identificadores em inglês; comentários e docs em PT-BR. Docstring em toda função pública.
 - Mensagens de commit **sem acento** (o ambiente do Code usa Git Bash; o CMD do usuário corrompe acento). Conventional Commits.
 - Edições nos `meta/` são **append-only** pelo Code (linha no STATUS, `DEC-`/`FIX-` em DECISIONS, marcar estado de fase no ROADMAP). Curadoria que REESCREVE um doc vem do chat (arquivo inteiro OU WO em `meta/workorders/`).
-- **Vocabulário (DEC-023):** **WO** = *como aplicar* (delta com texto exato + âncora), em `meta/workorders/AAMMDD-woNNNN-desc.md` — a numeração continua das antigas specs, a próxima é `wo0038`. **spec** = *o quê construir e quando está pronto* (spec de feature, modelo em `meta/SPEC.md`), em `meta/specs/`. Não confunda: as `spec0001`–`spec0037` que estão em `meta/workorders/` são WOs com nome antigo, e assim ficam.
+- **Vocabulário (DEC-023):** **WO** = *como aplicar* (delta com texto exato + âncora), em `meta/workorders/AAMMDD-woNNNN-desc.md` — a numeração continua das antigas specs, a próxima é `wo0044`. **spec** = *o quê construir e quando está pronto* (spec de feature, modelo em `meta/SPEC.md`), em `meta/specs/`. Não confunda: as `spec0001`–`spec0037` que estão em `meta/workorders/` são WOs com nome antigo, e assim ficam.
 - Ao aplicar uma WO: ache cada âncora EXATAMENTE; se não achar, PARE e reporte — não chute lugar próximo. Não mexa fora das edições nomeadas. `git diff` antes do commit.
 - **Ao fechar a tarefa, RELATE o trabalho** — o que fez, achados e desvios do que a WO pedia, arquivos tocados, resultado de `python -m pytest -q` e o commit. **Não** copie o bloco de fecho de turno do `meta/CEREBRO.md`: aquele é da raia de planejamento, e trocar relatório por formulário perde o que só você viu.
 - **Invariante — proteger o `.bat` (DEC-020).** O gerador/uso de `.bat` é o núcleo mais
@@ -25,6 +25,11 @@ Leia `meta/CEREBRO.md` → `meta/CONTEXT.md` → `meta/STATUS.md` antes de agir.
   `gui._generate_bat` e `gui._sources` são intocáveis por features de estado/persistência.
   Se algo só avançar mexendo neles, PARE e reporte ao autor — claro, mais de uma vez, como
   URGENTE — antes de priorizar a feature.
+
+## Relatório em arquivo (sempre, sem pedir)
+- Ao fechar QUALQUER tarefa (`/apply-wo` ou `/wrap`), grave o MESMO relatório também em `../AAMMDD-HHMM-code-flatdrop.txt` — pasta-PAI do repo (`FlatDrop/`), fora do versionamento.
+- Exige `permissions.additionalDirectories` no `.claude/settings.json`. Se a escrita for negada, DIGA e siga — o relatório no chat continua sendo a entrega.
+- Por que: copiar o relatório do console à mão trunca e duplica (aconteceu com o da wo0043), e o relatório é a única fonte do que só quem aplicou viu.
 
 ## Config (modelo × esforço)
 - WO com texto exato já validado → **Sonnet**, esforço proporcional (mecânico = baixo/médio).

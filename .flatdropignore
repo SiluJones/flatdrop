@@ -2,12 +2,17 @@
 # Sintaxe .gitignore; salvo na raiz; tem a palavra final sobre o .gitignore.
 #
 # COMO ESTE ARQUIVO E ORGANIZADO (DEC-028):
-# - Explicacao e comentario ficam AQUI EM CIMA, FORA do bloco. Dentro do bloco eles somem:
-#   o editor do FlatDrop reescreve o bloco inteiro a cada salvamento.
-# - REGRA (o que some do mount) vai DENTRO do bloco "# >>> flatdrop-editor".
-# - NADA depois do "# <<<": vale a ULTIMA regra que casa, entao o que vier depois vence o bloco.
+# - Explicacao e comentario ficam AQUI EM CIMA, FORA do bloco gerenciado. Dentro do bloco eles
+#   somem: o editor do FlatDrop reescreve o bloco inteiro a cada salvamento.
+# - REGRA (o que some do mount) vai DENTRO do bloco gerenciado, abaixo.
+# - NADA depois do marcador de fechamento do bloco: vale a ULTIMA regra que casa, entao o que
+#   vier depois vence o bloco em silencio.
+# - NAO cite os marcadores literalmente em comentario. O gerador os procura por SUBSTRING e usa
+#   a PRIMEIRA ocorrencia: uma mencao aqui em cima faz ele injetar o bloco no meio do comentario
+#   e deixar o bloco antigo no fim. Medido em 2026-08-02, com o proprio texto deste cabecalho.
 # - Enquanto o bug do bloco gerenciado nao for corrigido, este arquivo e editado A MAO (ver
-#   STATUS): o gerador e cego para linha manual e duplicaria dentro do bloco o que esta fora.
+#   meta/STATUS.md): o gerador e cego para linha manual e duplicaria dentro do bloco o que esta
+#   fora dele.
 #
 # FORMA (DEC-025): use "pasta/*" (o CONTEUDO), nunca "pasta/" (a PASTA). core._scan poda o
 # diretorio casado ANTES de descer, entao um "!" dentro de pasta podada nunca chega a ser
@@ -21,7 +26,7 @@
 # Logs de sessao: o "agora" fica no meta/STATUS.md; o diario nao precisa ir ao mount.
 # WOs aplicadas: o desfecho vive em meta/DECISIONS.md e meta/CHANGELOG.md; o corpo pesa — mas o
 # MODELO sobe sempre, senao a primeira sessao depois de uma transferencia fica sem o formato a
-# mao. Para estudar UMA WO no Projeto: "!meta/workorders/<arquivo>.md" dentro do bloco.
+# mao. Para estudar UMA WO no Projeto, acrescente "!meta/workorders/<arquivo>.md" no bloco.
 # meta/analises/ e meta/specs/ NAO entram aqui de proposito: sao poucas e dizem o que esta em
 # discussao ou sendo construido — valem o espaco no Projeto.
 # INSTRUCOES-DO-PROJETO.md ja e lida em todo turno pelo painel do Projeto: subir ao mount seria

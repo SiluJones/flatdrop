@@ -6,9 +6,49 @@ versionamento conforme [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Não lançado]
 
-_Itens de produto em aberto: trecho de KCM (ler `_TREE.md` → gerar `.flatdropignore`),
-multi-raiz na GUI (decisão A/B pendente), formato de nome "caminho escrito"
-(raiz→pastas→stem), UI-2/UI-3._
+_Itens de produto em aberto: multi-raiz na GUI (decisão A/B pendente), formato de nome
+"caminho escrito" (raiz→pastas→stem), UI-2/UI-3, saída da CLI ASCII-safe — todos com gatilho
+de retorno em `IDEAS.md` › Adiadas. Frente aberta: a correção do editor × curadoria manual._
+
+### Documentação e ambiente de trabalho — 2026-08-01
+
+> **Sem versão de propósito.** Nada do produto mudou: `flatdrop/` está intacto e a suíte não foi
+> rodada nesta sessão (último número verificado: 79 verdes em 2026-07-29, relatados pelo Code na
+> wo0043). Mesmo critério do merge de 2026-07-28, que também não cortou versão.
+
+#### Adicionado
+- **O Claude Code passa a gravar o relatório de trabalho em arquivo (DEC-028).** Ao fechar
+  qualquer tarefa, o mesmo relatório que vai para o chat é escrito em
+  `../AAMMDD-HHMM-code-flatdrop.txt`, na pasta-pai do repo. Motivo concreto: copiá-lo do console
+  à mão trunca e duplica — foi o que aconteceu com o da wo0043 — e ele é a única fonte do que só
+  quem aplicou viu. Exige `permissions.additionalDirectories` no `.claude/settings.json`.
+- **`meta/SPEC.md`** — o modelo de spec de feature que a DEC-023 referenciava desde 28/07 e que
+  nunca chegou a existir. Adaptado ao projeto: cada critério de aceite diz **onde** é verificado
+  (`pytest`, smoke manual, inspeção do arquivo gerado) e há uma seção de invariantes com o DEC-020.
+- **Seção «Adiadas» no `meta/IDEAS.md`**, com **gatilho de retorno obrigatório** em cada item —
+  ideia adiada sem gatilho é ideia perdida. Seis itens migraram para lá; quatro que já estavam
+  entregues foram para «Concluídas» com a versão em que saíram.
+
+#### Mudado
+- **Merge do template-update do KCM v1.95.0 (DEC-028).** Treze novidades adotadas no `CEREBRO.md`,
+  no `CLAUDE.md`, nas duas skills, no `.claude/settings.json` e no `.flatdropignore`; sete choques
+  resolvidos a favor do arquivo vivo, quatro deles devolvidos como feedback ao kit. Boa parte das
+  regras novas do kit nasceu do feedback deste repo (v1.89.0): é conteúdo próprio voltando
+  generalizado, não novidade externa.
+- **`.flatdropignore` reorganizado à mão:** cabeçalho explicando a anatomia do arquivo, tudo
+  dentro do bloco gerenciado, nada depois do `# <<<` (elimina a duplicação que o bug da 0.13.0
+  havia produzido) e o par que faltava — `meta/workorders/*` seguido de
+  `!meta/workorders/_TEMPLATE.md`, para o modelo das WOs voltar a subir ao Projeto.
+- **Instruções do Projeto refinadas** (5.514 → 6.143 caracteres): entram «análise antes do
+  compromisso», «WO nunca vai sozinha» e o bloco de fecho de turno; sai o vocabulário
+  **pré-DEC-023**, que ainda mandava escrever `meta/specs/AAMMDD-specNNNN-desc.md`.
+
+#### Corrigido
+- **Registro pendente da leva 0.12.0–0.14.0 (wo0044).** Duas docstrings de `flatdrop/core.py`
+  (`_peek_children` e `write_tree`) ainda citavam `C.TREE_NAME_CAP` como o limite, que a 0.14.0
+  substituiu por `TREE_NAME_HEAD`/`TREE_NAME_TAIL`; o cabeçalho do `meta/STATUS.md` ainda declarava
+  0.11.0 e 68 testes com o corpo já falando de 0.14.0; faltavam três termos no `meta/GLOSSARY.md`
+  e os logs das sessões de 28 e 29/07.
 
 ## [0.14.0] — 2026-07-28
 

@@ -5,6 +5,19 @@ virarem item de `ROADMAP.md`, serem implementados ou descartados. Ideia adotada
 vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
 "Descartadas" com o motivo. Nunca se perde nada — muda de status.
 
+> **Mudanças nesta revisão (2026-08-01) — merge do template-update do KCM v1.95.0 (DEC-028):**
+> criada a seção **Adiadas**, com gatilho de retorno obrigatório em cada item (formato adotado do
+> kit). Para lá foram, sem perder texto: multi-raiz na GUI, `pasta/` como exclusão dura, UI-2/UI-3,
+> saída da CLI ASCII-safe, formato «caminho escrito» e o arquivamento do `DECISIONS.md`. Quatro
+> ideias que já estavam entregues e continuavam em «Ativas» foram para **Concluídas** com a versão
+> em que saíram: `_TREE` nomear o conteúdo ignorado (0.12.0/0.14.0), force-include por caminho
+> exato (0.7.0), botão «Gerar atalho da UI» (0.9.0) e ignores de pasta editáveis (0.4.0 + 0.13.0).
+> Três ideias novas em Ativas (estado do repo no `_MANIFEST`, contrabarra em padrão, o limite da
+> amostra do `_TREE`) e seis itens novos em «Feedback para o Kit». A nota de **Foco** foi reescrita
+> para a frente atual. Nada foi apagado — só mudou de status.
+>
+> _A nota de foco de 2026-07-15 saiu: as frentes que ela citava estão em «Concluídas»._
+
 > **Mudanças nesta revisão (2026-07-15):** specs 0017–0024 aplicadas. KCM, editor visual
 > (Fase 2-D) e item C (persistência) movidos para **Concluídas**. Nova ideia ativa:
 > **force-include por caminho exato** (correção do `.min.js`). Descartada: **remover a
@@ -21,7 +34,12 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
 
 ## Ativas
 
-> **Foco (2026-07-28):** as duas frentes abaixo (**`_TREE` nomear o conteúdo útil do que
+
+> **Foco (2026-08-01):** o merge do template-update do KCM **v1.95.0** foi aplicado (DEC-028).
+> As duas frentes do `_TREE` fecharam (0.12.0 e 0.14.0). A frente aberta é **uma só**: o editor
+> não convive com regra escrita fora do bloco gerenciado — e ela começa pelas duas perguntas do
+> autor (aprova o desenho? o passo 3 move ou avisa?), não por código. A **contrabarra em padrão**
+> e o **estado do repo no manifesto** entram no mesmo ciclo.
 > foi ignorado** e **editor gravar `pasta/*`**) passam à frente do multi-raiz por decisão do
 > autor: nasceram de atrito real de uso (notas de 23 e 24/07) e são a próxima sessão.
 
@@ -33,21 +51,6 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
   manual abaixo dele vence em silêncio. Também vale a GUI **mostrar de onde vem** cada trava
   herdada (`travada (git)` já existe; falta `travada (manual)`), porque hoje o autor não tem
   como saber que aquela trava não é dele. (2026-07-28.)
-- **`pasta/` deveria voltar a ser exclusão DURA?** O FIX-011 tornou `pasta/` e `pasta/*`
-  equivalentes no FlatDrop: os dois aceitam `!` por dentro. O autor prefere o contrário — `pasta/`
-  significando "nunca entra, nem aparece na árvore" e só `pasta/*` aceitando resgate, que é o
-  comportamento do git puro e dá duas ferramentas com dois usos. Em troca, reintroduz o caso que
-  gerou a reclamação de 23/07, então só fecha se a GUI escrever `pasta/*` sozinha e o `_TREE`
-  disser em qual forma cada pasta está. **Decisão separada da do gerador**; ver
-  `meta/analises/260728-ANALISE-gerador-flatdropignore.md`. (2026-07-28.)
-- **`_TREE` deve nomear o conteúdo útil das pastas ignoradas.** Hoje a árvore colapsa a pasta
-  numa linha (`meta/legacy/  [ignorada: flatdropignore]`) e não diz o que havia dentro — então
-  o chat futuro não tem como saber qual arquivo pediria para liberar. Proposta: listar os
-  filhos de pasta ignorada **por ignore do autor** (`.gitignore`/`.flatdropignore`), marcados
-  como pulados, e seguir colapsando o lixo estrutural (`node_modules`, `.git`, `__pycache__` —
-  a poda embutida de `cfg.dir_ignores`, que ninguém quer ver). Talvez com teto de N nomes por
-  pasta para não inchar o `_TREE`. Insumo já existe: `_scan` produz `skipped_items` completo.
-  (Ideia do usuário, nota de 2026-07-24.)
 - **Editor de `.flatdropignore` deve gravar `pasta/*`, não `pasta/`.** Causa raiz medida em
   DEC-025: `_scan` poda o diretório casado antes de descer, então um `!` dentro dele nunca é
   avaliado. Hoje o editor grava a forma `pasta/` e, ao salvar com um filho marcado, cai no
@@ -57,29 +60,9 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
   pela GUI**, sob pena de o bloco `# >>> flatdrop-editor` reescrever a forma antiga.
   (Nasceu da nota de 2026-07-23 + medição desta sessão.)
 
-> **Foco (2026-07-15):** as tarefas KCM, editor (Fase 2-D) e item C foram concluídas (ver
 > Concluídas). As frentes candidatas agora são **multi-raiz na GUI** e o **force-include
 > por caminho exato**; o restante segue por prioridade aproximada.
 
-- **Formato de nome "caminho escrito" (`raiz__pastas__stem.ext`).** Um seletor de
-  formato do nome, alternativo ao `root_in_name` atual. Em vez de stem na frente,
-  escreveria o caminho na ordem natural de leitura com o **stem no fim**:
-  `app/routes/page.tsx` (raiz `meuapp`) → `meuapp__app__routes__page.tsx`. O usuário
-  reconhece que **não** ajuda o Claude a achar por nome (o stem deixa de liderar a
-  ordenação alfabética), mas agrupa todos os arquivos de um projeto por raiz — útil
-  para empilhar vários projetos numa mesma pasta/pilha mental. Implementação seria
-  barata (a mecânica de nomeação já existe), mas fica em **espera**: só entra se o
-  usuário quiser o seletor de formatos. Coexistiria com o `root_in_name`
-  (stem-primeiro) como dois estilos opt-in. (Ideia do usuário, 2026-07-04.)
-- **Force-include por caminho exato (resgatar um arquivo específico barrado por ignore
-  embutido).** Uma lista de "sempre inclua exatamente este caminho", checada ANTES dos
-  cortes embutidos (suffix-ignore, tipo, gitignore), ainda barrada por "sensível". Motiva:
-  `htmx.min.js` (e afins) some porque `.min.js` está em `DEFAULT_SUFFIX_IGNORES`, e o `!`
-  do `.flatdropignore` age numa camada abaixo (só o matcher), então não resgata. Marcador
-  próprio no `.flatdropignore` (distinto do `!`, para não borrar a semântica gitignore do
-  DEC-017). DEC-020-safe: vive no `_scan`, simétrica GUI×`.bat`, não toca o gerador de
-  `.bat`. Mexe no `_scan` → pede spec de design. **Não urgente** (o autor adiou). (Ideia do
-  usuário + assistente, nota 0827.)
 - **Mostrar a REGRA de ignore que casou (não só a contagem).** Ao achatar, informar quais
   arquivos ficaram de fora por `.gitignore` **e por qual padrão** — para o autor perceber na
   hora se algo relevante foi podado. **Estado atual (verificado):** a contagem por motivo e
@@ -90,25 +73,6 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
   que encarece o scan. Valor real: quem lê o `_TREE.md` (inclusive o KCM) descobre *por que*
   o arquivo sumiu sem abrir o `.gitignore`. Escopo pequeno-médio, sem risco ao `.bat`
   (relato apenas). (Ideia do usuário, nota `260717-1338`.)
-- **Selecionar várias pastas de uma vez na GUI (multi-raiz).** Irmã do multi-fonte
-  que já existe na core (`make_plan_sources`/`Source`): escolher N pastas na
-  interface, prefixar cada arquivo com o nome da sua pasta-raiz e só cair na
-  desambiguação atual se ainda colidir; a pasta de saída no Downloads vira uma
-  genérica com numerador quando já existir uma de mesmo nome. A core já suporta
-  multi-fonte; falta a UI de N raízes. (Ideia do usuário, nota `.txt` de 2026-07-03.)
-- **Botão "Gerar atalho da UI" na GUI.** UI-1 e o launcher `flatdrop-ui.bat` já
-  existem; falta um botão que gere o launcher calculando o caminho do `run.py`
-  sozinho (sem hardcode) — talvez um `.lnk` em vez de `.bat`.
-- **UI-2 (polimento de layout) e UI-3 (presets/lembrar seleção).** UI-2: ordem das
-  seções, 2 colunas nas opções, tema. UI-3: presets "só docs"/"só código", lembrar
-  a última seleção do modal.
-- **Saída da CLI ASCII-safe.** Trocar `↳`/`•`/`—` da saída por `->`/`*`/`-` para
-  dispensar `chcp 65001` nos `.bat` e evitar de vez problemas de code page. Baixo custo.
-- **Ignores de pasta editáveis na GUI** com núcleo imutável
-  (`.git`/`node_modules`/`__pycache__`/VCS sempre reaplicados), para tirar/pôr
-  pastas como `dist`/`build`/`.venv` caso a caso. (Fase 2 — item D.) **Consolidado
-  na "[PRÓXIMA 2] Editor visual de `.flatdropignore`" no topo** — o editor cobre isto
-  de forma declarativa e visual. O `.flatdropignore` já cobre boa parte hoje.
 - **Resync incremental por diff do manifesto.** Comparar com o `_MANIFEST.md`
   anterior e copiar/avisar só o que mudou. Ganha valor com uso frequente. (Stand-by.)
 - **Empacotar como `.exe` (PyInstaller).** Para o PC sem Python: duplo-clique sem
@@ -122,7 +86,127 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
 - **Drag-and-drop da pasta raiz na janela.** Arrastar a pasta em vez de navegar
   (exigiria tkinterdnd2 — pesar contra o princípio de zero dependências). (Stand-by.)
 
+- **FlatDrop grava o estado do repo no `_MANIFEST`.** Quando a raiz tem `.git`, rodar
+  `git log -1 --format=%h %ad %s --date=short` e um **resumo** de `git status` (`branch main ·
+  limpo` ou `branch main · 3 modificados · 2 não rastreados · 1 à frente de origin`) e escrever
+  as duas linhas no manifesto, rotuladas como **foto do momento da geração** — não como estado
+  atual. Valor: o mount é uma cópia achatada e não tem `.git`, então hoje o assistente não
+  consegue ler commit nenhum e precisa pedir. Com isso, a ressalva vira dado, e some uma regra
+  inteira do CEREBRO. Se quiser a lista de arquivos, `--porcelain` com teto (~20 + «(+N mais)»):
+  `git status` verboso é ruído e vaza nome de arquivo não rastreado. (Autor, notas de 2026-07-30
+  e 2026-08-01; refinos do assistente.)
+- **Contrabarra em padrão deveria ser detectada.** Sintaxe `.gitignore` usa só barra normal — a
+  contrabarra é escape, não separador —, então `!pasta\arquivo.json` não casa nada e o arquivo
+  sobe achando que foi ignorado. **Medido:** o gerador do bloco monta todo caminho com
+  `as_posix()`/`/` (`core.py` `_walk_leaves`, `annotate_children`, emissão de `pasta/*`), logo a
+  linha problemática veio de edição manual, não da ferramenta. A correção não é no gerador: é o
+  editor **avisar (ou normalizar)** ao ler linha manual com `\`. Só faz sentido depois que o
+  gerador passar a enxergar o que está fora do bloco — **mesma frente do bug do bloco
+  gerenciado**, não uma frente separada. (Nota de 2026-08-01.)
+- **A amostra do `_TREE` não responde «o arquivo X existe?».** A faixa da 0.14.0 mostra as duas
+  pontas e conta o meio — ótimo para ver até onde a coleção vai, inútil para confirmar a presença
+  de um arquivo nomeado. Custou caro nesta sessão: `meta/workorders/_TEMPLATE.md` cairia
+  exatamente nos 33 nomes ocultos do meio, e nem o `_MANIFEST` (que só lista o que subiu) nem o
+  `_TREE` sabiam dizer se ele existe. Duas saídas possíveis, nenhuma decidida: (a) o `_TREE`
+  sempre nomear os arquivos **resgatados por `!`** e os que casam um padrão `_*`/`_TEMPLATE`,
+  porque são justamente os que existem para serem vistos; (b) aceitar o limite e tratar o editor
+  da GUI como a resposta (foi a decisão da wo0043). (Assistente, 2026-08-01.)
+
+## Adiadas
+
+> Decisão consciente de não fazer agora. Cada item traz **o gatilho que o traz de volta** —
+> ideia adiada sem gatilho é ideia perdida. Formato adotado do KCM v1.95.0 (DEC-028).
+
+- **Selecionar várias pastas de uma vez na GUI (multi-raiz).** Irmã do multi-fonte
+  que já existe na core (`make_plan_sources`/`Source`): escolher N pastas na
+  interface, prefixar cada arquivo com o nome da sua pasta-raiz e só cair na
+  desambiguação atual se ainda colidir; a pasta de saída no Downloads vira uma
+  genérica com numerador quando já existir uma de mesmo nome. A core já suporta
+  multi-fonte; falta a UI de N raízes. (Ideia do usuário, nota `.txt` de 2026-07-03.)
+  **Adiada** pelo autor em 2026-07-28: a decisão A/B (recomendação **B** — `.bat` desabilitado no
+  modo multi-raiz) nunca foi tomada, e sem ela não há o que desenhar. **Volta quando** o autor
+  responder A ou B, ou quando aparecer o segundo projeto que precise de N raízes no mesmo mount.
+
+- **`pasta/` deveria voltar a ser exclusão DURA?** O FIX-011 tornou `pasta/` e `pasta/*`
+  equivalentes no FlatDrop: os dois aceitam `!` por dentro. O autor prefere o contrário — `pasta/`
+  significando "nunca entra, nem aparece na árvore" e só `pasta/*` aceitando resgate, que é o
+  comportamento do git puro e dá duas ferramentas com dois usos. Em troca, reintroduz o caso que
+  gerou a reclamação de 23/07, então só fecha se a GUI escrever `pasta/*` sozinha e o `_TREE`
+  disser em qual forma cada pasta está. **Decisão separada da do gerador**; ver
+  `meta/analises/260728-ANALISE-gerador-flatdropignore.md`. (2026-07-28.)
+  **Adiada:** depende de duas mudanças que ainda não existem (a GUI escrever `pasta/*` sozinha e o
+  `_TREE` dizer em qual forma cada pasta está). **Volta quando** o gerador do editor for corrigido —
+  é o mesmo código, mas **decisão separada**: não misturar as duas na mesma WO.
+
+- **UI-2 (polimento de layout) e UI-3 (presets/lembrar seleção).** UI-2: ordem das
+  seções, 2 colunas nas opções, tema. UI-3: presets "só docs"/"só código", lembrar
+  a última seleção do modal.
+  **Adiada:** polimento, sem dor relatada. **Volta quando** o autor reclamar do layout duas vezes,
+  ou quando um preset («só docs», «só código») for pedido em uso real.
+
+- **Saída da CLI ASCII-safe.** Trocar `↳`/`•`/`—` da saída por `->`/`*`/`-` para
+  dispensar `chcp 65001` nos `.bat` e evitar de vez problemas de code page. Baixo custo.
+  **Adiada** desde a Fase 2. **Volta quando** aparecer pela terceira vez num smoke — já apareceu duas
+  (`UnicodeEncodeError` no `↳` sob cp1252, na wo0043 e antes). O custo é baixo; o que falta é a vez.
+
+- **Formato de nome "caminho escrito" (`raiz__pastas__stem.ext`).** Um seletor de
+  formato do nome, alternativo ao `root_in_name` atual. Em vez de stem na frente,
+  escreveria o caminho na ordem natural de leitura com o **stem no fim**:
+  `app/routes/page.tsx` (raiz `meuapp`) → `meuapp__app__routes__page.tsx`. O usuário
+  reconhece que **não** ajuda o Claude a achar por nome (o stem deixa de liderar a
+  ordenação alfabética), mas agrupa todos os arquivos de um projeto por raiz — útil
+  para empilhar vários projetos numa mesma pasta/pilha mental. Implementação seria
+  barata (a mecânica de nomeação já existe), mas fica em **espera**: só entra se o
+  usuário quiser o seletor de formatos. Coexistiria com o `root_in_name`
+  (stem-primeiro) como dois estilos opt-in. (Ideia do usuário, 2026-07-04.)
+  **Adiada:** só entra se o autor quiser um **seletor de formatos** — sozinha ela não resolve nada que
+  o `root_in_name` não resolva. **Volta quando** houver dois projetos empilhados na mesma pasta.
+
+- **Arquivar o `meta/DECISIONS.md` em `DECISIONS-archive.md`.** O arquivo passou de 700 linhas (864
+  hoje, 38 entradas). O CEREBRO manda arquivar as mais antigas nesse ponto. **Adiada de propósito**
+  durante a migração de vocabulário (DEC-023), para não mexer nas mesmas referências duas vezes.
+  **Volta quando** a wo0044 estiver commitada — a migração acabou, o bloqueio saiu. (2026-07-28.)
+
 ## Concluídas
+
+- **`_TREE` deve nomear o conteúdo útil das pastas ignoradas.** Hoje a árvore colapsa a pasta
+  numa linha (`meta/legacy/  [ignorada: flatdropignore]`) e não diz o que havia dentro — então
+  o chat futuro não tem como saber qual arquivo pediria para liberar. Proposta: listar os
+  filhos de pasta ignorada **por ignore do autor** (`.gitignore`/`.flatdropignore`), marcados
+  como pulados, e seguir colapsando o lixo estrutural (`node_modules`, `.git`, `__pycache__` —
+  a poda embutida de `cfg.dir_ignores`, que ninguém quer ver). Talvez com teto de N nomes por
+  pasta para não inchar o `_TREE`. Insumo já existe: `_scan` produz `skipped_items` completo.
+  (Ideia do usuário, nota de 2026-07-24.)
+  **ENTREGUE na 0.12.0 (wo0038)** — arquivo pulado por ignore do autor sai nomeado e pasta ignorada
+  ganha espiada rasa nos filhos; ruído estrutural segue colapsado. Refinado na 0.14.0 (wo0043), que
+  trocou o teto simples pela amostra com as duas pontas.
+
+- **Force-include por caminho exato (resgatar um arquivo específico barrado por ignore
+  embutido).** Uma lista de "sempre inclua exatamente este caminho", checada ANTES dos
+  cortes embutidos (suffix-ignore, tipo, gitignore), ainda barrada por "sensível". Motiva:
+  `htmx.min.js` (e afins) some porque `.min.js` está em `DEFAULT_SUFFIX_IGNORES`, e o `!`
+  do `.flatdropignore` age numa camada abaixo (só o matcher), então não resgata. Marcador
+  próprio no `.flatdropignore` (distinto do `!`, para não borrar a semântica gitignore do
+  DEC-017). DEC-020-safe: vive no `_scan`, simétrica GUI×`.bat`, não toca o gerador de
+  `.bat`. Mexe no `_scan` → pede spec de design. **Não urgente** (o autor adiou). (Ideia do
+  usuário + assistente, nota 0827.)
+  **ENTREGUE na 0.7.0 (spec0027, DEC-021)** — marcador `++caminho` no `.flatdropignore`; vence tudo
+  menos «sensível»; `.bat` intocado. 4 testes em `test_force_include.py`.
+
+- **Botão "Gerar atalho da UI" na GUI.** UI-1 e o launcher `flatdrop-ui.bat` já
+  existem; falta um botão que gere o launcher calculando o caminho do `run.py`
+  sozinho (sem hardcode) — talvez um `.lnk` em vez de `.bat`.
+  **ENTREGUE na 0.9.0 (spec0031)** — menu **Ferramentas → «Gerar atalho da UI…»**, gerador NOVO e
+  separado (o RUN `.bat` ficou intocado, DEC-020).
+
+- **Ignores de pasta editáveis na GUI** com núcleo imutável
+  (`.git`/`node_modules`/`__pycache__`/VCS sempre reaplicados), para tirar/pôr
+  pastas como `dist`/`build`/`.venv` caso a caso. (Fase 2 — item D.) **Consolidado
+  na "[PRÓXIMA 2] Editor visual de `.flatdropignore`" no topo** — o editor cobre isto
+  de forma declarativa e visual. O `.flatdropignore` já cobre boa parte hoje.
+  **ENTREGUE** pelo editor visual (0.4.0–0.5.1) e completado pela **trava por pasta** (0.13.0,
+  DEC-027), que é a forma declarativa de dizer «arquivo novo aqui não entra».
+
 
 - **O teto de nomes do `_TREE` esconde justamente as pastas grandes.** **RESOLVIDO na 0.14.0
   (wo0043) — amostra com as duas pontas.** Depois do wo0038 a árvore nomeava até
@@ -311,3 +395,33 @@ Registro do que ESTE projeto observou/mudou além do kit (material que volta par
   o path); o usuário roda `pytest` puro (não resolvia). Fixar a forma de rodar na infra (`conftest.py`
   na rootdir), não na memória de quem invoca. Vale como recomendação para o Kit em projetos com pacote
   aninhado.
+- **O template regride quatro trechos que este projeto já refinou** (v1.95.0, todos mantidos no
+  vivo, DEC-028): (1) o **princípio 8** volta ao título antigo e apaga a citação «previsão ×
+  observação» — regra que nasceu de erro real aqui; (2) o **princípio 11** troca o exemplo real
+  (renomear «spec» para «WO» arrasta `/apply-spec` e `meta/specs/`) por um exemplo de outro nicho;
+  (3) a **tabela dos documentos** apaga as linhas `logs/` (perdendo a DEC-026, um arquivo por DIA)
+  e `workorders/`; (4) o **«Kit de arranque do Code»** volta ao `claude-code-kit.zip` e diz que
+  `.claude/commands/*.md` «também funcionaria» — afrouxando a DEC-024, que o próprio kit mandou
+  aplicar. Sugestão ao KCM: quando uma regra sobe de um projeto para o template, o texto que a
+  originou deveria subir junto — regra generalizada sem o caso que a gerou perde os dentes.
+  (2026-08-01.)
+- **O template do `IDEAS.md` não tem a seção «Feedback para o Kit», que o CEREBRO manda usar.** O
+  kit prescreve um endereço que ele próprio não cria; quem monta um projeto novo não tem onde
+  escrever o primeiro feedback. (2026-08-01.)
+- **O template do `STATUS.md` cria «📁 Arquivos Críticos», que duplica o CONTEXT.** Aqui esse papel
+  é do `CONTEXT.md` (Armadilhas) e do `CLAUDE.md` (Mapa rápido). Duas fontes para o mesmo dado
+  contraria a própria regra de higiene do kit. Não adotado. (2026-08-01.)
+- **`_TEMPLATE.md` de pasta ignorada precisa do par completo — e o kit acertou onde este projeto
+  errava.** O `flatdropignore__template-update` traz `meta/workorders/*` seguido de
+  `!meta/workorders/_TEMPLATE.md`; o arquivo vivo daqui não tinha a reinclusão, e o efeito foi
+  concreto: o modelo das WOs não chegou ao mount e não pôde ser comparado no update. Adotado.
+  (2026-08-01.)
+- **A regra do «pacote fica até o merge fechar» valeu na prática.** O protocolo novo diz que os
+  `__template-update` seguem no mount enquanto o merge estiver em curso e que o assistente deve
+  declarar a cobertura de leitura (verbatim × por estrutura). As duas coisas foram usadas nesta
+  sessão e evitaram refazer o merge quando ele foi entregue em duas fases. (2026-08-01.)
+- **O KCM aposentou o `meta/HUB.md` e devolveu o feedback deste projeto (v1.89.0).** Cinco itens
+  daqui viraram regra no kit; um foi aceito com refino (a limitação do `!` é normativa no git puro
+  e prática no FlatDrop — o texto novo diz as duas coisas). Os contratos de formato continuam de
+  pé: se o cabeçalho `<!-- flatdrop-manifest v1 -->` ou a tabela do manifesto mudarem, avisar o
+  KCM por uma linha aqui nesta seção. (Mensagem de 2026-07-29.)

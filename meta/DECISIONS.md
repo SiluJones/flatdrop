@@ -862,3 +862,53 @@ novo entrar; `!pasta/` e `!pasta/*` se comportam igual (padronizado em `/*`, DEC
 armadilha do aninhamento: `pasta/*` **não** casa `pasta/sub/arquivo.md` — só `pasta/sub/` como
 diretório. Enquanto ninguém resgata nada lá dentro, a poda resolve; assim que um `!` desce, a
 subpasta precisa da linha dela. Por isso o gerador emite uma linha por nível fechado.
+## DEC-028 — Merge do template-update do KCM v1.95.0: o kit devolve o que este projeto ensinou
+**Data:** 2026-08-01 · **Status:** aceita
+
+**Contexto.** Chegou ao mount o pacote `__template-update` do KCM **v1.95.0** (19 arquivos +
+`_UPDATE-MANIFEST.md`), o terceiro depois do v1.87.0/v1.88.0 (DEC-023 a DEC-025). Diferença
+importante em relação aos anteriores, conferida na mensagem do KCM de 2026-07-29: **boa parte das
+regras novas nasceu do «Feedback para o Kit» DESTE repo** (v1.89.0) — artefato gerado que convive
+com edição humana, «não verificado nesta rodada» como resposta de primeira classe, a regra da
+cópia que não é fonte da verdade colada ao campo **Estado**, e o gatilho testável de análise. Não
+era novidade externa a avaliar: era conteúdo próprio voltando generalizado.
+
+**Decisão.** Merge seletivo, em duas fases, com três critérios fixos:
+
+1. **Novidade (a) entra** — 13 itens adotados. No `meta/CEREBRO.md`: artefato gerado × edição
+   humana; os quatro modos de falha da releitura do mount; «não verifiquei» × «não é legível por
+   este canal»; a contrapartida do carimbo de emissão; as três exigências novas do protocolo de
+   update; o gatilho concreto e o abandono legítimo na análise; o teto por configuração; a linha
+   de `analises/` na tabela. No Claude Code: o **relatório gravado em arquivo** na pasta-pai
+   (`../AAMMDD-HHMM-code-flatdrop.txt`) com `additionalDirectories`. No `.flatdropignore`: o
+   cabeçalho que explica a anatomia e o par `meta/workorders/*` + `!meta/workorders/_TEMPLATE.md`.
+   Criado o `meta/SPEC.md`, que a DEC-023 já referenciava e nunca existiu. No `IDEAS.md`: a seção
+   **Adiadas** com gatilho de retorno.
+2. **Choque (b): o vivo fica** — sete confrontos, todos resolvidos a favor do arquivo vivo
+   (princípios 8 e 11, tabela dos documentos, kit de arranque do Code, commit/artefatos de repo,
+   rodapé dos gatilhos, LOG-TEMPLATE). Os quatro mais graves viraram feedback ao kit.
+3. **(c) não se toca.** Nenhuma migração obrigatória: `.claude/commands/` já virou Skills na
+   DEC-024, e era o único formato descontinuado da lista.
+
+**Alternativas consideradas.**
+- **Adotar o template inteiro** — descartada: apagaria o princípio 8 refinado, a DEC-026 e a
+  proibição de voltar a `.claude/commands/`. É exatamente o que a regra «template genérico nunca
+  substitui arquivo vivo refinado» existe para impedir.
+- **Não adotar nada** («já temos tudo») — descartada: treze itens não existiam aqui, e um deles
+  (o relatório em arquivo) automatiza um gesto manual que já tinha corrompido um relatório.
+- **Fazer o merge num turno só** — descartada por tamanho: oito arquivos de comportamento numa
+  fase, sete documentos de estado na outra, cada fase completa e commitável.
+
+**Consequências.**
+- O `.claude/settings.json` passa a permitir escrita **fora do repo** (`../`). É concessão
+  deliberada e estreita: só a pasta-pai, e o Code diz e segue se a escrita for negada.
+- O `.flatdropignore` foi reescrito **à mão** (o repo está no modo manual até o bug do bloco
+  gerenciado ser corrigido) com tudo dentro do bloco e nada depois do `# <<<` — o que já elimina
+  a duplicação que o próprio bug havia produzido.
+- **Achado colateral que virou trabalho:** faltava a reinclusão do modelo das WOs, então
+  `meta/workorders/_TEMPLATE.md` nunca chegou ao mount e não pôde ser comparado neste update. Nem
+  o `_MANIFEST` (só lista o que subiu) nem o `_TREE` (a amostra da 0.14.0 esconde o meio) sabiam
+  dizer se o arquivo existe. Conferir e, se faltar, criar — wo0044.
+- As Instruções do Projeto ganharam 629 caracteres (5.514 → 6.143), dentro do teto novo (6.900 +
+  550 do Modo Code). Na mesma passada corrigiu-se um resto **pré-DEC-023**: a seção do Modo Code
+  ainda dizia `meta/specs/` e `AAMMDD-specNNNN-desc.md`.

@@ -9,3 +9,4 @@ Encerre a tarefa:
 - Se mexeu em código, rode `python -m pytest -q` e cole o resultado. Se mexeu na GUI, diga o que precisa de smoke manual no Windows (a suíte não cobre tkinter).
 - Me mostre o `git diff` e o comando de commit (uma linha por comando, mensagem SEM acento, Conventional Commits).
 - Feche com o RELATÓRIO de trabalho: o que fez, achados e desvios do que a tarefa pedia, arquivos tocados, resultado da suíte e o commit. Não use o bloco de fecho de turno do `meta/CEREBRO.md` — aquele é da raia do chat.
+- Grave o MESMO relatório em `../AAMMDD-HHMM-code-flatdrop.txt` (pasta-pai do repo). Se a escrita for negada, diga e siga.

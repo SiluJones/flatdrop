@@ -3,6 +3,14 @@
 Direção do projeto por fases. Sem datas: a ordem importa mais que o calendário.
 Itens em aberto vêm de `IDEAS.md`; ao concluir, registre em `CHANGELOG.md`.
 
+> **Mudanças nesta revisão (2026-08-01):** leva **0.12.0 → 0.14.0** absorvida na Fase 2 —
+> **FIX-011** (a negação `!` volta a resgatar arquivo dentro de pasta ignorada), a **trava por
+> pasta** no editor (DEC-027) e a **amostra do `_TREE`** (wo0043). A Fase 2 segue *quase
+> concluída*: o que resta é **multi-raiz na GUI** (adiada, decisão A/B do autor) e **UI-2/UI-3**
+> — os dois agora com gatilho de retorno em `IDEAS.md` › Adiadas. Novo item bloqueante na Fase 2:
+> o **bug do bloco gerenciado**, que precisa fechar antes de o editor voltar a ser usável neste
+> repo. Meta atualizado com o merge do KCM v1.95.0 (DEC-028).
+
 > **Mudanças nesta revisão (2026-07-15):** specs 0017–0024 aplicadas. **KCM**, **editor
 > visual de `.flatdropignore` (Fase 2-D)** e **item C (persistência + recentes)**
 > concluídos; **0.6.0**, **58 testes**. O invariante **DEC-020** grava que o `.bat` não
@@ -44,7 +52,11 @@ Itens em aberto vêm de `IDEAS.md`; ao concluir, registre em `CHANGELOG.md`.
 - [x] **Trecho de KCM: ler `_TREE.md` → gerar `.flatdropignore`.** Entregue (bloco de KCM portável + exemplo no README; material externo, não é código do repo). Habilitado pela spec0011.
 - [x] **D — Editor de `.flatdropignore` na GUI** (Fase 2-D, specs 0017–0021). Modal com árvore lazy, checkbox binário, badges de tipo/sensível, bloco gerenciado no arquivo e glifo indeterminado correto na visão colapsada (FIX-007). Consolidou "ignores de pasta editáveis".
 - [x] **C —** Persistir configurações + pastas recentes na GUI (specs 0022–0024, 0.6.0). `settings.json` por plataforma, Combobox de recentes, grava ao Executar; escopo só-GUI (DEC-020) para não tocar o `.bat`.
-- [ ] **Multi-raiz na GUI**: selecionar N pastas de uma vez, prefixando cada uma com o nome da sua raiz (a core já suporta multi-fonte; falta a UI de N raízes).
+- [x] **Negação `!` dentro de pasta ignorada** (FIX-011, wo0038, 0.12.0): a poda passou a consultar as pastas alcançadas por alguma negação antes de descartá-las. Era o bug mais antigo em aberto.
+- [x] **Trava por pasta no editor** (DEC-027, wo0041 + wo0042, 0.13.0): a coluna «Arquivo novo» responde *arquivo novo aqui entra?* — a única intenção da pasta que a interface nunca soube capturar.
+- [x] **Amostra do `_TREE`** (wo0043, 0.14.0): pasta grande sai com as primeiras e as últimas posições e o meio contado, no lugar do teto simples.
+- [ ] 🔴 **Bug do bloco gerenciado × curadoria manual** (aberto na 0.13.0). O gerador compara com o **git puro** e é cego para as linhas manuais do próprio `.flatdropignore`: duplica ao salvar, e destravar/marcar não tem efeito quando a regra vem de fora do bloco. Correção desenhada em 4 passos em `meta/analises/260728-ANALISE-bloco-gerenciado-vs-manual.md`; **começa por duas perguntas ao autor**, não por código. Enquanto não fechar, este repo edita o `.flatdropignore` à mão.
+- [ ] **Multi-raiz na GUI**: selecionar N pastas de uma vez, prefixando cada uma com o nome da sua raiz (a core já suporta multi-fonte; falta a UI de N raízes). **Adiada** — decisão A/B do autor; gatilho de retorno em `IDEAS.md` › Adiadas.
 - [x] **Fullpath com pasta-raiz** (spec0013 + spec0014): flag `root_in_name` inclui o nome do projeto no nome de cada arquivo, no modo fullpath. Formato final: stem + caminho invertido + raiz no fim.
 - [x] **FIX-005** (`conftest.py` na raiz para `pytest` puro achar o pacote) — spec0016.
 - [ ] Aviso mais visível quando o pathspec está ausente (destaque na GUI).
@@ -65,8 +77,8 @@ Itens em aberto vêm de `IDEAS.md`; ao concluir, registre em `CHANGELOG.md`.
 
 - Resync incremental por diff do manifesto.
 - Drag-and-drop da pasta raiz na janela.
-- Saída da CLI ASCII-safe (dispensa `chcp` nos `.bat`).
-- Botão "Gerar atalho da UI" (cria o launcher calculando o caminho sozinho).
+- Saída da CLI ASCII-safe (dispensa `chcp` nos `.bat`). Reapareceu no smoke da wo0043.
+- **Estado do repo no `_MANIFEST`**: `git log -1` + resumo de `git status` gravados como *foto do momento da geração*, para o mount deixar de ser cego ao commit. (Notas de 30/07 e 01/08.)
 
 ## Fora de escopo (decidido)
 

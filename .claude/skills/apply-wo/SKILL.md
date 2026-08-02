@@ -10,4 +10,5 @@ Ao terminar, rode `git diff` e confira a forma esperada antes de commitar (mensa
 RELATE: o que foi feito, achados e desvios do texto da WO, arquivos tocados, resultado da suíte e o commit.
 Se a WO tocar `flatdrop/cli.py`, `gui._build_cli_args`, `gui._generate_bat` ou `gui._sources`, PARE e reporte como URGENTE antes de aplicar (invariante DEC-020).
 Nota: as WOs com nome antigo (`spec0001`–`spec0037`) são WOs — o nome ficou, a pasta mudou.
+Grave o MESMO relatório em `../AAMMDD-HHMM-code-flatdrop.txt` (pasta-pai do repo). Se a escrita for negada, diga e siga.
 WO: $ARGUMENTS
