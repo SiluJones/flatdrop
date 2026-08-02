@@ -1237,7 +1237,7 @@ def _tree_amostra(nomes: list[str]) -> list[str]:
 
 
 def _peek_children(abs_dir: Path) -> list[str]:
-    """Nomes dos filhos DIRETOS de uma pasta ignorada, ate ``C.TREE_NAME_CAP``.
+    """Nomes dos filhos DIRETOS de uma pasta ignorada, resumidos por ``_tree_amostra``.
 
     Leitura RASA (sem recursao) e so para pasta ignorada pelo AUTOR: o lixo estrutural
     (``node_modules``, ``.git``) segue colapsado sem custo. E o insumo que faltava para o
@@ -1328,8 +1328,9 @@ def write_tree(dest: Path, plan: FlattenPlan, cfg: ScanConfig) -> Path:
 
     A arvore e montada a partir de plan.files (copiados) e plan.skipped_items
     (pulados, ja em memoria). A UNICA leitura de disco e a espiada rasa nos filhos
-    diretos de cada pasta ignorada pelo AUTOR (wo0038): sem recursao, limitada por
-    C.TREE_NAME_CAP, e tolerante a falha (devolve vazio).
+    diretos de cada pasta ignorada pelo AUTOR (wo0038): sem recursao, resumida por
+    _tree_amostra (C.TREE_NAME_HEAD primeiros + C.TREE_NAME_TAIL ultimos, com o meio
+    contado — wo0043), e tolerante a falha (devolve vazio).
     """
     folder_items = [(rel, reason) for rel, reason in plan.skipped_items if rel.endswith("/")]
     file_items = [(rel, reason) for rel, reason in plan.skipped_items if not rel.endswith("/")]

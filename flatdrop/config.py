@@ -25,10 +25,6 @@ MANIFEST_SIGNATURE = "<!-- flatdrop-manifest v1 -->"
 TREE_NAME = "_TREE.md"
 TREE_SIGNATURE = "<!-- flatdrop-tree v1 -->"
 
-# Quantos nomes o _TREE.md lista antes de agregar o resto ("+N mais"), tanto para
-# arquivos pulados por ignore DO AUTOR quanto para a espiada rasa numa pasta ignorada.
-TREE_NAME_CAP = 10
-
 # Amostra de lista longa no _TREE.md (wo0043): quantos nomes das PRIMEIRAS e das ULTIMAS
 # posicoes aparecem, com o meio contado entre eles. Ver so o comeco esconde a faixa — e numa
 # pasta de arquivos datados e o ultimo nome que diz ate onde a colecao vai. A soma dos dois

@@ -1,25 +1,35 @@
 # .flatdropignore — enxuga o que sobe ao Projeto do Claude (tudo segue versionado no git).
 # Sintaxe .gitignore; salvo na raiz; tem a palavra final sobre o .gitignore.
 #
-# REGRA (DEC-025): use "pasta/*" (o CONTEUDO), nunca "pasta/" (a PASTA).
-# core._scan poda o diretorio casado ANTES de descer, entao um "!" dentro de pasta
-# podada nunca chega a ser avaliado — a subarvore inteira some. Com "pasta/*" a pasta
-# nao casa, a varredura desce, e o "!arquivo" volta a funcionar (PathSpec: a ultima
-# regra que casa vence).
-
+# COMO ESTE ARQUIVO E ORGANIZADO (DEC-028):
+# - Explicacao e comentario ficam AQUI EM CIMA, FORA do bloco. Dentro do bloco eles somem:
+#   o editor do FlatDrop reescreve o bloco inteiro a cada salvamento.
+# - REGRA (o que some do mount) vai DENTRO do bloco "# >>> flatdrop-editor".
+# - NADA depois do "# <<<": vale a ULTIMA regra que casa, entao o que vier depois vence o bloco.
+# - Enquanto o bug do bloco gerenciado nao for corrigido, este arquivo e editado A MAO (ver
+#   STATUS): o gerador e cego para linha manual e duplicaria dentro do bloco o que esta fora.
+#
+# FORMA (DEC-025): use "pasta/*" (o CONTEUDO), nunca "pasta/" (a PASTA). core._scan poda o
+# diretorio casado ANTES de descer, entao um "!" dentro de pasta podada nunca chega a ser
+# avaliado. Com "pasta/*" a varredura desce e o "!arquivo" volta a valer (FIX-011).
+# Corolario: modelo/guia de pasta ignorada precisa do PAR completo — a linha "pasta/*" e a
+# linha "!pasta/_TEMPLATE.md" logo depois dela, dentro do bloco.
+#
+# BARRA: padrao usa sempre barra normal. A contrabarra e caractere de escape, nao separador —
+# "pasta\arquivo.json" nao casa nada, e o arquivo sobe achando que foi ignorado.
+#
 # Logs de sessao: o "agora" fica no meta/STATUS.md; o diario nao precisa ir ao mount.
-logs/*
-
-# WOs aplicadas: o desfecho vive em meta/DECISIONS.md e meta/CHANGELOG.md; o corpo pesa.
-# Para estudar UMA no Projeto, reinclua nominalmente — ex.: !meta/workorders/260728-wo0038-x.md
-meta/workorders/*
-
-# meta/specs/ (specs de feature) NAO entra aqui de proposito: sao poucas e dizem o que
-# esta sendo construido — valem o espaco no Projeto.
-
-# As Instrucoes do Projeto ja sao lidas em todo turno pelo painel do Projeto: subir o
-# arquivo ao mount seria a mesma coisa duas vezes. Segue versionada no git, so nao vai aqui.
-INSTRUCOES-DO-PROJETO.md
+# WOs aplicadas: o desfecho vive em meta/DECISIONS.md e meta/CHANGELOG.md; o corpo pesa — mas o
+# MODELO sobe sempre, senao a primeira sessao depois de uma transferencia fica sem o formato a
+# mao. Para estudar UMA WO no Projeto: "!meta/workorders/<arquivo>.md" dentro do bloco.
+# meta/analises/ e meta/specs/ NAO entram aqui de proposito: sao poucas e dizem o que esta em
+# discussao ou sendo construido — valem o espaco no Projeto.
+# INSTRUCOES-DO-PROJETO.md ja e lida em todo turno pelo painel do Projeto: subir ao mount seria
+# a mesma coisa duas vezes. Segue versionada no git, so nao vai aqui.
 
 # >>> flatdrop-editor
+logs/*
+meta/workorders/*
+!meta/workorders/_TEMPLATE.md
+INSTRUCOES-DO-PROJETO.md
 # <<<
