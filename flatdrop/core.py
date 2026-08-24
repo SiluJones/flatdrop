@@ -1287,6 +1287,54 @@ def _git(root: Path, *args: str) -> str | None:
     return p.stdout.strip() if p.returncode == 0 else None
 
 
+def _divergence(header: str) -> str:
+    """Sufixo de sincronia lido da linha ``##`` do ``git status --porcelain=v1 --branch``.
+
+    Funcao PURA de proposito: e a unica parte do snapshot que da para testar SEM git instalado.
+    Os testes de git existentes pulam sozinhos onde nao ha git, e verde num ambiente assim nao
+    prova nada — lacuna registrada no STATUS desde a wo0048.
+
+    Formas de entrada e o que sai::
+
+        ## main                                    ->  · sem upstream
+        ## main...origin/main                      ->  · sincronizado com origin/main
+        ## main...origin/main [ahead 1]            ->  · 1 commit(s) a frente de origin/main
+        ## main...origin/main [behind 2]           ->  · 2 commit(s) atras de origin/main
+        ## main...origin/main [ahead 1, behind 2]  ->  · 1 a frente e 2 atras de origin/main
+        ## HEAD (no branch)                        ->  · HEAD solto, sem branch
+
+    Devolve string VAZIA so quando a linha nao e reconhecivel — nunca inventa estado: dizer
+    "sincronizado" por engano e pior do que nao dizer nada.
+    """
+    corpo = header[2:].strip()
+    if not corpo:
+        return ""
+    if corpo.startswith("HEAD (no branch)"):
+        return " · HEAD solto, sem branch"
+    trecho, _, resto = corpo.partition(" [")
+    if "..." not in trecho:
+        # Sem upstream configurado: o repo pode ter N commits que nao existem em lugar nenhum,
+        # e nada no resto do status denuncia isso. E o caso em que calar engana mais.
+        return " · sem upstream"
+    upstream = trecho.split("...", 1)[1].strip()
+    ahead = behind = 0
+    for parte in resto.rstrip("]").split(","):
+        chave, _, valor = parte.strip().partition(" ")
+        if not valor.isdigit():
+            continue
+        if chave == "ahead":
+            ahead = int(valor)
+        elif chave == "behind":
+            behind = int(valor)
+    if ahead and behind:
+        return f" · {ahead} a frente e {behind} atras de {upstream}"
+    if ahead:
+        return f" · {ahead} commit(s) a frente de {upstream}"
+    if behind:
+        return f" · {behind} commit(s) atras de {upstream}"
+    return f" · sincronizado com {upstream}"
+
+
 def git_snapshot(root) -> tuple[str | None, str | None]:
     """(commit, resumo do status) da raiz — FOTO do momento, nao estado atual.
 
@@ -1298,6 +1346,9 @@ def git_snapshot(root) -> tuple[str | None, str | None]:
       geracao do manifesto diz de cara se o mount e o commit ou trabalho posterior a ele.
     - status: RESUMO numerico, nunca a listagem. ``git status`` verboso e ruido e vaza nome
       de arquivo pessoal nao rastreado — o mount vai para uma conversa.
+    - sincronia: ``ahead``/``behind``/"sem upstream" explicitos (ver ``_divergence``). "limpo"
+      fala so da arvore de trabalho: um repo com tres commits locais nao empurrados lia como
+      repo em dia. Devolvido pelo KCM em 2026-08-02 e de novo na carta 01 (wo0050).
     """
     root = Path(root)
     if not (root / ".git").exists():
@@ -1308,12 +1359,10 @@ def git_snapshot(root) -> tuple[str | None, str | None]:
     if porcelain is None:
         return commit, None
     modificados = nao_rastreados = 0
-    frente = ""
+    sincronia = ""
     for ln in porcelain.splitlines():
         if ln.startswith("##"):
-            if "[ahead " in ln:
-                frente = " · " + ln.split("[ahead ", 1)[1].split("]")[0].split(",")[0] \
-                    .strip() + " commit(s) a frente de origin"
+            sincronia = _divergence(ln)
             continue
         if ln.startswith("??"):
             nao_rastreados += 1
@@ -1327,7 +1376,7 @@ def git_snapshot(root) -> tuple[str | None, str | None]:
             partes.append(f"{nao_rastreados} nao rastreado(s)")
     else:
         partes.append("limpo")
-    return commit, " · ".join(partes) + frente
+    return commit, " · ".join(partes) + sincronia
 
 
 def write_manifest(dest: Path, plan: FlattenPlan, cfg: ScanConfig) -> Path:

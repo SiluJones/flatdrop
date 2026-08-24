@@ -1098,3 +1098,54 @@ def test_manifesto_traz_as_duas_linhas(tmp_path):
     texto = manifests[0].read_text(encoding="utf-8")
     assert "Git (foto da geração) — último commit:" in texto
     assert "Git (foto da geração) — status:" in texto
+
+
+# --- sincronia com o remoto (wo0050) — puros, rodam sem git instalado ---
+
+def test_divergencia_sem_upstream():
+    """Branch sem upstream nao pode ler como repo em dia — e o pior caso dos tres."""
+    assert core._divergence("## main") == " · sem upstream"
+
+
+def test_divergencia_sincronizado():
+    """Com upstream e sem divergencia, a linha DIZ que esta sincronizado, em vez de calar."""
+    assert core._divergence("## main...origin/main") == " · sincronizado com origin/main"
+
+
+def test_divergencia_ahead():
+    """O caso que a wo0048 ja resolvia — fica coberto para nao regredir."""
+    assert core._divergence("## main...origin/main [ahead 1]") == \
+        " · 1 commit(s) a frente de origin/main"
+
+
+def test_divergencia_behind():
+    assert core._divergence("## main...origin/main [behind 3]") == \
+        " · 3 commit(s) atras de origin/main"
+
+
+def test_divergencia_ahead_e_behind():
+    """O defeito da wo0048: o `.split(",")[0]` jogava o behind fora."""
+    s = core._divergence("## main...origin/main [ahead 1, behind 2]")
+    assert "1 a frente" in s and "2 atras" in s
+
+
+def test_divergencia_head_solto():
+    assert "HEAD solto" in core._divergence("## HEAD (no branch)")
+
+
+def test_divergencia_linha_estranha_nao_inventa():
+    """Diante de linha irreconhecivel, silencio — nunca um estado inventado."""
+    assert core._divergence("##") == ""
+
+
+@pytest.mark.skipif(not _git_disponivel(), reason="git nao instalado no ambiente")
+def test_git_snapshot_sem_upstream_no_status(tmp_path):
+    """Ponta a ponta: repo local sem remoto sai como 'limpo' E 'sem upstream'."""
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "config", "user.email", "t@t"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "config", "user.name", "t"], cwd=tmp_path, check=True)
+    (tmp_path / "a.md").write_text("x\n", encoding="utf-8")
+    subprocess.run(["git", "add", "."], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "-qm", "primeiro"], cwd=tmp_path, check=True)
+    _commit, status = core.git_snapshot(tmp_path)
+    assert "limpo" in status and "sem upstream" in status

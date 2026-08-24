@@ -7,9 +7,24 @@ versionamento conforme [SemVer](https://semver.org/lang/pt-BR/).
 ## [Não lançado]
 
 _Itens de produto em aberto: multi-raiz na GUI (decisão A/B pendente), formato de nome
-"caminho escrito" (raiz→pastas→stem), UI-2/UI-3, saída da CLI ASCII-safe — todos com gatilho
-de retorno em `IDEAS.md` › Adiadas. Decisão em aberto: `pasta/*` + `!mantido` no gerador do
-editor (`meta/analises/260728-ANALISE-gerador-flatdropignore.md`)._
+"caminho escrito" (raiz→pastas→stem), UI-2/UI-3 — todos com gatilho de retorno em `IDEAS.md` ›
+Adiadas. A **saída da CLI ASCII-safe** saiu de «Adiadas» (gatilho disparado no smoke da wo0048) e
+está em «Ativas». Decisões em aberto: `pasta/*` + `!mantido` no gerador do editor
+(`meta/analises/260728-ANALISE-gerador-flatdropignore.md`) e o **formato do `_MANIFEST`**
+(`meta/analises/260823-ANALISE-formato-do-manifesto.md`)._
+
+### Adicionado
+- **A linha de git do `_MANIFEST` passa a dizer se o commit saiu daqui (wo0050).** Além do `ahead`
+  que a wo0048 já emitia, a linha agora traz o **`behind`**, diz **«sem upstream»** quando o branch
+  não rastreia nada e **«sincronizado com <upstream>»** quando está em dia — e nomeia o upstream
+  real em vez do literal `origin`. Motivo: «limpo» descreve a árvore de trabalho e não distinguia
+  *«o mount é o commit»* de *«o mount é o commit, e o commit não saiu daqui»*.
+
+### Corrigido
+- **O `behind` era descartado no parser (wo0050).** `[ahead 1, behind 2]` virava só «1 a frente»,
+  porque o trecho era cortado num `.split(",")[0]`. A leitura da linha `##` virou a função pura
+  `_divergence`, com **sete testes que rodam sem `git` instalado** — o trecho não tinha teste
+  nenhum desde a wo0048.
 
 ## [0.15.0] — 2026-08-02
 

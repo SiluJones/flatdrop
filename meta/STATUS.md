@@ -17,11 +17,11 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
 
 - **Versão:** **0.15.0** no `__init__.py` — fecha o bug do bloco gerenciado e abre o estado do git
   no manifesto.
-- **Data:** 2026-08-02
-- **Commit:** `9d8e62f` (wo0048), branch `main`, **limpo** e com push feito. **Este campo deixou de
-  depender de relato:** desde a wo0048 o `_MANIFEST` traz `git log -1` e o resumo do `git status`
-  como foto do momento da geração — leia de lá, e só peça se o manifesto for de uma versão
-  anterior.
+- **Data:** 2026-08-23 (a sessão anterior foi 2026-08-02; o repo ficou parado no intervalo)
+- **Commit:** **leia no `_MANIFEST`** («Git (foto da geração)»), que desde a wo0048 traz
+  `git log -1` e o resumo do `git status`. **Este campo não guarda mais hash:** guardar um aqui
+  garante que ele nasça velho — a wo0049 se commitou DEPOIS de escrever esta linha, e ela passou
+  20 dias apontando `9d8e62f` quando o repo estava em `8913a39`. Uma fonte de verdade por dado.
 - **Fase:** F1 (MVP) OK · F2 (robustez/conveniência) **concluída no que estava em aberto** —
   restam apenas itens adiados com gatilho (multi-raiz na GUI, UI-2/UI-3) · F3 (gerador de `.bat` +
   multi-fonte na GUI) OK · F4 (distribuição) não iniciada — ver `ROADMAP.md`.
@@ -74,8 +74,10 @@ mensagem e não escreve nada.
 - **A lacuna que deixou o bug passar foi fechada:** os testes do editor agora exercitam linha
   manual fora do bloco, destravar sobre linha manual, marcador citado em comentário e
   **estabilidade textual** (salvar 2× dá texto idêntico, não só regras equivalentes).
-- **Lacuna que fica:** os quatro testes de git pulam sozinhos onde não houver `git` instalado —
-  verde num ambiente sem git não prova nada sobre a wo0048.
+- **Lacuna que encolheu (wo0050):** os testes que precisam de `git` continuam pulando sozinhos onde
+  ele não existir, mas a parte que mais errava — ler a linha `##` do `--porcelain` — virou função
+  pura (`_divergence`) e ganhou **sete testes que rodam sem `git` nenhum**. Sobra dependente de
+  ambiente: só o que exige repositório de verdade.
 
 ## Em aberto (produto) — backlog curto, na ordem sugerida
 
@@ -85,12 +87,20 @@ mensagem e não escreve nada.
    arquivo novo. **Análise em discussão:** `meta/analises/260728-ANALISE-gerador-flatdropignore.md`
    — três opções (B, C, D); a decisão depende de responder *arquivo novo em pasta curada entra ou
    fica fora?*.
-3. **FlatDrop grava o estado do repo no `_MANIFEST`** (`git log -1` + resumo de `git status`, como
-   foto do momento da geração). Apaga uma ressalva inteira do lado do chat.
-4. **Mostrar a REGRA de ignore que casou**, não só a contagem por motivo.
+3. **Decidir o formato do `_MANIFEST`** — análise em
+   `meta/analises/260823-ANALISE-formato-do-manifesto.md`, «Em discussão», parada num ponto de
+   decisão do autor. O nome plano declarado na tabela **não existe** no mount para dotfile e nome
+   com ponto interno (medido: 3 de 38 aqui; 11 de 109 pelo KCM), e falta `mtime` por arquivo.
+   *(O item que estava neste lugar — «FlatDrop grava o estado do repo no `_MANIFEST`» — saiu: foi
+   ENTREGUE na 0.15.0 pela wo0048 e continuava listado como pendente.)*
+4. **Mostrar a REGRA de ignore que casou**, não só a contagem por motivo. **Reforçado em 07/08**
+   pela nota `260807-1324`: em projeto irmão, um `.xlsx` inteiro sumiu do achatamento por estar em
+   pasta gitignorada e a ausência só foi notada sessões depois. A contagem por motivo já existe na
+   saída — o que falta é a regra.
 5. Aviso mais visível quando o `pathspec` está ausente.
 6. Adiadas, com gatilho de retorno em `IDEAS.md`: multi-raiz na GUI, `pasta/` como exclusão dura,
-   UI-2/UI-3, saída da CLI ASCII-safe, formato «caminho escrito».
+   UI-2/UI-3, formato «caminho escrito». *(A **saída da CLI ASCII-safe** deixou de ser adiada — o
+   gatilho disparou em 02/08 e a curadoria de 23/08 a moveu para «Ativas».)*
 
 ## Riscos / pontos de atenção
 
