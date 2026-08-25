@@ -1149,3 +1149,87 @@ def test_git_snapshot_sem_upstream_no_status(tmp_path):
     subprocess.run(["git", "commit", "-qm", "primeiro"], cwd=tmp_path, check=True)
     _commit, status = core.git_snapshot(tmp_path)
     assert "limpo" in status and "sem upstream" in status
+
+
+# --- nome previsto no Projeto (wo0051, DEC-030) — puros ---
+
+def test_previsao_dotfile():
+    """Ponto inicial vira `_` — o caso dos tres dotfiles de configuracao."""
+    assert core.project_upload_name(".gitignore") == "_gitignore"
+    assert core.project_upload_name(".flatdropignore") == "_flatdropignore"
+    assert core.project_upload_name(".gitattributes") == "_gitattributes"
+
+
+def test_previsao_ponto_interno():
+    """Ponto interno vira `_`; a ultima extensao sobrevive."""
+    assert core.project_upload_name("settings.local.json") == "settings_local.json"
+    assert core.project_upload_name("index.template.html") == "index_template.html"
+
+
+def test_previsao_varios_pontos():
+    """Todos os pontos internos caem, nao so o primeiro."""
+    assert core.project_upload_name("map.2.0-avowed.json") == "map_2_0-avowed.json"
+
+
+def test_previsao_nome_comum_nao_muda():
+    """A esmagadora maioria nao diverge — e nao pode entrar no bloco de excecoes."""
+    for nome in ("core.py", "README.md", "Dockerfile", "README__meta.md"):
+        assert core.project_upload_name(nome) == nome
+
+
+def test_previsao_nao_opina_alem_do_ponto():
+    """Espaco e outros caracteres passam intactos: nunca foram medidos (DEC-030)."""
+    assert core.project_upload_name("meu arquivo.md") == "meu arquivo.md"
+
+
+def test_manifesto_traz_bloco_de_excecoes(tmp_path):
+    """Nome com ponto interno gera o bloco, com o rotulo de PREVISAO."""
+    origem = tmp_path / "src"
+    origem.mkdir()
+    (origem / "dados.v1.json").write_text("{}\n", encoding="utf-8")
+    (origem / "a.md").write_text("x\n", encoding="utf-8")
+    cfg = core.ScanConfig()
+    plan = core.make_plan(origem, cfg)
+    res = core.execute_plan(plan, tmp_path / "out", cfg)
+    texto = list(res.dest.glob("_MANIFEST*.md"))[0].read_text(encoding="utf-8")
+    assert "Nomes que chegam DIFERENTES ao Projeto (1)" in texto
+    assert "`dados_v1.json`" in texto
+    assert "PREVISÃO" in texto
+
+
+def test_manifesto_sem_divergencia_nao_tem_bloco(tmp_path):
+    """Sem caso, sem bloco — secao vazia e ruido em todo manifesto."""
+    origem = tmp_path / "src"
+    origem.mkdir()
+    (origem / "a.md").write_text("x\n", encoding="utf-8")
+    cfg = core.ScanConfig()
+    plan = core.make_plan(origem, cfg)
+    res = core.execute_plan(plan, tmp_path / "out", cfg)
+    texto = list(res.dest.glob("_MANIFEST*.md"))[0].read_text(encoding="utf-8")
+    assert "chegam DIFERENTES" not in texto
+
+
+def test_manifesto_tabela_original_intacta(tmp_path):
+    """A tabela continua declarando o nome EM DISCO — a excecao nao a reescreve."""
+    origem = tmp_path / "src"
+    origem.mkdir()
+    (origem / "dados.v1.json").write_text("{}\n", encoding="utf-8")
+    cfg = core.ScanConfig()
+    plan = core.make_plan(origem, cfg)
+    res = core.execute_plan(plan, tmp_path / "out", cfg)
+    texto = list(res.dest.glob("_MANIFEST*.md"))[0].read_text(encoding="utf-8")
+    assert "| `dados.v1.json` | `dados.v1.json` |" in texto
+    assert (res.dest / "dados.v1.json").is_file()
+
+
+def test_assinatura_continua_na_primeira_linha(tmp_path):
+    """Invariante do DEC-007: e ela que autoriza o safe_clear. Nada pode empurra-la."""
+    origem = tmp_path / "src"
+    origem.mkdir()
+    (origem / "dados.v1.json").write_text("{}\n", encoding="utf-8")
+    cfg = core.ScanConfig()
+    plan = core.make_plan(origem, cfg)
+    res = core.execute_plan(plan, tmp_path / "out", cfg)
+    texto = list(res.dest.glob("_MANIFEST*.md"))[0].read_text(encoding="utf-8")
+    assert texto.splitlines()[0] == C.MANIFEST_SIGNATURE
+    assert core.is_our_folder(res.dest)

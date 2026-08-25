@@ -5,6 +5,31 @@ virarem item de `ROADMAP.md`, serem implementados ou descartados. Ideia adotada
 vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
 "Descartadas" com o motivo. Nunca se perde nada — muda de status.
 
+> **Mudanças nesta revisão (2026-08-23) — curadoria adiada desde 02/08, item a item:**
+>
+> 1. **«Saída da CLI ASCII-safe» saiu de Adiadas e voltou para Ativas** — o gatilho de retorno já
+>    estava marcado como DISPARADO no próprio item desde 02/08 (terceira ocorrência, smoke da
+>    wo0048); faltava só a curadoria do chat, prevista no handoff §3.3. Texto preservado inteiro.
+> 2. **A Ativa «o editor e a curadoria manual não convivem» saiu** — descrevia como «bug aberto da
+>    0.13.0» o que fechou na 0.15.0 (FIX-012). Nada se perdeu: o que ela tinha de único (o rótulo
+>    `travada (manual)` e a origem do diagnóstico) foi somado à entrada correspondente em
+>    **Concluídas**, que já existia.
+> 3. **Duas frases obsoletas corrigidas dentro da Ativa do gerador `pasta/*`:** o contorno «não
+>    salvar o `.flatdropignore` pela GUI» está **revogado** desde a 0.15.0 (DEC-029), e a trava por
+>    pasta já grava a forma nova. O que segue aberto é só a pasta **parcialmente** curada.
+> 4. **Dois resíduos truncados removidos** — a nota de Foco de 01/08 arrastava meia frase de uma
+>    nota anterior («> foi ignorado\*\* e \*\*editor gravar `pasta/*`\*\*…»), e havia outro fragmento solto
+>    antes do item da REGRA de ignore («> Concluídas). As frentes candidatas agora são…»). Ambos
+>    eram sobra de reescrita, não conteúdo.
+> 5. **Foco reescrito para a frente atual** (carta 01 do KCM sobre o formato do `_MANIFEST`).
+> 6. **Duas ideias novas em Ativas:** o formato do `_MANIFEST` (nome plano que não existe no mount +
+>    `mtime` por arquivo) e a linha de sincronia do git (`behind`/«sem upstream»).
+> 7. **Uma corroboração** somada ao item «REGRA de ignore que casou»: a nota `260807-1324`, de
+>    projeto irmão, com o custo real medido lá.
+> 8. **Um item novo em «Feedback para o Kit»:** ausência de saída não é ausência de recurso.
+>
+> _Canal deste doc neste ciclo = **CHAT** (a wo0050 não toca o `IDEAS.md`)._
+
 > **Mudanças nesta revisão (2026-08-01) — merge do template-update do KCM v1.95.0 (DEC-028):**
 > criada a seção **Adiadas**, com gatilho de retorno obrigatório em cada item (formato adotado do
 > kit). Para lá foram, sem perder texto: multi-raiz na GUI, `pasta/` como exclusão dura, UI-2/UI-3,
@@ -35,33 +60,49 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
 ## Ativas
 
 
-> **Foco (2026-08-01):** o merge do template-update do KCM **v1.95.0** foi aplicado (DEC-028).
-> As duas frentes do `_TREE` fecharam (0.12.0 e 0.14.0). A frente aberta é **uma só**: o editor
-> não convive com regra escrita fora do bloco gerenciado — e ela começa pelas duas perguntas do
-> autor (aprova o desenho? o passo 3 move ou avisa?), não por código. A **contrabarra em padrão**
-> e o **estado do repo no manifesto** entram no mesmo ciclo.
-> foi ignorado** e **editor gravar `pasta/*`**) passam à frente do multi-raiz por decisão do
-> autor: nasceram de atrito real de uso (notas de 23 e 24/07) e são a próxima sessão.
+> **Foco (2026-08-23):** a 0.15.0 fechou o único bug aberto e o repo ficou 20 dias parado
+> (`8913a39`, 02/08). A frente atual **não é código do produto**: é a **carta 01 do KCM sobre o
+> formato do `_MANIFEST`** — o nome plano declarado na tabela não existe no mount para dotfile e
+> nome com ponto interno (medido: 3 de 38 aqui, 11 de 109 lá), e falta `mtime` por arquivo. A
+> análise está em `meta/analises/260823-ANALISE-formato-do-manifesto.md`, «Em discussão», e para
+> num ponto de decisão do autor. Em paralelo, a **wo0050** completa a linha de git do manifesto
+> (`behind` e «sem upstream»), que já tinha o `ahead` desde a wo0048. Seguem esperando decisão do
+> autor, sem prazo: o gerador (`pasta/*` + `!mantido`) e a multi-raiz na GUI.
 
-- **O editor e a curadoria manual do `.flatdropignore` não convivem.** Bug aberto da 0.13.0,
-  detalhado no STATUS e na análise. Fica aqui a ideia que nasceu do diagnóstico: o bloco
-  gerenciado deveria ser tratado como um **diff contra tudo o que já existe** — emite linha
-  só quando o estado desejado diverge do que os outros arquivos e a parte manual já fazem —,
-  e o gerador deveria **garantir que o bloco fique por último** no arquivo, senão uma linha
-  manual abaixo dele vence em silêncio. Também vale a GUI **mostrar de onde vem** cada trava
-  herdada (`travada (git)` já existe; falta `travada (manual)`), porque hoje o autor não tem
-  como saber que aquela trava não é dele. (2026-07-28.)
+- **O formato do `_MANIFEST` promete um nome que não existe no mount.** Carta 01 do KCM
+  (2026-08-21), com dois pedidos. **(1)** O cabeçalho diz que a tabela mapeia cada nome plano de
+  volta ao caminho original — e para dotfile e nome com ponto interno ela mapeia um nome que **não
+  está lá**: o Projeto do Claude sanitiza no upload (ponto inicial → `_`, ponto interno → `_`, só a
+  extensão final sobrevive). Medido neste mount em 23/08: 3 de 38 (`.gitignore`,
+  `.flatdropignore`, `settings.local.json`); medido pelo KCM: 11 de 109 em dois repos. Quem busca
+  pelo nome declarado encontra ausência, que é indistinguível de «não subiu». **(2)** O mount
+  **zera o `mtime`** de todo arquivo (`1979-12-31`), então não há como saber qual arquivo mudou
+  entre duas gerações — só se o manifesto carregar o `mtime` da origem. Quatro opções mapeadas em
+  `meta/analises/260823-ANALISE-formato-do-manifesto.md` (Em discussão) — **decisão do autor.**
 - **Editor de `.flatdropignore` deve gravar `pasta/*`, não `pasta/`.** Causa raiz medida em
   DEC-025: `_scan` poda o diretório casado antes de descer, então um `!` dentro dele nunca é
   avaliado. Hoje o editor grava a forma `pasta/` e, ao salvar com um filho marcado, cai no
   fallback de listar arquivo por arquivo — frágil, porque arquivo novo na pasta passa a entrar
   sozinho. Proposta: o gerador emite `pasta/*` sempre que houver (ou puder haver) reinclusão,
-  e o fallback por arquivo é aposentado. Enquanto não entrar: **não salvar o `.flatdropignore`
-  pela GUI**, sob pena de o bloco `# >>> flatdrop-editor` reescrever a forma antiga.
-  (Nasceu da nota de 2026-07-23 + medição desta sessão.)
-
-> Concluídas). As frentes candidatas agora são **multi-raiz na GUI** e o **force-include
-> por caminho exato**; o restante segue por prioridade aproximada.
+  e o fallback por arquivo é aposentado. (Nasceu da nota de 2026-07-23 + medição de 28/07.)
+  **Atualizado em 2026-08-23:** o contorno «não salvar o `.flatdropignore` pela GUI» está
+  **revogado** — a 0.15.0 (FIX-012 + DEC-029) fez os dois conviverem, e a **trava** por pasta já
+  grava a forma nova (`pasta/*` + `!` do que ficou). O que continua aberto é só a pasta
+  **parcialmente curada e aberta**, que sai listada por folha. A decisão que trava está na análise
+  `meta/analises/260728-ANALISE-gerador-flatdropignore.md`: *arquivo novo em pasta curada entra ou
+  fica fora?*
+- **Saída da CLI ASCII-safe.** Trocar `↳`/`•`/`—` da saída por `->`/`*`/`-` para
+  dispensar `chcp 65001` nos `.bat` e evitar de vez problemas de code page. Baixo custo.
+  Ficou **Adiada** desde a Fase 2, com o gatilho «volta na terceira ocorrência num smoke»;
+  **o gatilho disparou em 2026-08-02** (smoke da wo0048: `UnicodeEncodeError` no `↳` sob cp1252,
+  com o traceback saindo DEPOIS de o manifesto já estar no disco — não corrompe o resultado, mas
+  assusta). **Movida para Ativas em 2026-08-23**, na curadoria prevista pelo handoff §3.3.
+- **A linha de git do manifesto não distingue «commitado» de «empurrado».** «limpo» fala da
+  árvore de trabalho e cala sobre o `ahead/behind`. Devolvida pelo KCM em 02/08 e de novo na carta
+  01. **Estado verificado em 23/08, lendo `core.git_snapshot`:** o `ahead` **já existe** desde a
+  wo0048 — a nota `260802-2319` que dizia o contrário está errada, e o KCM concluiu ausência de
+  recurso a partir de ausência de saída (`ahead=0` não imprime nada). Falta o `behind`, o caso
+  «sem upstream» e teste nenhum cobre o trecho. **Vira a wo0050.**
 
 - **Mostrar a REGRA de ignore que casou (não só a contagem).** Ao achatar, informar quais
   arquivos ficaram de fora por `.gitignore` **e por qual padrão** — para o autor perceber na
@@ -73,6 +114,10 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
   que encarece o scan. Valor real: quem lê o `_TREE.md` (inclusive o KCM) descobre *por que*
   o arquivo sumiu sem abrir o `.gitignore`. Escopo pequeno-médio, sem risco ao `.bat`
   (relato apenas). (Ideia do usuário, nota `260717-1338`.)
+  **Corroborado em 2026-08-07** pela nota `260807-1324`, com custo medido em projeto irmão: um
+  `.xlsx` inteiro sumiu do achatamento por estar em pasta gitignorada, e a ausência só foi notada
+  **sessões depois**. Reforça a prioridade sem mudar o escopo — a contagem já existia lá também;
+  o que teria evitado o custo é a regra (ou o nome) na saída.
 - **Resync incremental por diff do manifesto.** Comparar com o `_MANIFEST.md`
   anterior e copiar/avisar só o que mudou. Ganha valor com uso frequente. (Stand-by.)
 - **Empacotar como `.exe` (PyInstaller).** Para o PC sem Python: duplo-clique sem
@@ -144,13 +189,8 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
   **Adiada:** polimento, sem dor relatada. **Volta quando** o autor reclamar do layout duas vezes,
   ou quando um preset («só docs», «só código») for pedido em uso real.
 
-- **Saída da CLI ASCII-safe.** Trocar `↳`/`•`/`—` da saída por `->`/`*`/`-` para
-  dispensar `chcp 65001` nos `.bat` e evitar de vez problemas de code page. Baixo custo.
-  **Adiada** desde a Fase 2. **Volta quando** aparecer pela terceira vez num smoke — já apareceu duas
-  (`UnicodeEncodeError` no `↳` sob cp1252, na wo0043 e antes). O custo é baixo; o que falta é a vez.
-  **GATILHO DISPARADO em 2026-08-02:** terceira ocorrência, no smoke da wo0048 — o traceback saiu
-  DEPOIS de o manifesto já estar no disco, então não corrompe resultado, mas assusta. Esta ideia
-  volta para «Ativas» na próxima curadoria do chat.
+> _**Saída da CLI ASCII-safe** saiu desta seção em 2026-08-23: o gatilho («terceira ocorrência num
+> smoke») disparou em 02/08 e a curadoria do chat a moveu para **Ativas**, com o texto inteiro._
 
 - **Formato de nome "caminho escrito" (`raiz__pastas__stem.ext`).** Um seletor de
   formato do nome, alternativo ao `root_in_name` atual. Em vez de stem na frente,
@@ -175,6 +215,11 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
 - **O editor deve conviver com regra escrita à mão.** **ENTREGUE na 0.15.0** (FIX-012, wo0045 +
   wo0046): o bloco virou um diff contra a curadoria manual e vai sempre para o fim. Junto veio a
   **anatomia normativa** (DEC-029), que é o que de fato revoga o «ou um, ou outro».
+  *(Absorve, em 2026-08-23, a Ativa gêmea de 28/07 que ainda descrevia isto como «bug aberto da
+  0.13.0». O que ela tinha de próprio: o desenho nasceu do diagnóstico — bloco como **diff** e
+  bloco **por último** —, e dele saiu também a exigência de a GUI **mostrar de onde vem cada
+  trava herdada**, que virou o rótulo `travada (manual)` na wo0047. As três partes estão
+  entregues.)*
 - **Contrabarra em padrão deveria ser detectada.** **ENTREGUE na 0.15.0** (wo0047): o editor avisa
   na abertura e aponta arquivo e linha. Confirmado por medição que o gerador nunca emitiu `\` — as
   linhas vinham sempre de edição manual, e por isso a ferramenta **avisa em vez de normalizar**.
@@ -313,6 +358,17 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
 ## Feedback para o Kit
 
 Registro do que ESTE projeto observou/mudou além do kit (material que volta para evoluí-lo).
+
+- **Ausência de saída não é ausência de recurso — leia o código antes de devolver a outra frente
+  que algo não foi feito.** Medido em 2026-08-23, num caso com três participantes errando junto: o
+  `ahead` da linha de git do manifesto **existe** desde a wo0048, mas só imprime quando há commit
+  não empurrado. A nota `260802-2319` afirmou, no mesmo dia da implementação, que «a parte do à
+  frente não entrou»; o KCM repetiu a devolução na carta 01 citando um manifesto sem o trecho; e
+  o STATUS deste repo listava como pendente («backlog 3») algo que o CHANGELOG da mesma versão
+  declarava entregue. Nenhum dos três abriu a função. O kit já tem «verifica antes de AFIRMAR»
+  para o estado do repo — falta a variante para **capacidade do próprio produto**: antes de
+  registrar «a ferramenta não faz X», abra o código de X; ausência na saída é compatível com
+  recurso presente e condição não satisfeita.
 
 - **Adotado o modo Claude Code (duas raias).** Chat autora docs/specs; Code implementa e commita.
   Criados os arquivos de arranque (`CLAUDE.md` raiz, `.claude/`). Ver DEC-012.

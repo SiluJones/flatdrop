@@ -1379,6 +1379,30 @@ def git_snapshot(root) -> tuple[str | None, str | None]:
     return commit, " · ".join(partes) + sincronia
 
 
+def project_upload_name(flat: str) -> str:
+    """Nome PREVISTO com que ``flat`` chega ao Projeto do Claude — inferencia, nao promessa.
+
+    Regra observada em 2026-08 sobre 14 casos em tres repositorios: o upload troca o ponto
+    INICIAL e os pontos INTERNOS por ``_``, preservando so a ultima extensao. Nao e documentada
+    pela Anthropic e pode mudar — por isso o resultado sai rotulado como previsao e FORA da
+    tabela, que continua descrevendo o que esta ferramenta escreveu em disco (analise 260823,
+    DEC-030).
+
+    Nao opina sobre nada alem de pontos: qualquer outro caractere passa intacto, porque nunca
+    foi medido. Prever o que nao se mediu e como declarar estado sem ler.
+
+        .gitignore           -> _gitignore
+        settings.local.json  -> settings_local.json
+        map.2.0-avowed.json  -> map_2_0-avowed.json
+        core.py              -> core.py            (sem divergencia)
+    """
+    nome = ("_" + flat[1:]) if flat.startswith(".") else flat
+    stem, ponto, ext = nome.rpartition(".")
+    if not ponto:                      # sem ponto nenhum: nada a prever
+        return nome
+    return stem.replace(".", "_") + "." + ext
+
+
 def write_manifest(dest: Path, plan: FlattenPlan, cfg: ScanConfig) -> Path:
     """Escreve _MANIFEST.md: assinatura + metadados + mapa origem→nome plano.
 
@@ -1415,6 +1439,24 @@ def write_manifest(dest: Path, plan: FlattenPlan, cfg: ScanConfig) -> Path:
     for f in plan.files:
         lines.append(f"| `{f.rel.as_posix()}` | `{f.target}` |")
     lines.append("")
+    # Bloco de excecoes (DEC-030): a tabela acima descreve o DISCO; o Projeto renomeia no upload
+    # e a busca pelo nome declarado voltava vazia — ausencia indistinguivel de "nao subiu". Fica
+    # FORA da tabela de proposito: vale para poucos arquivos (3 de 38 aqui) e e previsao sobre
+    # software de terceiro. Coluna gastaria celula vazia em 92% das linhas para servir 8%.
+    divergentes = [(f.target, project_upload_name(f.target)) for f in plan.files
+                   if project_upload_name(f.target) != f.target]
+    if divergentes:
+        lines.append(
+            f"> **Nomes que chegam DIFERENTES ao Projeto ({len(divergentes)}).** O upload troca "
+            "ponto inicial e ponto interno por `_`, preservando só a última extensão. Regra "
+            "observada em 2026-08 e **não documentada pela Anthropic**: é PREVISÃO, não promessa. "
+            "A tabela acima continua valendo para a pasta em disco.\n"
+        )
+        lines.append("| Nome na pasta | Como chega ao Projeto (previsto) |")
+        lines.append("|---|---|")
+        for _flat, _previsto in divergentes:
+            lines.append(f"| `{_flat}` | `{_previsto}` |")
+        lines.append("")
     mani = dest / meta_name(C.MANIFEST_NAME, dest, cfg)
     mani.write_text("\n".join(lines), encoding="utf-8")
     return mani

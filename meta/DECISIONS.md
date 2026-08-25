@@ -976,3 +976,35 @@ semântica de um arquivo que outras ferramentas também leem.
 **Consequência.** As cinco regras foram enviadas ao KCM como acréscimo ao princípio «artefato
 gerado que convive com edição humana», que a v1.89.0 já tinha levado deste projeto. Princípio sem
 forma testável não impede o erro — este caso é a prova.
+
+## DEC-030 — o manifesto declara o disco; o que o Projeto renomeia vai num bloco à parte
+
+**Contexto.** O `_MANIFEST` promete, no cabeçalho, mapear cada nome plano de volta ao caminho
+original. Para dotfile e nome com ponto interno a promessa é falsa **no destino**: o Projeto do
+Claude sanitiza no upload (ponto inicial e ponto interno viram `_`; só a última extensão
+sobrevive). Medido em 2026-08-23: 3 de 38 entradas neste repo; 11 de 109 nos dois repos do KCM,
+nos dois modos de renomeação. Quem busca pelo nome declarado encontra **ausência**, que é
+indistinguível de «não subiu» — a dúvida que o manifesto existe para eliminar.
+
+**Decisão.** A tabela **não muda**: ela descreve o que esta ferramenta escreveu em disco, que é a
+única coisa sobre a qual ela tem autoridade. Quando houver divergência prevista, o manifesto ganha
+logo abaixo da tabela um **bloco de exceções** — aviso com a regra observada, a data, o rótulo
+**PREVISÃO** e uma minitabela `nome na pasta → como chega`. Sem caso, sem bloco.
+
+**Alternativas descartadas.** *(a) A coluna «Nome na pasta» passar a declarar o nome sanitizado* —
+a tabela deixaria de descrever o disco, e é frágil na direção mais provável: se a sanitização
+afrouxar, o nome declarado volta a não existir, agora por culpa nossa. *(b) Terceira coluna na
+tabela* (pedido do KCM) — paga a quebra de forma em 100% das linhas para carregar informação que
+vale para 8% delas; célula vazia no resto. *(c) Só uma linha no cabeçalho* — resolve a leitura, não
+a busca, que é onde dói; adotada **dentro** do bloco, não sozinha. *(d) Gravar o arquivo já
+sanitizado* — é a única imune a mudança do destino, mas exigiria sanitizar **dentro** de
+`_plan_names`, antes da checagem de unicidade (senão `settings.local.json` e `settings_local.json`
+colidem em silêncio): risco no coração da ferramenta para resolver um problema de relato. Fica
+registrada como a saída correta **se** o problema deixar de ser de relato — por exemplo, se o
+upload passar a falhar em vez de renomear.
+
+**Consequências.** O manifesto passa a afirmar uma regra de software de terceiro, não documentada:
+por isso o rótulo de previsão, a data da observação e o isolamento fora da tabela — se a regra
+mudar, o que fica errado é um bloco datado, e a tabela segue verdadeira. `project_upload_name` só
+opina sobre pontos; qualquer outro caractere passa intacto, porque nunca foi medido. A assinatura
+`<!-- flatdrop-manifest v1 -->` continua na primeira linha (DEC-007) — há teste fixando isso.

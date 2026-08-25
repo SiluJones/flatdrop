@@ -14,6 +14,12 @@ está em «Ativas». Decisões em aberto: `pasta/*` + `!mantido` no gerador do e
 (`meta/analises/260823-ANALISE-formato-do-manifesto.md`)._
 
 ### Adicionado
+- **O `_MANIFEST` avisa quais nomes chegam diferentes ao Projeto (wo0051, DEC-030).** Quando algum
+  arquivo plano tiver ponto inicial ou ponto interno, entra um bloco logo abaixo da tabela com o
+  nome previsto no destino, a regra observada e o rótulo de **previsão**. Motivo: o Projeto do
+  Claude sanitiza no upload, e a tabela apontava para um nome que **não existe** no mount — 3 de 38
+  entradas aqui, 11 de 109 nos repos do KCM. A tabela continua intacta e continua descrevendo o
+  disco; a exceção é que ficou visível.
 - **A linha de git do `_MANIFEST` passa a dizer se o commit saiu daqui (wo0050).** Além do `ahead`
   que a wo0048 já emitia, a linha agora traz o **`behind`**, diz **«sem upstream»** quando o branch
   não rastreia nada e **«sincronizado com <upstream>»** quando está em dia — e nomeia o upstream

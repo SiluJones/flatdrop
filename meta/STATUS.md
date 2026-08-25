@@ -87,12 +87,12 @@ mensagem e não escreve nada.
    arquivo novo. **Análise em discussão:** `meta/analises/260728-ANALISE-gerador-flatdropignore.md`
    — três opções (B, C, D); a decisão depende de responder *arquivo novo em pasta curada entra ou
    fica fora?*.
-3. **Decidir o formato do `_MANIFEST`** — análise em
-   `meta/analises/260823-ANALISE-formato-do-manifesto.md`, «Em discussão», parada num ponto de
-   decisão do autor. O nome plano declarado na tabela **não existe** no mount para dotfile e nome
-   com ponto interno (medido: 3 de 38 aqui; 11 de 109 pelo KCM), e falta `mtime` por arquivo.
-   *(O item que estava neste lugar — «FlatDrop grava o estado do repo no `_MANIFEST`» — saiu: foi
-   ENTREGUE na 0.15.0 pela wo0048 e continuava listado como pendente.)*
+3. **Responder a carta 01 do KCM** — falta só a carta 02, que o chat escreve depois desta WO
+   aplicada. Item 1 **decidido e implementado** (DEC-030, wo0051: bloco de exceções). Item 3
+   **entregue** (wo0050). Item 2 (`mtime` por arquivo) **em discussão**: o autor questionou a
+   utilidade e o chat contrapôs uma coluna de **hash curto** — hash igual ao que já se leu
+   *justifica* pular a releitura; `mtime` antigo só *sugere*. Decisão pendente na análise
+   `meta/analises/260823-ANALISE-formato-do-manifesto.md`.
 4. **Mostrar a REGRA de ignore que casou**, não só a contagem por motivo. **Reforçado em 07/08**
    pela nota `260807-1324`: em projeto irmão, um `.xlsx` inteiro sumiu do achatamento por estar em
    pasta gitignorada e a ausência só foi notada sessões depois. A contagem por motivo já existe na
