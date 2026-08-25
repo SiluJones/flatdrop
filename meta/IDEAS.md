@@ -91,18 +91,6 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
   **parcialmente curada e aberta**, que sai listada por folha. A decisão que trava está na análise
   `meta/analises/260728-ANALISE-gerador-flatdropignore.md`: *arquivo novo em pasta curada entra ou
   fica fora?*
-- **Saída da CLI ASCII-safe.** Trocar `↳`/`•`/`—` da saída por `->`/`*`/`-` para
-  dispensar `chcp 65001` nos `.bat` e evitar de vez problemas de code page. Baixo custo.
-  Ficou **Adiada** desde a Fase 2, com o gatilho «volta na terceira ocorrência num smoke»;
-  **o gatilho disparou em 2026-08-02** (smoke da wo0048: `UnicodeEncodeError` no `↳` sob cp1252,
-  com o traceback saindo DEPOIS de o manifesto já estar no disco — não corrompe o resultado, mas
-  assusta). **Movida para Ativas em 2026-08-23**, na curadoria prevista pelo handoff §3.3.
-- **A linha de git do manifesto não distingue «commitado» de «empurrado».** «limpo» fala da
-  árvore de trabalho e cala sobre o `ahead/behind`. Devolvida pelo KCM em 02/08 e de novo na carta
-  01. **Estado verificado em 23/08, lendo `core.git_snapshot`:** o `ahead` **já existe** desde a
-  wo0048 — a nota `260802-2319` que dizia o contrário está errada, e o KCM concluiu ausência de
-  recurso a partir de ausência de saída (`ahead=0` não imprime nada). Falta o `behind`, o caso
-  «sem upstream» e teste nenhum cobre o trecho. **Vira a wo0050.**
 
 - **Mostrar a REGRA de ignore que casou (não só a contagem).** Ao achatar, informar quais
   arquivos ficaram de fora por `.gitignore` **e por qual padrão** — para o autor perceber na
@@ -162,6 +150,15 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
 > Decisão consciente de não fazer agora. Cada item traz **o gatilho que o traz de volta** —
 > ideia adiada sem gatilho é ideia perdida. Formato adotado do KCM v1.95.0 (DEC-028).
 
+- **Acento na saída da CLI quebra em cp437.** A wo0052 resolveu os glifos decorativos e com isso
+  cp1252 e cp850 — os dois consoles que este projeto usa. Sobra o cp437 (CMD em locale US), onde
+  `ã`, `õ` e `Í` também não codificam: `PRÉ-VISUALIZAÇÃO`, `CONCLUÍDO` e `não` derrubariam o
+  `print` do mesmo jeito. Não foi feito porque a correção certa aqui **não** é apagar os acentos
+  (a saída ficaria feia em português para resolver um console que ninguém aqui usa) e sim uma rede
+  de segurança no `print` — que é mudança de mecanismo, não de texto, e precisa de decisão própria
+  por tocar `cli.py` (DEC-020). **Volta quando** alguém rodar o FlatDrop num Windows fora do
+  locale pt-BR, ou quando a ferramenta for usada por outra pessoa. (Medido em 2026-08-24.)
+
 - **Selecionar várias pastas de uma vez na GUI (multi-raiz).** Irmã do multi-fonte
   que já existe na core (`make_plan_sources`/`Source`): escolher N pastas na
   interface, prefixar cada arquivo com o nome da sua pasta-raiz e só cair na
@@ -212,6 +209,18 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
 
 ## Concluídas
 
+- **Saída da CLI ASCII-safe.** **ENTREGUE (wo0052).** Os quatro glifos da saída (`↳`, `•`, `…`,
+  `⚠`) viraram `->`, `*`, `...` e `!`. Nasceu como item de conforto («dispensar `chcp 65001` nos
+  `.bat`») e terminou como correção de bug: era `UnicodeEncodeError` derrubando o `print` final
+  depois de a ferramenta já ter dado certo. Quatro ocorrências até virar WO — a última já não era
+  smoke, era uso. Medição de 24/08: `↳` e `⚠` falham nos três code pages do Windows; `•` e `…`
+  falham em cp850, que é o CMD pt-BR, ou seja, o caminho do `.bat`. **Resíduo conhecido:** em
+  cp437 (CMD em locale US) os **acentos** ainda quebram — outra conversa, ver «Adiadas».
+- **A linha de git do manifesto não distingue «commitado» de «empurrado».** **ENTREGUE (wo0050).**
+  O `ahead` já existia desde a wo0048; entraram o `behind`, o «sem upstream», o «sincronizado com
+  <upstream>» e o nome real do upstream. Sete testes puros, que rodam sem `git` instalado. O
+  registro que sobra é o da lição, e está em «Feedback para o Kit»: ausência de saída não é
+  ausência de recurso.
 - **O editor deve conviver com regra escrita à mão.** **ENTREGUE na 0.15.0** (FIX-012, wo0045 +
   wo0046): o bloco virou um diff contra a curadoria manual e vai sempre para o fim. Junto veio a
   **anatomia normativa** (DEC-029), que é o que de fato revoga o «ou um, ou outro».
@@ -359,6 +368,23 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
 
 Registro do que ESTE projeto observou/mudou além do kit (material que volta para evoluí-lo).
 
+- **Havendo WO no turno, o Code commita TUDO — inclusive o que o chat entregou junto.** Levantado
+  pelo autor em 2026-08-24. Até a wo0050, o chat entregava a WO **e** um bloco `git add/commit`
+  para os documentos que ele mesmo tinha escrito, obrigando o autor a um passo manual e criando
+  risco de registro pendente (o defeito que a wo0044 existiu para consertar). A regra correta:
+  **com WO, o bloco de commit é do Code e cobre a WO + os arquivos do chat + qualquer pendência;
+  sem WO, o bloco é do chat.** A salvaguarda é conferir a presença no disco e, se faltar, commitar
+  o resto e reportar — nunca inventar. Já em uso desde a wo0051; falta virar linha no
+  `_TEMPLATE__workorders.md` e na skill `apply-wo`. *Guardado para o merge do próximo
+  template-update do KCM, para não escrever convenção que o kit novo talvez já traga.*
+- **O relatório de aplicação precisa ser gravado DEPOIS do push — ou corrigido depois dele.**
+  Medido em 2026-08-24: o relatório da wo0051 diz «NÃO executei o push» porque o Code, com razão,
+  pediu confirmação antes de mudar o remoto; o push saiu logo em seguida, e o `.txt` em disco ficou
+  afirmando um estado falso, que é o que a sessão seguinte lê. **O que salvou:** o `_MANIFEST`
+  gerado depois trazia «sincronizado com origin/main» — a linha da wo0050 desmentindo o relatório
+  sozinha, um dia depois de existir. A correção: o campo `## Push` do relatório só é escrito com o
+  resultado real, e se o push ficar pendente de confirmação o relatório é **reaberto e corrigido**
+  quando ele sair. *Guardado para o mesmo merge.*
 - **Ausência de saída não é ausência de recurso — leia o código antes de devolver a outra frente
   que algo não foi feito.** Medido em 2026-08-23, num caso com três participantes errando junto: o
   `ahead` da linha de git do manifesto **existe** desde a wo0048, mas só imprime quando há commit

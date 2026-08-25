@@ -125,7 +125,7 @@ def _summary(plan: core.FlattenPlan) -> str:
     ]
     if len(plan.sources) > 1:
         lines.append(f"Fontes ({len(plan.sources)}):")
-        lines += [f"  • {d}" for d in plan.sources]
+        lines += [f"  * {d}" for d in plan.sources]
     skipped_txt = ", ".join(f"{k}={v}" for k, v in plan.skipped.items() if v)
     lines.append(f"Pulados: {skipped_txt or 'nenhum'}")
     for reason, sample in plan.skipped_samples.items():
@@ -133,12 +133,12 @@ def _summary(plan: core.FlattenPlan) -> str:
             continue
         total = plan.skipped.get(reason, 0)
         shown = sample[:5]
-        extra = f" … (+{total - len(shown)})" if total > len(shown) else ""
-        lines.append(f"  ↳ {reason}: " + ", ".join(shown) + extra)
+        extra = f" ... (+{total - len(shown)})" if total > len(shown) else ""
+        lines.append(f"  -> {reason}: " + ", ".join(shown) + extra)
     if plan.warnings:
         lines.append("")
         lines.append("AVISOS:")
-        lines += [f"  ⚠ {w}" for w in plan.warnings]
+        lines += [f"  ! {w}" for w in plan.warnings]
     return "\n".join(lines)
 
 
@@ -198,7 +198,7 @@ def main(argv: list[str] | None = None) -> int:
     if res.warnings:
         print("AVISOS de execução:")
         for w in res.warnings:
-            print(f"  ⚠ {w}")
+            print(f"  ! {w}")
     return 0
 
 

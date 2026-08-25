@@ -7,7 +7,7 @@ argumentos viram as fontes/filtros certos e que o multi-fonte do --also-md-from
 
 from pathlib import Path
 
-from flatdrop import cli
+from flatdrop import cli, core
 
 
 def _tree(root: Path, files: dict[str, str]) -> None:
@@ -102,6 +102,32 @@ def test_run_start_dir_with_root_goes_flatten():
     sd, rest = _split_start_dir(["--start-dir", "X", "--root", "C:/p"])
     assert sd == "X"
     assert rest == ["--root", "C:/p"]
+
+
+def test_summary_e_ascii_puro(tmp_path):
+    """O resumo nao pode ter glifo fora do ASCII: e ele que quebra o console do Windows.
+
+    Quatro ocorrencias de UnicodeEncodeError (wo0048, wo0050, wo0051 e uso real) vinham do
+    `↳` de `_summary`. Medido em 24/08: `↳` e `⚠` falham em cp1252, cp850 e cp437; `•` e `…`
+    falham em cp850 e cp437 — o cp850 e justamente o CMD pt-BR, o caminho do `.bat`.
+    """
+    root = _mono(tmp_path)
+    cfg = cli._primary_cfg(cli.build_parser().parse_args(["--root", str(root), "--no-gitignore"]))
+    plan = core.make_plan(root, cfg)
+    texto = cli._summary(plan)
+    assert texto.isascii(), [c for c in texto if not c.isascii()]
+
+
+def test_saida_do_preview_sobrevive_ao_cp850(tmp_path, capsys):
+    """A saida INTEIRA (com acentos) tem de caber no cp850, que e o CMD pt-BR padrao.
+
+    Acento cabe em cp850; o que nunca coube foram os glifos decorativos. Este teste falha se
+    alguem reintroduzir um deles em qualquer print da CLI, nao so no `_summary`.
+    """
+    root = _mono(tmp_path)
+    cli.main(["--root", str(root), "--only-ext", "md", "--no-gitignore", "--preview"])
+    out = capsys.readouterr().out
+    out.encode("cp850")  # levanta UnicodeEncodeError se alguem reintroduzir glifo
 
 
 def test_open_gui_bat_content_semeia_start_dir():

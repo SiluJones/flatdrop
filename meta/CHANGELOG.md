@@ -14,6 +14,12 @@ está em «Ativas». Decisões em aberto: `pasta/*` + `!mantido` no gerador do e
 (`meta/analises/260823-ANALISE-formato-do-manifesto.md`)._
 
 ### Adicionado
+- **A saída da CLI virou ASCII puro (wo0052).** `↳`, `•`, `…` e `⚠` viraram `->`, `*`, `...` e
+  `!`. Era `UnicodeEncodeError` derrubando o `print` final **depois** de o achatamento ter dado
+  certo — quatro ocorrências, a última em uso real. Medido: `↳` e `⚠` não codificam em nenhum dos
+  três code pages do Windows, e `•`/`…` não codificam em cp850, que é o CMD pt-BR — o caminho do
+  `.bat` gerado pela GUI. Some junto a dependência de `chcp 65001`. Um teste fixa o invariante
+  (`_summary(...).isascii()`) e outro passa a saída inteira por `cp850`.
 - **O `_MANIFEST` avisa quais nomes chegam diferentes ao Projeto (wo0051, DEC-030).** Quando algum
   arquivo plano tiver ponto inicial ou ponto interno, entra um bloco logo abaixo da tabela com o
   nome previsto no destino, a regra observada e o rótulo de **previsão**. Motivo: o Projeto do
