@@ -87,12 +87,11 @@ mensagem e não escreve nada.
    arquivo novo. **Análise em discussão:** `meta/analises/260728-ANALISE-gerador-flatdropignore.md`
    — três opções (B, C, D); a decisão depende de responder *arquivo novo em pasta curada entra ou
    fica fora?*.
-3. **Responder a carta 01 do KCM** — falta só a carta 02, que o chat escreve depois desta WO
-   aplicada. Item 1 **decidido e implementado** (DEC-030, wo0051: bloco de exceções). Item 3
-   **entregue** (wo0050). Item 2 (`mtime` por arquivo) **em discussão**: o autor questionou a
-   utilidade e o chat contrapôs uma coluna de **hash curto** — hash igual ao que já se leu
-   *justifica* pular a releitura; `mtime` antigo só *sugere*. Decisão pendente na análise
-   `meta/analises/260823-ANALISE-formato-do-manifesto.md`.
+3. **Escrever a carta 02 ao KCM** — os três itens da carta 01 estão fechados no código: item 1
+   entregue (DEC-030, wo0051), item 3 entregue (wo0050) e item 2 **recusado com contraproposta
+   entregue** (DEC-031, wo0053: nomear os rastreados divergentes, em vez do `mtime` pedido). A
+   carta precisa levar a lógica inteira da recusa, não só o «não» — pedido explícito do autor em
+   24/08. O hash curto ficou guardado com gatilho na DEC-031.
 4. **Mostrar a REGRA de ignore que casou**, não só a contagem por motivo. **Reforçado em 07/08**
    pela nota `260807-1324`: em projeto irmão, um `.xlsx` inteiro sumiu do achatamento por estar em
    pasta gitignorada e a ausência só foi notada sessões depois. A contagem por motivo já existe na

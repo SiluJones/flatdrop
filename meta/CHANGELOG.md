@@ -20,6 +20,16 @@ está em «Ativas». Decisões em aberto: `pasta/*` + `!mantido` no gerador do e
   três code pages do Windows, e `•`/`…` não codificam em cp850, que é o CMD pt-BR — o caminho do
   `.bat` gerado pela GUI. Some junto a dependência de `chcp 65001`. Um teste fixa o invariante
   (`_summary(...).isascii()`) e outro passa a saída inteira por `cp850`.
+- **O `_MANIFEST` diz QUAIS arquivos do mount não são o commit (wo0053, DEC-031).** Além da
+  contagem, o cabeçalho passa a nomear os arquivos rastreados que divergem do commit **e** entraram
+  no achatamento — a pergunta que quem lê o mount faz o tempo todo. Não rastreado continua sem
+  aparecer: é ali que mora arquivo pessoal, e a recusa da wo0048 vale inteira. É a resposta ao item
+  2 da carta 01 do KCM **no lugar** do `mtime` pedido: data diz «quando foi tocado», o `git status`
+  diz «mudou».
+- **O bloco de nomes previstos passa a carregar seu teste de falsificação (wo0053).** Uma frase diz
+  ao leitor que, se o arquivo aparecer no Projeto com o nome da coluna 1, a regra de sanitização
+  mudou e a previsão morreu. Pedido do autor ao aceitar a DEC-030: ficar esperto sem depender de
+  vigilância.
 - **O `_MANIFEST` avisa quais nomes chegam diferentes ao Projeto (wo0051, DEC-030).** Quando algum
   arquivo plano tiver ponto inicial ou ponto interno, entra um bloco logo abaixo da tabela com o
   nome previsto no destino, a regra observada e o rótulo de **previsão**. Motivo: o Projeto do

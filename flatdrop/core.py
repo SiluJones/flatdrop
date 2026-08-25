@@ -1335,6 +1335,52 @@ def _divergence(header: str) -> str:
     return f" · sincronizado com {upstream}"
 
 
+def _modified_paths(porcelain: str) -> list[str]:
+    """Caminhos RASTREADOS que divergem do commit, lidos do ``git status --porcelain=v1``.
+
+    Funcao PURA, pelo mesmo motivo do ``_divergence``: e testavel sem git instalado.
+
+    Le so o que e rastreado — linhas ``??`` (nao rastreado) e ``!!`` (ignorado) ficam de fora **de
+    proposito**. A wo0048 decidiu que o manifesto nao lista nome de arquivo, e para o nao rastreado
+    essa recusa continua inteira: e ali que mora o arquivo pessoal que ninguem quer ver numa
+    conversa. Rastreado que entrou no achatamento e outra coisa: o nome ja esta na tabela do
+    proprio manifesto (DEC-031).
+
+    Renomeado (``R  velho -> novo``) devolve o caminho NOVO, que e o que foi copiado.
+    """
+    fora: list[str] = []
+    for ln in porcelain.splitlines():
+        if len(ln) < 4 or ln.startswith(("##", "??", "!!")):
+            continue
+        caminho = ln[3:].strip()          # porcelain v1: dois codigos, espaco, caminho
+        if " -> " in caminho:
+            caminho = caminho.split(" -> ", 1)[1].strip()
+        fora.append(caminho.strip('"'))
+    return fora
+
+
+def git_modified_paths(root) -> list[str]:
+    """Wrapper fino do ``_modified_paths``; devolve [] quando nao ha git, repo ou saida.
+
+    ``core.quotepath=false`` para caminho com acento vir legivel — o padrao do git escapa em
+    octal (``"meta/an\\303\\241lise.md"``), e o manifesto e para leitura humana.
+
+    Chama o git uma segunda vez de proposito, em vez de mudar o retorno de ``git_snapshot``:
+    aquela assinatura ja tem seis testes em cima, e o custo aqui e um processo de 5 ms num
+    caminho que ja roda tres.
+
+    ``--branch`` aqui NAO e para ler o branch (ninguem le o retorno disso): e para blindar contra
+    um efeito colateral do ``_git`` (achado ao aplicar a wo0053) — ele faz ``.strip()`` na saida
+    inteira, e a primeira linha do porcelain pode comecar com espaco (`` M arquivo``, so working
+    tree). Sem ``--branch``, esse espaco inicial some e ``_modified_paths`` le a linha deslocada.
+    Com ``--branch``, a linha 0 e sempre ``## ramo...`` (nunca espaco) e ``_modified_paths`` ja a
+    descarta pelo proprio filtro. `git_snapshot` nunca teve esse bug porque ja chamava com
+    ``--branch`` por outro motivo (ler o `##`).
+    """
+    porcelain = _git(root, "-c", "core.quotepath=false", "status", "--porcelain=v1", "--branch")
+    return _modified_paths(porcelain) if porcelain else []
+
+
 def git_snapshot(root) -> tuple[str | None, str | None]:
     """(commit, resumo do status) da raiz — FOTO do momento, nao estado atual.
 
@@ -1427,6 +1473,25 @@ def write_manifest(dest: Path, plan: FlattenPlan, cfg: ScanConfig) -> Path:
         lines.append(f"- **Git (foto da geração) — último commit:** `{_commit}`")
     if _status:
         lines.append(f"- **Git (foto da geração) — status:** {_status}")
+    # Nomear os divergentes que ENTRARAM no achatamento (DEC-031). O resumo acima conta e nao
+    # diz quais; quem le o mount precisa saber se o arquivo que esta lendo e o commit ou trabalho
+    # por cima dele. Nao rastreado continua sem aparecer — a recusa da wo0048 vale inteira la.
+    # Em multi-fonte o `rel` pode nao ser relativo a plan.root: a intersecao entao nao casa e a
+    # linha simplesmente nao sai. Falso negativo, nunca falso positivo.
+    if _commit:
+        _no_mount = {f.rel.as_posix() for f in plan.files}
+        _fora_do_commit = [p for p in git_modified_paths(plan.root) if p in _no_mount]
+        if _fora_do_commit:
+            _nomes = ", ".join(f"`{p}`" for p in _fora_do_commit)
+            lines.append(
+                f"- **Git — arquivos deste mount que NÃO são o commit ({len(_fora_do_commit)}):** "
+                f"{_nomes}"
+            )
+        elif "modificado" in (_status or ""):
+            lines.append(
+                "- **Git — arquivos deste mount que NÃO são o commit:** nenhum (o que está "
+                "modificado na árvore não entrou no achatamento)"
+            )
     lines.append(f"- **Modo de renomeação:** {cfg.mode} · separador `{cfg.sep}`")
     lines.append(f"- **Arquivos:** {len(plan.files)}")
     lines.append(f"- **Tamanho total:** {human_size(plan.total_bytes)}")
@@ -1450,7 +1515,9 @@ def write_manifest(dest: Path, plan: FlattenPlan, cfg: ScanConfig) -> Path:
             f"> **Nomes que chegam DIFERENTES ao Projeto ({len(divergentes)}).** O upload troca "
             "ponto inicial e ponto interno por `_`, preservando só a última extensão. Regra "
             "observada em 2026-08 e **não documentada pela Anthropic**: é PREVISÃO, não promessa. "
-            "A tabela acima continua valendo para a pasta em disco.\n"
+            "A tabela acima continua valendo para a pasta em disco. **Se você está lendo isto "
+            "DENTRO do Projeto e o arquivo aparece com o nome da coluna 1, a regra mudou — diga "
+            "ao autor, porque esta previsão morreu.**\n"
         )
         lines.append("| Nome na pasta | Como chega ao Projeto (previsto) |")
         lines.append("|---|---|")

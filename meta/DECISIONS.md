@@ -1008,3 +1008,37 @@ por isso o rótulo de previsão, a data da observação e o isolamento fora da t
 mudar, o que fica errado é um bloco datado, e a tabela segue verdadeira. `project_upload_name` só
 opina sobre pontos; qualquer outro caractere passa intacto, porque nunca foi medido. A assinatura
 `<!-- flatdrop-manifest v1 -->` continua na primeira linha (DEC-007) — há teste fixando isso.
+
+## DEC-031 — o manifesto nomeia o rastreado divergente; o não rastreado continua anônimo
+
+**Contexto.** A wo0048 decidiu «resumo, nunca listagem» no bloco de git, por dois motivos: ruído e
+vazamento de nome de arquivo pessoal não rastreado. A regra funcionou, mas deixou sem resposta a
+pergunta que o leitor do mount mais faz: *o arquivo que estou lendo é o commit, ou trabalho por
+cima dele?* `1 modificado(s)` não diz qual.
+
+**Decisão.** Nomear **apenas** os arquivos rastreados que (a) divergem do commit e (b) entraram no
+achatamento. Não rastreado (`??`) e ignorado (`!!`) seguem fora, sem exceção.
+
+**O que sustenta o corte.** Dos dois motivos da wo0048, o do vazamento **só vale para o não
+rastreado** — e ali continua valendo inteiro. Para o rastreado que foi achatado ele não protege
+coisa alguma: o nome já está na tabela do mesmo arquivo, poucas linhas acima. O motivo do ruído
+some pela ordem de grandeza: são tipicamente 1 a 3 nomes, contra os 39 da tabela.
+
+**Alternativa descartada — `mtime` por arquivo** (pedido do KCM na carta 01, item 2). Responde
+«quando foi tocado», não «mudou»: `git checkout` carimba a hora do checkout em arquivo parado há
+meses, e cópia com preservação de timestamp mantém data velha em arquivo recém-chegado. E cria um
+dado que **autoriza a não ler** — que é o gesto que produziu a falha que o pedido tentava
+consertar. O `git status` já sabe a resposta certa, de graça, e é dado de conteúdo. A recusa vai
+argumentada na carta 02.
+
+**Alternativa guardada — hash curto por arquivo.** Responde a pergunta vizinha («mudou desde a
+geração anterior?»), que esta decisão só cobre em parte: arquivo alterado **e commitado** entre
+duas gerações não aparece aqui, porque deixou de divergir. Fica com gatilho: volta quando uma
+sessão precisar comparar duas gerações e esta linha não bastar. A regra que separa os dois
+instrumentos, e que vale para qualquer um deles: **hash igual ao que já se leu JUSTIFICA pular a
+releitura; data antiga apenas SUGERE.**
+
+**Consequências.** `git_modified_paths` chama o git uma segunda vez em vez de alterar o retorno de
+`git_snapshot`, que já tem seis testes em cima. O parser (`_modified_paths`) é puro e roda sem git
+instalado. Em multi-fonte, o `rel` pode não ser relativo a `plan.root`; a interseção então não casa
+e a linha não sai — falso negativo, nunca falso positivo.

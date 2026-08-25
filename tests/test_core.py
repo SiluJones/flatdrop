@@ -1233,3 +1233,72 @@ def test_assinatura_continua_na_primeira_linha(tmp_path):
     texto = list(res.dest.glob("_MANIFEST*.md"))[0].read_text(encoding="utf-8")
     assert texto.splitlines()[0] == C.MANIFEST_SIGNATURE
     assert core.is_our_folder(res.dest)
+
+
+# --- quais arquivos do mount nao sao o commit (wo0053, DEC-031) ---
+
+def test_modificados_le_rastreado():
+    """Modificado e adicionado no indice contam: os dois divergem do commit."""
+    porcelain = " M meta/IDEAS.md\nA  meta/novo.md\n"
+    assert core._modified_paths(porcelain) == ["meta/IDEAS.md", "meta/novo.md"]
+
+
+def test_modificados_ignora_nao_rastreado():
+    """`??` fica de fora — e ali que mora arquivo pessoal (recusa da wo0048, mantida)."""
+    porcelain = " M a.md\n?? segredo-pessoal.txt\n!! build/\n"
+    assert core._modified_paths(porcelain) == ["a.md"]
+
+
+def test_modificados_ignora_cabecalho():
+    """A linha `##` e do branch, nao e caminho."""
+    assert core._modified_paths("## main...origin/main [ahead 1]\n") == []
+
+
+def test_modificados_renomeado_vale_o_destino():
+    """`R  velho -> novo`: o que foi copiado e o novo."""
+    assert core._modified_paths("R  velho.md -> novo.md\n") == ["novo.md"]
+
+
+def test_modificados_saida_vazia():
+    assert core._modified_paths("") == []
+
+
+@pytest.mark.skipif(not _git_disponivel(), reason="git nao instalado no ambiente")
+def test_manifesto_nomeia_modificado_rastreado(tmp_path):
+    """Ponta a ponta: o rastreado divergente e NOMEADO; o nao rastreado, nunca."""
+    origem = tmp_path / "src"
+    origem.mkdir()
+    (origem / "a.md").write_text("x\n", encoding="utf-8")
+    subprocess.run(["git", "init", "-q"], cwd=origem, check=True)
+    subprocess.run(["git", "config", "user.email", "t@t"], cwd=origem, check=True)
+    subprocess.run(["git", "config", "user.name", "t"], cwd=origem, check=True)
+    subprocess.run(["git", "add", "."], cwd=origem, check=True)
+    subprocess.run(["git", "commit", "-qm", "primeiro"], cwd=origem, check=True)
+    (origem / "a.md").write_text("x\ny\n", encoding="utf-8")   # rastreado, divergente
+    (origem / "b.md").write_text("z\n", encoding="utf-8")      # NAO rastreado
+    cfg = core.ScanConfig()
+    plan = core.make_plan(origem, cfg)
+    res = core.execute_plan(plan, tmp_path / "out", cfg)
+    texto = list(res.dest.glob("_MANIFEST*.md"))[0].read_text(encoding="utf-8")
+    linha = [ln for ln in texto.splitlines() if "NÃO são o commit" in ln][0]
+    assert "`a.md`" in linha
+    assert "b.md" not in linha
+    assert "`b.md`" in texto          # o nao rastreado esta na TABELA, so nao nesta linha
+
+
+@pytest.mark.skipif(not _git_disponivel(), reason="git nao instalado no ambiente")
+def test_manifesto_repo_limpo_nao_tem_a_linha(tmp_path):
+    """Sem divergencia, sem linha — o cabecalho ja diz `limpo`."""
+    origem = tmp_path / "src"
+    origem.mkdir()
+    (origem / "a.md").write_text("x\n", encoding="utf-8")
+    subprocess.run(["git", "init", "-q"], cwd=origem, check=True)
+    subprocess.run(["git", "config", "user.email", "t@t"], cwd=origem, check=True)
+    subprocess.run(["git", "config", "user.name", "t"], cwd=origem, check=True)
+    subprocess.run(["git", "add", "."], cwd=origem, check=True)
+    subprocess.run(["git", "commit", "-qm", "primeiro"], cwd=origem, check=True)
+    cfg = core.ScanConfig()
+    plan = core.make_plan(origem, cfg)
+    res = core.execute_plan(plan, tmp_path / "out", cfg)
+    texto = list(res.dest.glob("_MANIFEST*.md"))[0].read_text(encoding="utf-8")
+    assert "NÃO são o commit" not in texto
