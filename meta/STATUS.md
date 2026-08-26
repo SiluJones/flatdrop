@@ -112,6 +112,14 @@ mensagem e não escreve nada.
    - **arquivos do pacote comparados: 8 de 20** — faltam os 2 de `fusao` e os 10 modelos de `meta/`;
    - **ocorrências corrigidas: 8 de 18** (esta WO) — e a varredura é **PARCIAL**: não alcançou
      `logs/` nem `meta/workorders/`, que o `.flatdropignore` mantém fora do mount.
+   **Fase 2a (wo0056, feita):** as «Regras de higiene» do CEREBRO passaram de 8 para 16 bullets
+   (3.443 → 12.922 bytes, medido em 26/08), entrou a seção «Medição delegada», e o `CLAUDE.md`
+   ganhou «Quando eu pedir medição» e «Push e relatório» (esta com o desvio da DEC-032 escrito no
+   corpo). **Fase 2b e 2c (a fazer):** «Bloco de fecho de turno» (2.797 → 6.861), «Tabela de
+   gatilhos» (1.885 → 3.960), «Ao final da conversa, o assistente REGISTRA o que falta» (substitui
+   a nossa «Ao final de cada sessão… entrega arquivos completos»), e as seções novas «Sonda e
+   exploração» (4.882) e «Correspondência entre projetos» (2.126) — mais os 4 títulos com
+   «sessão» que ainda restam no CEREBRO.
    **Fase 1 (wo0054, feita):** `Write` no `settings.json`, as 3 linhas revogadas da `wrap/SKILL.md`,
    a instrução obsoleta do `.flatdropignore`, `sessão`→`turno` no `CLAUDE.md`, e as 4 das
    instruções — que passam a subir ao mount (DEC-032). **Fase 2 (a fazer):** fusão do

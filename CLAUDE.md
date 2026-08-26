@@ -17,7 +17,7 @@ Leia `meta/CEREBRO.md` → `meta/CONTEXT.md` → `meta/STATUS.md` antes de agir.
 - Identificadores em inglês; comentários e docs em PT-BR. Docstring em toda função pública.
 - Mensagens de commit **sem acento** (o ambiente do Code usa Git Bash; o CMD do usuário corrompe acento). Conventional Commits.
 - Edições nos `meta/` são **append-only** pelo Code (linha no STATUS, `DEC-`/`FIX-` em DECISIONS, marcar estado de fase no ROADMAP). Curadoria que REESCREVE um doc vem do chat (arquivo inteiro OU WO em `meta/workorders/`).
-- **Vocabulário (DEC-023):** **WO** = *como aplicar* (delta com texto exato + âncora), em `meta/workorders/AAMMDD-woNNNN-desc.md` — a numeração continua das antigas specs, a próxima é `wo0044`. **spec** = *o quê construir e quando está pronto* (spec de feature, modelo em `meta/SPEC.md`), em `meta/specs/`. Não confunda: as `spec0001`–`spec0037` que estão em `meta/workorders/` são WOs com nome antigo, e assim ficam.
+- **Vocabulário (DEC-023):** **WO** = *como aplicar* (delta com texto exato + âncora), em `meta/workorders/AAMMDD-woNNNN-desc.md` — a numeração continua das antigas specs, e **a próxima livre é a maior existente + 1 — confira a pasta, não confie em número escrito aqui** (um contador copiado para dentro de documento estável nasce certo e envelhece em silêncio: este dizia `wo0044` quando o repo já ia na `wo0055`). **spec** = *o quê construir e quando está pronto* (spec de feature, modelo em `meta/SPEC.md`), em `meta/specs/`. Não confunda: as `spec0001`–`spec0037` que estão em `meta/workorders/` são WOs com nome antigo, e assim ficam.
 - Ao aplicar uma WO: ache cada âncora EXATAMENTE; se não achar, PARE e reporte — não chute lugar próximo. Não mexa fora das edições nomeadas. `git diff` antes do commit.
 - **Ao fechar a tarefa, RELATE o trabalho** — o que fez, achados e desvios do que a WO pedia, arquivos tocados, resultado de `python -m pytest -q` e o commit. **Não** copie o bloco de fecho de turno do `meta/CEREBRO.md`: aquele é da raia de planejamento, e trocar relatório por formulário perde o que só você viu.
 - **Invariante — proteger o `.bat` (DEC-020).** O gerador/uso de `.bat` é o núcleo mais
@@ -25,6 +25,16 @@ Leia `meta/CEREBRO.md` → `meta/CONTEXT.md` → `meta/STATUS.md` antes de agir.
   `gui._generate_bat` e `gui._sources` são intocáveis por features de estado/persistência.
   Se algo só avançar mexendo neles, PARE e reporte ao autor — claro, mais de uma vez, como
   URGENTE — antes de priorizar a feature.
+
+## Quando eu pedir medição
+- Eu leio só o que chega pelo mount; você lê o disco. Se eu pedir para **medir**, o pedido não tem âncora nem commit: não edite nada, não conserte nada, não sugira nada.
+- Responda com o **número cru e o comando que o produziu**. Sem interpretação, sem recomendação — se você achar que o número indica um problema, diga o número primeiro e a suspeita depois, separada.
+- Se o alvo estiver fora da raiz do repositório, isso depende de `permissions.additionalDirectories` no `.claude/settings.json` (a mesma chave do relatório em arquivo). Se a leitura for negada, DIGA — não estime.
+
+## Push e relatório — nesta ordem, sempre
+- **Verde** (validação passou, ou WO só de doc com o `git diff` conferido) → `add` e `commit` sem perguntar. **`push`: peça confirmação — DESVIO REGISTRADO deste projeto (DEC-032)**, contra a regra do kit v1.104.0, que manda empurrar direto. O gatilho para reabrir está na DEC-032: a primeira vez que a confirmação atrasar um relatório correto.
+- **Vermelho** (validação falhou, âncora não encontrada, `git diff` com arquivo fora do previsto) → **não commite e não empurre.** E **não pergunte em prosa** («posso dar push?») — pergunta escrita no meio do texto passa despercebida. Feche com um **menu numerado** de saídas reais, a recomendada em **1** — ex.: `1) corrigir <o quê> e revalidar (recomendado)  2) reverter as edições  3) commitar local, sem push  4) empurrar assim mesmo`.
+- **O relatório é o ÚLTIMO passo** — só depois de resolvido o push. Ele diz o que de fato aconteceu: empurrado (com o hash), não empurrado (com o motivo), ou aguardando a escolha do menu. **Relatório escrito antes da decisão conta metade da história** e vira mentira assim que o push sai; se a escolha chegar depois, **reescreva o relatório**, não deixe a versão velha valendo.
 
 ## Relatório em arquivo (sempre, sem pedir)
 - Ao fechar QUALQUER tarefa (`/apply-wo` ou `/wrap`), grave o MESMO relatório também em `../AAMMDD-HHMM-code-flatdrop.txt` — pasta-PAI do repo (`FlatDrop/`), fora do versionamento.

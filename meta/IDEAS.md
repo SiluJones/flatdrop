@@ -385,6 +385,21 @@ Registro do que ESTE projeto observou/mudou além do kit (material que volta par
   sozinha, um dia depois de existir. A correção: o campo `## Push` do relatório só é escrito com o
   resultado real, e se o push ficar pendente de confirmação o relatório é **reaberto e corrigido**
   quando ele sair. *Guardado para o mesmo merge.*
+- **Edição em `.claude/` não vai por WO — vai pelo chat, como arquivo inteiro.** Medido em
+  2026-08-26, na wo0054: o classificador de permissão do Claude Code **bloqueou** as duas edições
+  que tocavam `.claude/settings.json` e `.claude/skills/wrap/SKILL.md`, e o executor fez certo em
+  não contornar (a barreira existe para impedir que o Code se autoconceda permissão, e «eu
+  autorizo» dito no chat não muda isso). O erro foi do **chat**, ao montar a WO: deveria ter
+  previsto que edição na configuração do próprio executor não é aplicável por ele. **Regra:**
+  arquivo sob `.claude/` o chat entrega INTEIRO, para download e substituição; a WO só o menciona
+  no `git add`. O kit poderia marcar essas edições como «risco de bloqueio do classificador».
+- **A distinção «MANDA × RELATA» vale para o próprio texto da WO, não só para a varredura.** Medido
+  em 2026-08-26, na wo0055: a WO mandou trocar as **três** ocorrências de `118` no `STATUS.md`, e
+  o executor trocou **duas** — deixando de pé a que estava dentro de um bloco datado («números
+  lidos nesta revisão», 24/08), porque ali `118` era o número **medido naquele dia**. Ele estava
+  certo e a WO estava errada: trocar teria falsificado o registro. Quem escreve a instrução de
+  varredura precisa classificar as ocorrências ANTES de mandar trocar todas — é a mesma regra que
+  o kit aplica às linhas revogadas, virada para dentro.
 - **Ausência de saída não é ausência de recurso — leia o código antes de devolver a outra frente
   que algo não foi feito.** Medido em 2026-08-23, num caso com três participantes errando junto: o
   `ahead` da linha de git do manifesto **existe** desde a wo0048, mas só imprime quando há commit
