@@ -41,7 +41,7 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
   multi-fonte na GUI) OK · F4 (distribuição) não iniciada — ver `ROADMAP.md`.
 - **Situação geral:** em uso real, **estável**, em **stand-by** por decisão do autor. Fluxo do
   monorepo `cinzeiro` coberto de ponta a ponta (GUI, CLI e `.bat`). Modo Claude Code em operação;
-  **WOs 0001–0053 aplicadas e commitadas** (as 0001–0037 mantêm o nome `spec00NN`, anteriores à
+  **WOs 0001–0057 aplicadas e commitadas** (as 0001–0037 mantêm o nome `spec00NN`, anteriores à
   DEC-023). **122 testes verdes.** **Nenhum bug aberto** — o da 0.13.0 fechou na 0.15.0.
 - **Contorno revogado:** o «use a curadoria manual OU o editor, nunca os dois» **não vale mais**.
   Respeitada a anatomia normativa (DEC-029), os dois convivem no mesmo arquivo.
@@ -120,6 +120,10 @@ mensagem e não escreve nada.
    a nossa «Ao final de cada sessão… entrega arquivos completos»), e as seções novas «Sonda e
    exploração» (4.882) e «Correspondência entre projetos» (2.126) — mais os 4 títulos com
    «sessão» que ainda restam no CEREBRO.
+   **wo0057 (feita):** corrigiu os dois números que a wo0056 tinha escrito errado — o `STATUS`
+   afirmava 16 bullets (real: **18**, já refletido acima) e o `IDEAS` ganhou a lição de método
+   (número de checklist é derivado do texto final da WO, nunca estimado antes dela; terceira
+   ocorrência da mesma falha em três WOs seguidas).
    **Fase 1 (wo0054, feita):** `Write` no `settings.json`, as 3 linhas revogadas da `wrap/SKILL.md`,
    a instrução obsoleta do `.flatdropignore`, `sessão`→`turno` no `CLAUDE.md`, e as 4 das
    instruções — que passam a subir ao mount (DEC-032). **Fase 2 (a fazer):** fusão do
