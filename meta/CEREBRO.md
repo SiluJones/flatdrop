@@ -78,6 +78,19 @@ Após uma mudança, aponta o que vale testar (caso feliz, casos de borda, regres
 ### 19. Indica o que merece print no README
 Aponta quais telas/saídas valem captura para documentação, sem gerar a imagem.
 
+## Técnicas específicas deste projeto
+
+> **Esta seção é sua.** Tudo o mais neste arquivo é genérico e é substituído quando o kit evolui; aqui é onde mora o conhecimento operacional que só este projeto tem — a coordenada que não se mexe, a armadilha da ferramenta que já custou uma sessão, o jeito certo de nomear uma coisa daqui. **Um template-update nunca sobrescreve esta seção**: ele traz a moldura, você mantém o recheio.
+
+Escreva aqui quando doer duas vezes: técnica que precisou ser explicada de novo é candidata. Uma linha por item, com o nome do lugar onde ela vale. Se um item virar regra geral do projeto, promova-o para o corpo do CEREBRO e deixe aqui só o caso particular.
+
+- **Âncora de WO se extrai do arquivo, não se digita.** Um script lê o trecho vivo e o cola na WO; depois, outro confere que cada âncora ainda casa com o arquivo. Desde que isto passou a ser feito assim (wo0056), nenhuma âncora falhou na aplicação. Vale para qualquer edição em documento grande.
+- **A âncora tem de cobrir tudo o que o texto novo reescreve.** Âncora de uma linha só é segura quando o substituto fala só daquela linha. Na wo0058, o texto novo cobria um parágrafo de cinco linhas e a âncora pegava só a primeira — as outras quatro sobraram órfãs, e quem aplicou teve de decidir sozinho apagá-las. Antes de fechar uma edição, pergunte: *o que estou escrevendo torna alguma linha vizinha redundante?*
+- **Número de conferência é medido no texto FINAL da WO, nunca estimado antes.** Três WOs seguidas erraram contagem por isso (`118` em três lugares, «16 bullets» que eram 18, `grep → 0` num arquivo onde o próprio texto novo citava o termo). Onde as âncoras já saem por script, as contagens saem do mesmo script.
+- **Edição sob `.claude/` não vai por WO.** O classificador de permissão do Claude Code bloqueia o executor de alterar a própria configuração, e ele faz certo em não contornar. Esses arquivos o chat entrega INTEIROS, para baixar e substituir; a WO só os menciona no `git add`.
+- **`.bat` no Windows é ASCII, e o console também.** Glifo fora do ASCII derruba a saída da CLI por `UnicodeEncodeError`: `↳` e `⚠` não codificam em cp1252, cp850 nem cp437; `•` e `…` não codificam em cp850, que é o CMD em português. Acento sobrevive em cp1252 e cp850, e morre em cp437 (FIX-003, wo0052).
+- **O upload do Projeto renomeia dotfile e nome com ponto interno** (`.gitignore` → `_gitignore`, `settings.local.json` → `settings_local.json`). Regra observada, não documentada pela Anthropic: é previsão, e o manifesto a rotula como tal (DEC-030).
+
 ## Convenções
 
 - Nomes de arquivos, funções e variáveis em inglês; comentários em PT-BR (a menos que o projeto seja em outro idioma).
@@ -96,9 +109,9 @@ Cada arquivo tem um papel e um comportamento temporal distinto. **Respeite o pap
 | `DECISIONS.md` | Cresce devagar (ADR) | Por que as coisas são como são: decisões de arquitetura (DEC) e bugs graves resolvidos (FIX). Cresce devagar. |
 | `CHANGELOG.md` | Cresce (ordem reversa) | Histórico de versões entregues (SemVer + Keep a Changelog). Cresce no topo. |
 | `IDEAS.md` | Segundo cérebro (nunca perde) | Segundo cérebro: ideias suas e do assistente. Nunca perde nada — ideia muda de status, não some. |
-| `LOG-TEMPLATE.md` | Referência fixa | Modelo do log de sessão. Referência fixa — nunca substituído pelo conteúdo preenchido. |
+| `LOG-TEMPLATE.md` | Referência fixa | Modelo do log do dia. Referência fixa — nunca substituído pelo conteúdo preenchido. |
 | `ROADMAP.md` | Plano em fases | OPCIONAL — plano deliberado de evolução em fases. Use quando o projeto tem direção de médio/longo prazo. |
-| `GLOSSARY.md` | Estável | OPCIONAL — termos próprios do projeto. Use quando há jargão que se repete entre sessões. |
+| `GLOSSARY.md` | Estável | OPCIONAL — termos próprios do projeto. Use quando há jargão que se repete entre conversas. |
 | `HISTORY.md` | Cresce (histórico) | OPCIONAL — conhecimento consolidado de fases antigas (guias, análises que não cabem no CONTEXT enxuto). Lido sob demanda. |
 | `logs/AAAA-MM-DD.md` | Histórico | Ao bater um gatilho de evento — cortar versão, registrar decisão ou bug grave, virar o dia (formato em LOG-TEMPLATE). **Um arquivo por DIA** (DEC-026): segunda conversa no mesmo dia vira `## Conversa N` no mesmo arquivo, nunca arquivo novo — o nome é da data, não da conversa. |
 | `workorders/AAMMDD-woNNNN-desc.md` | Cresce (uma por delta) | Delta estruturado que o Code aplica: texto exato + âncora semântica. Autorado pelo chat. |
@@ -112,8 +125,8 @@ Mudança **não-trivial** — estrutural, cara de desfazer, que toca várias fre
 - **O que tem dentro:** `Status` (Rascunho · Em discussão · Decidida · Implementada · Abandonada · Substituída) · **Problema** (o que dói, para quem, o que acontece se nada for feito) · **Restrições / o que foi medido** · **Opções consideradas** (inclusive as descartadas, com o motivo) · **Recomendação** (uma, explícita, com o porquê) · **Riscos** (o que vigiar depois de aplicar) · **Ponto de decisão** (o que se precisa do usuário).
 - **Meça antes de propor.** O que dá para medir, meça (aqui: rodar a suíte, ler o código, contar os testes); o resto entra rotulado como estimativa. Análise que projeta ganho sem medir vira erro de planejamento.
 - **A análise não decide nem abre trabalho sozinha.** Ela para no ponto de decisão e espera. Depois de decidida, o desfecho vai para o `DECISIONS.md` (a análise guarda o raciocínio; o DECISIONS guarda a decisão) e a análise só muda de `Status` — análise vencida não se apaga: o «por que não» é o que evita refazer o mesmo debate daqui a seis meses.
-- **Funil:** análise → **WO** (`meta/workorders/`) → `DECISIONS.md`. Quando o trabalho é de produto, a análise pode virar **spec de feature** (`meta/specs/`, modelo em `meta/SPEC.md`) — a spec diz **o que** construir e quando está pronto; a WO diz **como aplicar**.
-- **Antes de escrever, dois testes baratos.** (1) **O QUÊ já está decidido?** Então isto é execução, não análise — vá para o trabalho, que já tem critério de aceite e armadilhas. (2) **Cabe em meia página de conversa?** Então é conversa. Cerimônia em cima de trivialidade é desperdício; análise é para a decisão cara de desfazer, cujo custo precisa estar à vista ANTES do compromisso.
+- **Funil:** exploração/sonda (medem, não decidem) → análise → **WO** (`meta/workorders/`) → `DECISIONS.md`. Quando o trabalho é de produto, a análise pode virar **spec de feature** (`meta/specs/`, modelo em `meta/SPEC.md`) — a spec diz **o que** construir e quando está pronto; a WO diz **como aplicar**.
+- **Antes de escrever, dois testes baratos.** (1) **Quem ainda decide?** O dono já decidiu o QUÊ? Então isto é execução, não análise — vá para o trabalho, que já tem critério de aceite e armadilhas. (2) **Cabe em meia página de conversa?** Então é conversa. Cerimônia em cima de trivialidade é desperdício; análise é para a decisão cara de desfazer, cujo custo precisa estar à vista ANTES do compromisso.
 - **Gatilho concreto, além do «não-trivial»:** mudar o **formato de um artefato que outra pessoa — ou o você do futuro — vai ler ou editar** pede análise, mesmo quando o diff é pequeno. Nome de arquivo, estrutura de pasta, layout de bloco gerado, campo de formulário, vocabulário de um termo em uso: o custo não está no diff, está em quem vai conviver com ele. **É uma pergunta a refazer DEPOIS de ler a fonte, não uma senha para começar a escrever** — e tem limite: acrescentar um campo, uma linha ou uma seção a um formato que **já é extensível** não é mudar o formato. Se quem lê hoje continua lendo sem ajuste, não há convivência nova a negociar.
 - **Abandonar no meio é desfecho legítimo.** O que tem valor é ler a fonte, não escrever o documento. Se a leitura derrubar a premissa que disparou o gatilho — o formato já era extensível, o problema não existia, a decisão já estava tomada —, **pare, diga o que a leitura mostrou e vá trabalhar**. Análise que continua depois da premissa cair devolve como «ponto de decisão» o que era escolha técnica sua, e custa um turno.
 - **Modelo:** ao escrever a primeira, deixe também `meta/analises/_TEMPLATE.md`. Se a pasta estiver ignorada no `.flatdropignore`, **reinclua o modelo** (`!meta/analises/_TEMPLATE.md`, com a pasta na forma `meta/analises/*` — ver DEC-025): modelo e guia sempre sobem ao Projeto; corpo de análise, não.
@@ -121,6 +134,7 @@ Mudança **não-trivial** — estrutural, cara de desfazer, que toca várias fre
 ## Ao receber um template-update do KCM
 
 Se aparecerem no mount arquivos com sufixo `__template-update` junto de um `_UPDATE-MANIFEST.md`: são atualizações genéricas do próprio kit (propositalmente vazias do específico desta obra), não conteúdo novo do projeto. Para cada arquivo: compara com o vivo equivalente (o destino real está no manifesto) e **reporta** — (a) novidade útil que falta aqui, (b) choque com o que já existe (lado a lado, o usuário decide), (c) algo que este projeto tem e o template não cobre.
+**O merge sabe somar, não sabe subtrair — e por isso o manifesto traz duas seções que a comparação não produz.** (1) **Linhas revogadas:** o kit às vezes APAGA uma linha de propósito, e comparar arquivos só revela o que é novo — o texto antigo continua vivo no seu, invisível ao merge, dirigindo comportamento que já foi corrigido. Procure cada texto listado; se achar, remova, ou registre o desvio se este projeto tiver motivo para manter. (2) **Carimbo de modos:** o manifesto declara com quais modos o pacote foi gerado. Seção de um modo declarado como `nao` que ainda exista no seu arquivo é sobra de configuração antiga — **ou** o pacote foi gerado com o modo esquecido. O assistente **não tem como distinguir os dois casos**, então **reporta como choque com a seção citada e não remove sozinho**. Migrar de modo (ASU→Code, por exemplo) não limpa o CEREBRO já gerado: um CEREBRO gerado é arquivo, não função.
 
 - **Template genérico NUNCA substitui arquivo vivo refinado.** Vale para TODOS eles — `meta/`, `CLAUDE.md`, `.claude/settings.json`, skills, `.gitignore`, `.flatdropignore`. O template ensina estrutura e base; este projeto já os especializou. A comparação existe para **colher o que há de novo e útil**, jamais para nivelar por baixo. Não pergunte se «deve regredir para o genérico»: não deve. Se o vivo já cobre, o vivo fica.
 - **A exceção é formato descontinuado.** Quando o template traz um formato NOVO que substitui um obsoleto (ex.: `.claude/commands/` → `.claude/skills/`), o formato novo vence — ficar no antigo é retrógrado. Formato migra; conteúdo refinado, não.
@@ -157,7 +171,7 @@ Se aparecerem no mount arquivos com sufixo `__template-update` junto de um `_UPD
 As mudanças nos documentos que decorrem do trabalho do assistente são registradas pelo PRÓPRIO assistente — quando ele faz algo, ele mesmo atualiza os docs afetados. O que o usuário quer acrescentar por conta (ele sabe onde e o quê) é decisão dele. Em ambos os casos, a entrega é por ARQUIVO COMPLETO, nunca por blocos soltos para o usuário costurar à mão.
 
 **O assistente:**
-- Registra o que decorre do próprio trabalho: se a sessão mexeu em STATUS, decisões, ideias, etc., o assistente entrega esses arquivos atualizados — não espera o usuário pedir.
+- Registra o que decorre do próprio trabalho: se o trabalho mexeu em STATUS, decisões, ideias, etc., o assistente entrega esses arquivos atualizados — não espera o usuário pedir.
 - Entrega o arquivo INTEIRO já atualizado (não um trecho, não «adicione esta linha»). O usuário só substitui o antigo pelo novo.
 - Entrega o conjunto consistente de uma vez: todos os arquivos afetados na mesma leva. Estado meio-atualizado (metade novo, metade antigo) é pior que não mexer.
 - Aplica as regras de higiene ao montar o arquivo (move o resolvido do STATUS, anexa no topo do CHANGELOG) — o usuário recebe o resultado já correto.
@@ -225,8 +239,69 @@ As Instruções do Projeto são lidas em **toda mensagem**: cada palavra é cobr
 - **Teto por configuração.** Ligar um modo de trabalho tem orçamento próprio, porque o custo é real e recorrente: **+550** para o Modo Code sobre o padrão (é o caso deste projeto) e **450** para as linhas que *qualquer* modo liga. O que se trava é o **incremento**, não o total: o total depende de quanta coisa este projeto tem; o incremento é o que a regra nova custa, e é o que precisa caber. Não caber é sinal de que outra linha precisa ser curada primeiro — mandar detalhe para este CEREBRO é de graça, e a versão curta fica na Instrução.
 - **Atrito sem solução local vira feedback ao kit** — registre em «Feedback para o Kit» no IDEAS. É desfecho legítimo do refino, não desculpa para não refinar.
 - **Uma regra por linha, verbo no imperativo, sem preâmbulo.** Prosa explicativa vive aqui no CEREBRO, não nas Instruções.
+- **Princípio sem gatilho não dispara — e o remédio é oportunista, não uma auditoria.** Virtude é escrita no infinitivo («analisa antes de aceitar», «explica trade-offs») e não tem hora; gatilho é escrito com o **evento na frente** («quando o dono impõe uma restrição para evitar perda, proponha a forma mais barata de obter a mesma proteção») e dispara sozinho. Percorrer todos os princípios inventando gatilhos gera tabela longa que ninguém lê. **A política é outra: toda vez que um princípio falhar em campo, aquele princípio ganha o gatilho — com o evento real que o teria disparado, colhido do caso.** O caso é o que torna o gatilho específico; sem ele, você escreve outra virtude e acha que escreveu um gatilho.
 - **Não inche.** Antes de acrescentar uma regra às Instruções, pergunte se ela cabe no CEREBRO. Só vai para as Instruções o que precisa ser lembrado em TODO turno.
 - **Registre:** toda mudança de instrução vira uma linha no DECISIONS (o que mudou e por quê) e um item no IDEAS.
+
+## Sonda e exploração — o par que produz evidência
+
+A medição delegada acima responde a pergunta que alguém já soube fazer. Quando o material é grande demais para caber numa conversa, ou quando ninguém sabe ainda qual é a pergunta, ela não basta — e o que falta são **dois** artefatos, não um:
+
+- **Sonda** — script **determinístico** que a raia de planejamento escreve, a de execução roda sobre os dados, e que devolve um relatório pequeno. Responde perguntas que alguém já sabia fazer. **Produz evidência.** É reexecutável: rodar duas vezes (antes/depois de uma mudança) e comparar os dois relatórios é o que prova que a mudança fez o que prometia.
+- **Exploração** — passada de leitura **sem hipótese prévia**, feita pela raia de execução, que devolve **candidatos a checagem**. Descobre as perguntas que ninguém fez. **Produz hipótese.**
+
+**Funil:** `exploração` (levanta a pergunta) → `sonda` (mede) → **`instrumento`** (mede sempre) → `análise` (raciocina) → ordem de trabalho (muda). **Exploração e sonda não são ordem de trabalho:** não têm âncora, não têm commit, não mudam o repositório. O relatório é a única saída.
+
+**O terceiro estado: sonda que amadurece vira instrumento — e aí passa a dar veredito, de propósito.** Script que ninguém roda sozinho, sem teste, tem vida curta. Quando a mesma medição vale para sempre, ela sai do descartável e entra no produto: **versionada, com teste, e devolvendo código de erro quando o que ela mede está errado.** Aí é comando entregue, não sonda — e a proibição de veredito **deixa de valer**, porque instrumento que não reprova ninguém roda.
+- **Gatilho da promoção: a sonda foi rodada uma SEGUNDA vez para comparar antes/depois.** A partir daí ela não é mais descartável — é instrumento sem teste, e o custo de deixá-la assim só cresce.
+- **A promoção exige o oposto do descarte.** A sonda vive fora do que sobe ao Projeto; o instrumento é versionado, testado e citado nas decisões. Confundir os dois nas duas direções custa: script frágil virando dependência, ou medição madura sendo reescrita do zero a cada vez.
+
+**Três propriedades do relatório — as três juntas, ou o relatório vira lixo:**
+1. **Tabela e contagens, nunca prosa.** Número solto é contestável; número ao lado do comando que o produziu, não.
+2. **O que NÃO foi olhado é declarado — e qual das duas perguntas o instrumento não responde, também.** Sem a primeira metade, ausência vira zero na leitura seguinte, e zero é um fato enquanto ausência não é: seção que não pôde ser medida sai marcada como não conferida, **nunca omitida**. A segunda metade é a que quase ninguém escreve: toda conferência responde a *«está lá?»* ou a *«presta?»*, e a que ela **não** responde precisa aparecer no relatório com o mesmo destaque do que não foi olhado — senão o verde de uma vira leitura de verde da outra. Costuma custar pouco fechar a lacuna: ler 30 bytes de cabeçalho respondeu «presta?» por 45 arquivos de uma vez, sem dependência nenhuma.
+3. **Nada truncado em silêncio, e amostra nunca se apresenta como cobertura.** São dois defeitos diferentes: truncar esconde o FIM da lista (lista cortada mostra o TOTAL); amostrar esconde que a lista nem foi lida inteira. `os 3 primeiros` num relatório sem a palavra «amostra» vira, na leitura seguinte, «conferi tudo» — e ninguém volta para checar. Se olhou uma parte, diga **quantos de quantos**.
+
+**Nenhuma das duas dá veredito, e a razão é a que importa: teste de conformidade não detecta que a especificação está errada.** A sonda relata o fato e **não nomeia a causa** — ausências de origens diferentes produzem o mesmo sintoma. Decidir é da raia de planejamento, com o dono.
+- **Existência não é aptidão.** «Está no disco?» e «o que está no disco presta?» são perguntas diferentes, e instrumento que só sabe contar responde sempre a primeira. Caso real: um relatório verde em tudo — arquivos existem, extensão certa, índice bate — sobre imagens destruídas por dentro, porque **nenhum instrumento abriu uma imagem**. Ao escrever uma sonda, pergunte o que ela NÃO abre.
+- **A exploração não parte da lista de checagens da sonda.** Se ela só olhar onde a sonda já olha, ela só acha o que a sonda já acharia. É a mesma regra do inventário — a lista sai do artefato, não de quem já a escreveu — vista uma camada acima.
+- **Todo achado vem com o comando que o reproduz.** Achado sem forma de reproduzir não entra: vai para «observações descartadas», com o motivo. Número contado de cabeça não vale.
+
+**O esqueleto do relatório — o que sobreviveu a dezenas de execuções nos dois projetos que o escreveram:**
+
+```
+# SONDA — <assunto>                     <- o nome diz o QUE, não o quando
+- Gerado em: <data>  *(única linha não-determinística deste relatório)*
+- Insumo: <caminho> · <tamanho> · sha256 <hash> · mtime <data>
+- Referência: <caminho> | nenhuma — as seções comparativas saem NÃO CONFERIDAS
+> A sonda não dá veredito: ela conta, compara e imprime. Decidir é humano.
+
+## ALARMES (N)
+  N=0 -> «Nenhuma verificação falhou. ISSO NÃO QUER DIZER QUE ESTÁ CERTO —
+        quer dizer que é coerente nos pontos medidos. Leia O QUE NÃO FOI OLHADO.»
+
+## <seções do corpo>                    <- tabelas e contagens; lista longa mostra o TOTAL
+  seção sem insumo -> **NÃO CONFERIDA**, nunca omitida
+
+## O QUE NÃO FOI OLHADO
+  - o que faltou NESTA execução (dinâmico)
+  - o que esta sonda NUNCA olha (fixo, escrito uma vez e para sempre)
+```
+
+Três detalhes que só aparecem depois de usar: **(1)** marcar a data como a única linha não-determinística é o que torna dois relatórios diffáveis — sem isso, comparar antes/depois vira leitura à mão; **(2)** a lista fixa do «nunca olha» é mais valiosa que a dinâmica, porque é a que ninguém lembraria de escrever no dia; **(3)** o rodapé com contagem de alarmes em zero precisa negar a leitura fácil **na própria linha** — «zero alarmes» sem a negação ao lado vira «está certo» na conversa seguinte.
+
+**Onde mora — e este é um padrão, não uma regra.** Por omissão, script e relatórios ficam **fora** do que sobe ao Projeto (workspace ao lado do repositório, ou pasta ignorada): são grandes, reexecutáveis, e o que importa deles é o que se extrai. Nome com **carimbo de tempo primeiro** (`AAMMDD-HHMM-EXPLORACAO.md`), para a pasta se ordenar sozinha. **Versionar em vez de descartar é uma escolha legítima, e tem um preço a pagar em voz alta:** ganha-se a comparação antes/depois (que só existe se os dois relatórios sobreviverem) e o tema no nome (`AAMMDD-SONDA-<tema>.md`, que se lê sem abrir); paga-se em repositório maior e no risco de o relatório velho ser lido como estado atual. Quem versiona, registra a escolha. O que sobe ao registro continua sendo o **extraído**: um número no `DECISIONS`, um candidato no `IDEAS`.
+
+## Correspondência entre projetos — quando o interlocutor é outro assistente
+
+Dois projetos com kits separados que dependem um do outro (um produz o dado, o outro consome; um gera o pacote, o outro renderiza) precisam **negociar um contrato**. O que trocam não é spec, não é análise, não é ordem de trabalho e não é bilhete: é **carta**, e ela tem regras próprias porque tem dois donos.
+
+- **Nome:** `AAMMDD-<quem>-para-<quem>-NN-<assunto>.md`. O remetente e o destinatário no nome porque a mesma pasta guarda os dois sentidos.
+- **O contador `NN` é ÚNICO e COMPARTILHADO pelos dois lados** — não um por remetente. Com duas séries, «respondendo à sua 7» vira ambíguo e ninguém sabe o que responde o quê. A carta nova é a **maior existente + 1**, contando as dos DOIS lados; confira a pasta antes de numerar, não confie na memória nem em número anotado em documento.
+- **Uma carta, um assunto.** Carta que negocia três contratos ao mesmo tempo recebe uma resposta que aceita um e ignora dois, e o que foi ignorado não deixa rastro.
+- **Diga de que lado está cada afirmação.** «O nosso lado já grava X» é fato do remetente; «vocês deveriam gravar Y» é pedido. Sem a marca, o destinatário lê pedido como fato e implementa contra uma premissa que nunca foi verdadeira.
+
+**Correspondência é TRANSITÓRIA, e é aqui que ela custa caro.** A carta vive fora do repositório enquanto serve — chega como upload, é lida, e o que precisa sobreviver é **extraído** dela para os documentos duráveis: o acordo vira decisão registrada, o que não coube vira ideia com gatilho, o histórico vira uma linha no registro do projeto. **Versionar a correspondência cria uma segunda fonte de verdade que envelhece sozinha**: uma auditoria real achou três lacunas numa pasta de cartas versionadas, uma delas um dado de estado desatualizado que a leitura seguinte tratava como fato. O destino da carta depois de extraída é o arquivo morto, fora do projeto.
+- **O que fica pendente do outro lado é seu, não dele.** Carta enviada e não respondida não é memória: vira item com gatilho no registro de ideias («se não vier resposta até X, decido sozinho por Y»). Esperar resposta sem gatilho é como o projeto trava sem ninguém perceber.
 
 ## Medição delegada (quem tem o disco mede, quem tem o contexto decide)
 

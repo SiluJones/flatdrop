@@ -385,6 +385,15 @@ Registro do que ESTE projeto observou/mudou além do kit (material que volta par
   sozinha, um dia depois de existir. A correção: o campo `## Push` do relatório só é escrito com o
   resultado real, e se o push ficar pendente de confirmação o relatório é **reaberto e corrigido**
   quando ele sair. *Guardado para o mesmo merge.*
+- **Âncora de uma linha só é segura quando o texto novo fala só daquela linha.** Medido em
+  2026-08-26, na wo0058: a edição de registro tinha âncora de uma linha, mas o texto substituto
+  reescrevia o parágrafo inteiro — cinco linhas. Aplicada ao pé da letra, ela deixaria quatro
+  linhas órfãs, dizendo em versão velha o que a nova já dizia. Quem aplicou percebeu, removeu as
+  quatro e reportou; a decisão foi dele, não da WO, e é decisão que uma WO não deveria delegar.
+  **A regra é de escopo, não de tamanho:** a âncora precisa cobrir tudo o que o substituto torna
+  redundante. A pergunta antes de fechar qualquer edição: *o que estou escrevendo faz alguma linha
+  vizinha virar repetição?* O modelo de WO poderia dizer isso ao lado do conselho de preferir
+  âncora de uma linha — os dois são verdadeiros e um limita o outro.
 - **O pacote v1.120.0 traz cinco bullets do «Refino das Instruções» dentro da seção «Bloco de fecho
   de turno» — e some com eles da seção a que pertencem.** Medido em 2026-08-26, comparando as duas
   versões do CEREBRO: os bullets «Sincronia com o CEREBRO», «Uma regra por linha», «Teto», «Teto por

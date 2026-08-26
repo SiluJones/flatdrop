@@ -118,11 +118,13 @@ mensagem e não escreve nada.
    corpo). **Fase 2b (wo0058, feita):** «Bloco de fecho de turno», «Tabela de gatilhos» (+8 linhas)
    e a seção «Ao final de cada sessão… entrega arquivos completos» substituída por «Ao final da
    conversa, o assistente REGISTRA o que falta» — mais os títulos do ritual e da recomendação de
-   configuração. **As 4 ocorrências de «sessão» no CEREBRO foram a zero.** **Fase 2c (a fazer):**
-   seções novas «Sonda e exploração» (4.882) e «Correspondência entre projetos» (2.126),
-   «Técnicas específicas deste projeto» (765), e os deltas menores em «Análise antes do
-   compromisso» (+1.146), «Ao receber um template-update» (+421) e «Princípios» (+391). **Fase 3:**
-   os 12 modelos.
+   configuração. **As 4 ocorrências de «sessão» no CEREBRO foram a zero** — pelo padrão varrido;
+   a fase 2c achou mais 3, de outra forma («log de sessão», «entre sessões», «se a sessão mexeu»),
+   e as fechou. **Fase 2c (wo0059, feita):** entraram as seções «Sonda e exploração»,
+   «Correspondência entre projetos» e «Técnicas específicas deste projeto» — esta última com seis
+   itens reais deste projeto, não vazia. Mais o funil da análise (agora com sonda), o parágrafo
+   «o merge sabe somar, não sabe subtrair» e o bullet «princípio sem gatilho não dispara».
+   **O merge do CEREBRO está fechado. Fase 3 (a fazer):** os 12 modelos do pacote.
    **wo0057 (feita):** corrigiu os dois números que a wo0056 tinha escrito errado — o `STATUS`
    afirmava 16 bullets (real: **18**, já refletido acima) e o `IDEAS` ganhou a lição de método
    (número de checklist é derivado do texto final da WO, nunca estimado antes dela; terceira
