@@ -42,7 +42,7 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
 - **Situação geral:** em uso real, **estável**, em **stand-by** por decisão do autor. Fluxo do
   monorepo `cinzeiro` coberto de ponta a ponta (GUI, CLI e `.bat`). Modo Claude Code em operação;
   **WOs 0001–0053 aplicadas e commitadas** (as 0001–0037 mantêm o nome `spec00NN`, anteriores à
-  DEC-023). **118 testes verdes.** **Nenhum bug aberto** — o da 0.13.0 fechou na 0.15.0.
+  DEC-023). **122 testes verdes.** **Nenhum bug aberto** — o da 0.13.0 fechou na 0.15.0.
 - **Contorno revogado:** o «use a curadoria manual OU o editor, nunca os dois» **não vale mais**.
   Respeitada a anatomia normativa (DEC-029), os dois convivem no mesmo arquivo.
 
@@ -80,8 +80,8 @@ mensagem e não escreve nada.
 
 ## Qualidade / testes
 
-- **118 testes verdes** em 2026-08-24 (92 → 100 → 109 → 111 → 118, um degrau por WO). Rodar da
-  raiz: `pytest -q` (o `conftest.py` resolve o import — FIX-005) ou `python -m pytest -q`.
+- **122 testes verdes** em 2026-08-25 (92 → 100 → 109 → 111 → 118 → 122, um degrau por WO). Rodar
+  da raiz: `pytest -q` (o `conftest.py` resolve o import — FIX-005) ou `python -m pytest -q`.
 - A distribuição por arquivo não é reconferida desde 21/07 (68 testes); os 24 posteriores estão em
   `test_core.py`.
 - A GUI **não** é coberta pela suíte (tkinter fora do CI) → smoke manual no Windows.

@@ -1235,6 +1235,47 @@ def test_assinatura_continua_na_primeira_linha(tmp_path):
     assert core.is_our_folder(res.dest)
 
 
+# --- contagem de nomes previstos no cabecalho (wo0055) ---
+
+def _manifesto_de(tmp_path, arquivos: dict[str, str]) -> str:
+    """Gera um manifesto a partir de {nome: conteudo} e devolve o texto."""
+    origem = tmp_path / "src"
+    origem.mkdir()
+    for nome, conteudo in arquivos.items():
+        (origem / nome).write_text(conteudo, encoding="utf-8")
+    cfg = core.ScanConfig()
+    plan = core.make_plan(origem, cfg)
+    res = core.execute_plan(plan, tmp_path / "out", cfg)
+    return list(res.dest.glob("_MANIFEST*.md"))[0].read_text(encoding="utf-8")
+
+
+def test_cabecalho_conta_os_nomes_previstos(tmp_path):
+    """Havendo caso, o cabecalho traz a contagem e aponta para o fim do arquivo."""
+    texto = _manifesto_de(tmp_path, {"dados.v1.json": "{}\n", "a.md": "x\n"})
+    assert "- **Nomes que chegam diferentes ao Projeto:** 1 (detalhe no fim deste arquivo)" in texto
+
+
+def test_cabecalho_diz_zero_em_voz_alta(tmp_path):
+    """Sem caso, a linha SAI MESMO ASSIM, com 0 — omissao nao e estado (wo0050, wo0055)."""
+    texto = _manifesto_de(tmp_path, {"a.md": "x\n"})
+    assert "- **Nomes que chegam diferentes ao Projeto:** 0" in texto
+    assert "detalhe no fim" not in texto      # nao aponta para um bloco que nao existe
+    assert "chegam DIFERENTES" not in texto   # e o bloco continua ausente
+
+
+def test_contagem_do_cabecalho_bate_com_o_bloco(tmp_path):
+    """A contagem e a minitabela saem da MESMA lista: nunca podem discordar."""
+    texto = _manifesto_de(tmp_path, {"a.b.json": "{}\n", "c.d.json": "{}\n", "e.md": "x\n"})
+    assert "Nomes que chegam diferentes ao Projeto:** 2" in texto
+    assert "Nomes que chegam DIFERENTES ao Projeto (2)" in texto
+
+
+def test_contagem_vem_antes_da_tabela(tmp_path):
+    """A linha tem de estar no CABECALHO — o ponto inteiro da wo0055 e o alcance."""
+    texto = _manifesto_de(tmp_path, {"dados.v1.json": "{}\n"})
+    assert texto.index("Nomes que chegam diferentes ao Projeto:") < texto.index("| Caminho original |")
+
+
 # --- quais arquivos do mount nao sao o commit (wo0053, DEC-031) ---
 
 def test_modificados_le_rastreado():

@@ -1494,6 +1494,18 @@ def write_manifest(dest: Path, plan: FlattenPlan, cfg: ScanConfig) -> Path:
             )
     lines.append(f"- **Modo de renomeação:** {cfg.mode} · separador `{cfg.sep}`")
     lines.append(f"- **Arquivos:** {len(plan.files)}")
+    # Contagem no cabecalho (wo0055): o bloco de excecoes da DEC-030 vive no FIM do arquivo, depois
+    # da tabela, e quem le so o cabecalho — que e o ritual — nao chega la. Medido pelo KCM em
+    # 25/08: leram as 30 primeiras linhas, nao viram o bloco, e so o acharam com grep. A contagem e
+    # dado de LOTE, que e do que o cabecalho fala; o detalhe continua na excecao. Sai SEMPRE,
+    # inclusive `0`: zero diz que a previsao foi avaliada e nao teve caso, e a omissao nao diz nada
+    # — mesmo principio do "sincronizado" da wo0050.
+    divergentes = [(f.target, project_upload_name(f.target)) for f in plan.files
+                   if project_upload_name(f.target) != f.target]
+    lines.append(
+        f"- **Nomes que chegam diferentes ao Projeto:** {len(divergentes)}"
+        + (" (detalhe no fim deste arquivo)" if divergentes else "")
+    )
     lines.append(f"- **Tamanho total:** {human_size(plan.total_bytes)}")
     lines.append(f"- **Tokens (estimativa grosseira ~4 B/token):** ~{plan.est_tokens:,}")
     lines.append("")
@@ -1506,10 +1518,10 @@ def write_manifest(dest: Path, plan: FlattenPlan, cfg: ScanConfig) -> Path:
     lines.append("")
     # Bloco de excecoes (DEC-030): a tabela acima descreve o DISCO; o Projeto renomeia no upload
     # e a busca pelo nome declarado voltava vazia — ausencia indistinguivel de "nao subiu". Fica
-    # FORA da tabela de proposito: vale para poucos arquivos (3 de 38 aqui) e e previsao sobre
+    # FORA da tabela de proposito: vale para poucos arquivos (3 de 39 aqui) e e previsao sobre
     # software de terceiro. Coluna gastaria celula vazia em 92% das linhas para servir 8%.
-    divergentes = [(f.target, project_upload_name(f.target)) for f in plan.files
-                   if project_upload_name(f.target) != f.target]
+    # `divergentes` ja foi montado la em cima, para a contagem do cabecalho (wo0055) — uma passada
+    # so, e os dois lugares nunca discordam.
     if divergentes:
         lines.append(
             f"> **Nomes que chegam DIFERENTES ao Projeto ({len(divergentes)}).** O upload troca "

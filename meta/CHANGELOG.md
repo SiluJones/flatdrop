@@ -20,6 +20,13 @@ está em «Ativas». Decisões em aberto: `pasta/*` + `!mantido` no gerador do e
   três code pages do Windows, e `•`/`…` não codificam em cp850, que é o CMD pt-BR — o caminho do
   `.bat` gerado pela GUI. Some junto a dependência de `chcp 65001`. Um teste fixa o invariante
   (`_summary(...).isascii()`) e outro passa a saída inteira por `cp850`.
+- **O cabeçalho do `_MANIFEST` conta os nomes que chegam diferentes ao Projeto (wo0055).** Uma
+  linha, sempre presente — inclusive com `0` —, apontando para o bloco de exceções quando houver
+  caso. Motivo, medido pelo KCM em 25/08: o bloco da DEC-030 fica depois da tabela, e quem lê só o
+  cabeçalho não chega lá — eles só o encontraram com `grep`, procurando de propósito. **O bloco
+  chegou por busca, não por leitura.** A tabela e o bloco não mudam: o que subiu foi a contagem,
+  que é dado de lote. O `0` sai em voz alta pelo mesmo princípio do «sincronizado» da wo0050 —
+  ausência de aviso não deve ser lida como estado.
 - **O `_MANIFEST` diz QUAIS arquivos do mount não são o commit (wo0053, DEC-031).** Além da
   contagem, o cabeçalho passa a nomear os arquivos rastreados que divergem do commit **e** entraram
   no achatamento — a pergunta que quem lê o mount faz o tempo todo. Não rastreado continua sem
