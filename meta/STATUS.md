@@ -112,7 +112,7 @@ mensagem e não escreve nada.
    - **arquivos do pacote comparados: 8 de 20** — faltam os 2 de `fusao` e os 10 modelos de `meta/`;
    - **ocorrências corrigidas: 8 de 18** (esta WO) — e a varredura é **PARCIAL**: não alcançou
      `logs/` nem `meta/workorders/`, que o `.flatdropignore` mantém fora do mount.
-   **Fase 2a (wo0056, feita):** as «Regras de higiene» do CEREBRO passaram de 8 para 16 bullets
+   **Fase 2a (wo0056, feita):** as «Regras de higiene» do CEREBRO passaram de 8 para **18** bullets
    (3.443 → 12.922 bytes, medido em 26/08), entrou a seção «Medição delegada», e o `CLAUDE.md`
    ganhou «Quando eu pedir medição» e «Push e relatório» (esta com o desvio da DEC-032 escrito no
    corpo). **Fase 2b e 2c (a fazer):** «Bloco de fecho de turno» (2.797 → 6.861), «Tabela de

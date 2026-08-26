@@ -385,6 +385,19 @@ Registro do que ESTE projeto observou/mudou além do kit (material que volta par
   sozinha, um dia depois de existir. A correção: o campo `## Push` do relatório só é escrito com o
   resultado real, e se o push ficar pendente de confirmação o relatório é **reaberto e corrigido**
   quando ele sair. *Guardado para o mesmo merge.*
+- **Número de checklist é DERIVADO do texto da WO, nunca estimado antes dela.** Terceira
+  ocorrência da mesma falha em três WOs seguidas, o que já a qualifica como padrão e não como
+  descuido: a wo0055 mandou trocar `118` em três lugares quando dois eram estado e um era registro
+  datado; a wo0056 previu «16 bullets» onde o texto que ela mesma mandava colar produz **18**, e
+  mandou conferir `grep "wo0044" → 0` num arquivo onde o próprio texto novo cita `wo0044` de
+  propósito. **Nas três, o executor mediu, discordou e reportou sem consertar por conta — e nas
+  três ele estava certo.** A causa é sempre a mesma: o número foi escrito na fase de *raciocínio*
+  sobre o merge e não foi recalculado depois que o texto final da edição ficou pronto. **A regra:**
+  onde as âncoras já são extraídas do arquivo vivo por script, as contagens do checklist saem do
+  mesmo script, sobre o texto final — e aí param de poder divergir do que a WO manda escrever.
+  Enquanto não for automático, vale a pergunta antes de escrever qualquer número de conferência:
+  *«isto eu medi agora, ou lembrei?»*. O kit poderia dizer isso no campo do checklist do modelo de
+  WO, ao lado dos três campos por passo de verificação.
 - **Edição em `.claude/` não vai por WO — vai pelo chat, como arquivo inteiro.** Medido em
   2026-08-26, na wo0054: o classificador de permissão do Claude Code **bloqueou** as duas edições
   que tocavam `.claude/settings.json` e `.claude/skills/wrap/SKILL.md`, e o executor fez certo em
