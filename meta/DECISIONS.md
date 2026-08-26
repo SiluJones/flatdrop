@@ -1042,3 +1042,42 @@ releitura; data antiga apenas SUGERE.**
 `git_snapshot`, que já tem seis testes em cima. O parser (`_modified_paths`) é puro e roda sem git
 instalado. Em multi-fonte, o `rel` pode não ser relativo a `plan.root`; a interseção então não casa
 e a linha não sai — falso negativo, nunca falso positivo.
+
+## DEC-032 — as instruções do projeto sobem ao mount; e o desvio registrado sobre o push
+
+**Contexto.** Merge do template-update do KCM **v1.120.0** (o `CEREBRO.md` daqui carregava a marca
+da v1.95.0 — 23 versões de distância). A seção «Linhas revogadas» do pacote aponta texto que foi
+apagado do kit de propósito e que segue vivo nos arquivos deste projeto, invisível a qualquer
+comparação. **Varredura de 2026-08-25: 23 ocorrências**, 18 para remoção e 5 classificadas como
+relato legítimo (reescrever relato falsificaria registro). Desta WO saem 8; o restante é a fase 2.
+
+**Decisão 1 — `INSTRUCOES-DO-PROJETO.md` passa a subir ao mount.** A regra antiga excluía o arquivo
+com a justificativa de que o painel do Projeto já o entrega. Está errada: o painel entrega um
+TEXTO, o arquivo em disco é outro OBJETO, e não havia como conferir se batiam — os dois nunca
+chegavam juntos. **Conferido em 25/08, pela primeira vez desde que o projeto existe: batem, linha a
+linha.** O custo de subir é ~7 KB por geração; o benefício é que a superfície mais lida do projeto
+passa a ser auditável por quem a lê.
+
+**O que sustenta:** enquanto ficou fora, foi onde mais linha revogada sobreviveu — 5 das 23,
+inclusive a que mandava reler o mount só mediante sinal do autor (revogada na v1.90.0). Em
+2026-08-23 essa regra produziu a falha que ela descreve: o assistente abriu um turno sem reler o
+mount e quase escreveu uma WO com âncoras de arquivos já mudados. O `CEREBRO.md` mandava reler a
+cada turno; as instruções, lidas sempre, mandavam esperar o sinal. **Entre uma regra correta lida
+às vezes e uma regra errada lida sempre, venceu a errada** — e é por isso que a exclusão de uma
+superfície de leitura não é economia de tokens, é ponto cego.
+
+**Decisão 2 — desvio registrado: o executor continua pedindo confirmação antes do `push`.** O kit
+revogou, na v1.104.0, o desenho em que o chat entrega o bloco de git ao dono, e o substituiu por
+«verde: o executor roda `add`/`commit`/`push` sem perguntar». **Adotamos tudo menos o push
+automático.** O resto entra inteiro — e a parte mais valiosa é *o push se resolve ANTES de escrever
+o relatório, que é o último passo*, que é a nossa própria Devolução 2 ao KCM voltando pronta.
+
+**Por que o desvio.** Empurrar muda o estado de um remoto, e o Code pediu confirmação nas quatro
+últimas WOs sem que isso custasse nada além de uma linha. A troca é: um turno a mais contra um
+push que ninguém pediu. **Fica em revisão** — o gatilho para reabrir é a primeira vez que a
+confirmação atrasar um relatório correto, que é o defeito oposto e já aconteceu uma vez (wo0051).
+
+**Consequências.** A `wrap/SKILL.md` passa a citar este desvio no próprio texto, para que ninguém o
+leia como esquecimento. O `.flatdropignore` perde a linha das instruções e ganha a explicação do
+porquê — mas a linha vive DENTRO do bloco gerenciado, então o editor da GUI pode devolvê-la no
+próximo salvamento: conferir uma vez na tela faz parte desta decisão.

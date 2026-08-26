@@ -1,6 +1,6 @@
 # FlatDrop — guia para o Claude Code
 
-> Arquivo-raiz lido pelo Claude Code em toda sessão. Mantenha CURTO (< 200 linhas — custa token em todo turno).
+> Arquivo-raiz lido pelo Claude Code em todo TURNO. Mantenha CURTO (< 200 linhas — custa token em todo turno).
 > Regra prática: se remover uma linha e o Claude ainda acerta, ela não pertence aqui. Procedural detalhado → vira skill em `.claude/skills/`.
 > O comportamento detalhado do assistente está em `meta/CEREBRO.md`.
 

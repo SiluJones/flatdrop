@@ -10,9 +10,9 @@
 # - NAO cite os marcadores literalmente em comentario. O gerador os procura por SUBSTRING e usa
 #   a PRIMEIRA ocorrencia: uma mencao aqui em cima faz ele injetar o bloco no meio do comentario
 #   e deixar o bloco antigo no fim. Medido em 2026-08-02, com o proprio texto deste cabecalho.
-# - Enquanto o bug do bloco gerenciado nao for corrigido, este arquivo e editado A MAO (ver
-#   meta/STATUS.md): o gerador e cego para linha manual e duplicaria dentro do bloco o que esta
-#   fora dele.
+# - O editor e a curadoria manual CONVIVEM desde a 0.15.0 (FIX-012 + DEC-029): o bloco gerenciado
+#   e um diff contra o que ja existe fora dele, e vai sempre para o fim do arquivo. O contorno
+#   antigo ("edite este arquivo a mao") esta REVOGADO.
 #
 # FORMA (DEC-025): use "pasta/*" (o CONTEUDO), nunca "pasta/" (a PASTA). core._scan poda o
 # diretorio casado ANTES de descer, entao um "!" dentro de pasta podada nunca chega a ser
@@ -29,12 +29,14 @@
 # mao. Para estudar UMA WO no Projeto, acrescente "!meta/workorders/<arquivo>.md" no bloco.
 # meta/analises/ e meta/specs/ NAO entram aqui de proposito: sao poucas e dizem o que esta em
 # discussao ou sendo construido — valem o espaco no Projeto.
-# INSTRUCOES-DO-PROJETO.md ja e lida em todo turno pelo painel do Projeto: subir ao mount seria
-# a mesma coisa duas vezes. Segue versionada no git, so nao vai aqui.
+# INSTRUCOES-DO-PROJETO.md SOBE ao mount desde 2026-08-25 (DEC-032). A justificativa antiga era
+# "o painel ja a entrega, subir seria a mesma coisa duas vezes" — e ela estava errada: o painel
+# entrega um TEXTO, o arquivo em disco e outro OBJETO, e nao havia como conferir se batiam porque
+# os dois nunca chegavam juntos. Enquanto ficou fora, foi a superficie com mais linha revogada
+# viva do projeto, e e a mais lida de todas.
 
 # >>> flatdrop-editor
 logs/*
 meta/workorders/*
 !meta/workorders/_TEMPLATE.md
-INSTRUCOES-DO-PROJETO.md
 # <<<

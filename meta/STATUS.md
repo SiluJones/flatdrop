@@ -3,7 +3,21 @@
 Estado atual do projeto. Atualize ao fim de cada sessão de trabalho (rolante: o
 resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
 
-> **Mudanças nesta revisão (2026-08-02) — a sessão mais densa do projeto até aqui:**
+> **Mudanças nesta revisão (2026-08-24) — quatro WOs e o fim do ciclo da carta 01:**
+>
+> - **wo0050 · wo0051 · wo0052 · wo0053 aplicadas e empurradas.** Os três itens da carta 01 do KCM
+>   estão fechados no código; a **carta 02 foi escrita** e sai deste turno.
+> - **Números lidos nesta revisão** (relatórios de aplicação de 22:23, 22:45 e 23:30 + manifesto
+>   das 23:49): **118 testes verdes**, commit `03eeecf`, `main` limpo e sincronizado.
+> - **Bug real encontrado pela suíte durante a wo0053:** o `.strip()` do helper `_git` comia o
+>   espaço inicial de `" M caminho"` na primeira linha do `--porcelain`, e o caminho saía truncado.
+>   Corrigido com `--branch` (a linha `## ramo…` blinda a borda). Está na carta 02, seção 2.6.
+> - **A DEC-020 foi acionada e liberada uma vez**, com autorização escrita do autor e escopo
+>   delimitado (glifos de saída em `cli.py`, wo0052). Nenhum argumento ou semântica mudou.
+> - **Ficou o que ainda é o agora:** a validação visual pendente no Windows e a decisão em aberto
+>   do gerador (`pasta/*` + `!mantido`).
+
+> **Mudanças na revisão anterior (2026-08-02) — a sessão mais densa do projeto até aqui:**
 >
 > - **O único bug aberto fechou** (FIX-012, wo0045 + wo0046). A seção «🔴 Bug aberto» saiu daqui:
 >   o desfecho vive no `CHANGELOG` 0.15.0 e no `DECISIONS`.
@@ -17,7 +31,7 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
 
 - **Versão:** **0.15.0** no `__init__.py` — fecha o bug do bloco gerenciado e abre o estado do git
   no manifesto.
-- **Data:** 2026-08-23 (a sessão anterior foi 2026-08-02; o repo ficou parado no intervalo)
+- **Data:** 2026-08-24
 - **Commit:** **leia no `_MANIFEST`** («Git (foto da geração)»), que desde a wo0048 traz
   `git log -1` e o resumo do `git status`. **Este campo não guarda mais hash:** guardar um aqui
   garante que ele nasça velho — a wo0049 se commitou DEPOIS de escrever esta linha, e ela passou
@@ -27,8 +41,8 @@ resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
   multi-fonte na GUI) OK · F4 (distribuição) não iniciada — ver `ROADMAP.md`.
 - **Situação geral:** em uso real, **estável**, em **stand-by** por decisão do autor. Fluxo do
   monorepo `cinzeiro` coberto de ponta a ponta (GUI, CLI e `.bat`). Modo Claude Code em operação;
-  **WOs 0001–0049 aplicadas e commitadas** (as 0001–0037 mantêm o nome `spec00NN`, anteriores à
-  DEC-023). **92 testes verdes.** **Nenhum bug aberto** — o da 0.13.0 fechou na 0.15.0.
+  **WOs 0001–0053 aplicadas e commitadas** (as 0001–0037 mantêm o nome `spec00NN`, anteriores à
+  DEC-023). **118 testes verdes.** **Nenhum bug aberto** — o da 0.13.0 fechou na 0.15.0.
 - **Contorno revogado:** o «use a curadoria manual OU o editor, nunca os dois» **não vale mais**.
   Respeitada a anatomia normativa (DEC-029), os dois convivem no mesmo arquivo.
 
@@ -66,18 +80,22 @@ mensagem e não escreve nada.
 
 ## Qualidade / testes
 
-- **92 testes verdes** em 2026-08-02 (79 → 82 → 86 → 88 → 92, um degrau por WO). Rodar da raiz:
-  `pytest -q` (o `conftest.py` resolve o import — FIX-005) ou `python -m pytest -q`.
+- **118 testes verdes** em 2026-08-24 (92 → 100 → 109 → 111 → 118, um degrau por WO). Rodar da
+  raiz: `pytest -q` (o `conftest.py` resolve o import — FIX-005) ou `python -m pytest -q`.
 - A distribuição por arquivo não é reconferida desde 21/07 (68 testes); os 24 posteriores estão em
   `test_core.py`.
 - A GUI **não** é coberta pela suíte (tkinter fora do CI) → smoke manual no Windows.
 - **A lacuna que deixou o bug passar foi fechada:** os testes do editor agora exercitam linha
   manual fora do bloco, destravar sobre linha manual, marcador citado em comentário e
   **estabilidade textual** (salvar 2× dá texto idêntico, não só regras equivalentes).
-- **Lacuna que encolheu (wo0050):** os testes que precisam de `git` continuam pulando sozinhos onde
-  ele não existir, mas a parte que mais errava — ler a linha `##` do `--porcelain` — virou função
-  pura (`_divergence`) e ganhou **sete testes que rodam sem `git` nenhum**. Sobra dependente de
-  ambiente: só o que exige repositório de verdade.
+- **Lacuna que encolheu (wo0050, wo0053):** os testes que precisam de `git` continuam pulando
+  sozinhos onde ele não existir, mas as duas partes que mais erravam — ler a linha `##` e ler os
+  caminhos do `--porcelain` — viraram funções puras (`_divergence`, `_modified_paths`) com **doze
+  testes que rodam sem `git` nenhum**. Sobra dependente de ambiente só o que exige repositório de
+  verdade.
+- **O teste puro não substitui o ponta a ponta, e a wo0053 provou:** o parser passava nos cinco
+  testes puros e mesmo assim o manifesto saía errado, porque o defeito estava no `.strip()` do
+  helper que entregava a string ao parser. Só o teste que gerou um manifesto de verdade viu.
 
 ## Em aberto (produto) — backlog curto, na ordem sugerida
 
@@ -87,11 +105,21 @@ mensagem e não escreve nada.
    arquivo novo. **Análise em discussão:** `meta/analises/260728-ANALISE-gerador-flatdropignore.md`
    — três opções (B, C, D); a decisão depende de responder *arquivo novo em pasta curada entra ou
    fica fora?*.
-3. **Escrever a carta 02 ao KCM** — os três itens da carta 01 estão fechados no código: item 1
-   entregue (DEC-030, wo0051), item 3 entregue (wo0050) e item 2 **recusado com contraproposta
-   entregue** (DEC-031, wo0053: nomear os rastreados divergentes, em vez do `mtime` pedido). A
-   carta precisa levar a lógica inteira da recusa, não só o «não» — pedido explícito do autor em
-   24/08. O hash curto ficou guardado com gatilho na DEC-031.
+3. **Merge do KCM v1.120.0 — em curso, 3 fases.** O pacote chegou em 25/08 com a carta 03 (o
+   `CEREBRO.md` daqui marcava v1.95.0: 23 versões de distância). **Varredura de linhas revogadas:
+   23 ocorrências, 18 para remoção, 5 relato legítimo.** Duas coberturas, que medem coisas
+   diferentes e não se substituem:
+   - **arquivos do pacote comparados: 8 de 20** — faltam os 2 de `fusao` e os 10 modelos de `meta/`;
+   - **ocorrências corrigidas: 8 de 18** (esta WO) — e a varredura é **PARCIAL**: não alcançou
+     `logs/` nem `meta/workorders/`, que o `.flatdropignore` mantém fora do mount.
+   **Fase 1 (wo0054, feita):** `Write` no `settings.json`, as 3 linhas revogadas da `wrap/SKILL.md`,
+   a instrução obsoleta do `.flatdropignore`, `sessão`→`turno` no `CLAUDE.md`, e as 4 das
+   instruções — que passam a subir ao mount (DEC-032). **Fase 2 (a fazer):** fusão do
+   `meta/CEREBRO.md` (10 ocorrências vivas) com o template de 83 KB, mais as duas seções novas do
+   `CLAUDE.md` («Quando eu pedir medição» e «Push e relatório — nesta ordem»). **Fase 3:** os
+   modelos (`_TEMPLATE.md` de WO e de análise, e os 10 de `meta/`).
+   *(O raciocínio completo do merge está numa análise que o autor decidiu NÃO versionar — por isso
+   os números que importam estão aqui e na DEC-032, e não numa referência a arquivo.)*
 4. **Mostrar a REGRA de ignore que casou**, não só a contagem por motivo. **Reforçado em 07/08**
    pela nota `260807-1324`: em projeto irmão, um `.xlsx` inteiro sumiu do achatamento por estar em
    pasta gitignorada e a ausência só foi notada sessões depois. A contagem por motivo já existe na
