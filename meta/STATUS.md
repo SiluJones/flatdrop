@@ -115,11 +115,14 @@ mensagem e não escreve nada.
    **Fase 2a (wo0056, feita):** as «Regras de higiene» do CEREBRO passaram de 8 para **18** bullets
    (3.443 → 12.922 bytes, medido em 26/08), entrou a seção «Medição delegada», e o `CLAUDE.md`
    ganhou «Quando eu pedir medição» e «Push e relatório» (esta com o desvio da DEC-032 escrito no
-   corpo). **Fase 2b e 2c (a fazer):** «Bloco de fecho de turno» (2.797 → 6.861), «Tabela de
-   gatilhos» (1.885 → 3.960), «Ao final da conversa, o assistente REGISTRA o que falta» (substitui
-   a nossa «Ao final de cada sessão… entrega arquivos completos»), e as seções novas «Sonda e
-   exploração» (4.882) e «Correspondência entre projetos» (2.126) — mais os 4 títulos com
-   «sessão» que ainda restam no CEREBRO.
+   corpo). **Fase 2b (wo0058, feita):** «Bloco de fecho de turno», «Tabela de gatilhos» (+8 linhas)
+   e a seção «Ao final de cada sessão… entrega arquivos completos» substituída por «Ao final da
+   conversa, o assistente REGISTRA o que falta» — mais os títulos do ritual e da recomendação de
+   configuração. **As 4 ocorrências de «sessão» no CEREBRO foram a zero.** **Fase 2c (a fazer):**
+   seções novas «Sonda e exploração» (4.882) e «Correspondência entre projetos» (2.126),
+   «Técnicas específicas deste projeto» (765), e os deltas menores em «Análise antes do
+   compromisso» (+1.146), «Ao receber um template-update» (+421) e «Princípios» (+391). **Fase 3:**
+   os 12 modelos.
    **wo0057 (feita):** corrigiu os dois números que a wo0056 tinha escrito errado — o `STATUS`
    afirmava 16 bullets (real: **18**, já refletido acima) e o `IDEAS` ganhou a lição de método
    (número de checklist é derivado do texto final da WO, nunca estimado antes dela; terceira

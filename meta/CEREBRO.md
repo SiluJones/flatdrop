@@ -7,12 +7,12 @@
 
 ---
 
-## Ritual de início de sessão
+## Ritual de início de turno
 
 1. Lê `CEREBRO.md` (este) — confirma comportamento e ritual.
 2. Lê `CONTEXT.md` — entende o projeto (panorama estável).
 3. Lê `STATUS.md` — descobre o estado atual e o próximo passo.
-4. Lê última entrada do `CHANGELOG.md` — vê o que mudou desde a sessão anterior.
+4. Lê última entrada do `CHANGELOG.md` — vê o que mudou desde a conversa anterior.
 5. **Não lê por padrão:** IDEAS inteiro, logs antigos, arquivos de arquivo morto. Lê sob demanda quando a tarefa exigir.
 6. Antes de executar: confirma em uma frase o que entendeu. Se houver ambiguidade real, pergunta antes.
 
@@ -100,7 +100,7 @@ Cada arquivo tem um papel e um comportamento temporal distinto. **Respeite o pap
 | `ROADMAP.md` | Plano em fases | OPCIONAL — plano deliberado de evolução em fases. Use quando o projeto tem direção de médio/longo prazo. |
 | `GLOSSARY.md` | Estável | OPCIONAL — termos próprios do projeto. Use quando há jargão que se repete entre sessões. |
 | `HISTORY.md` | Cresce (histórico) | OPCIONAL — conhecimento consolidado de fases antigas (guias, análises que não cabem no CONTEXT enxuto). Lido sob demanda. |
-| `logs/AAAA-MM-DD.md` | Histórico | Ao final de cada sessão (formato em LOG-TEMPLATE). **Um arquivo por DIA** (DEC-026): segunda sessão no mesmo dia vira `## Sessão N` no mesmo arquivo, nunca arquivo novo. |
+| `logs/AAAA-MM-DD.md` | Histórico | Ao bater um gatilho de evento — cortar versão, registrar decisão ou bug grave, virar o dia (formato em LOG-TEMPLATE). **Um arquivo por DIA** (DEC-026): segunda conversa no mesmo dia vira `## Conversa N` no mesmo arquivo, nunca arquivo novo — o nome é da data, não da conversa. |
 | `workorders/AAMMDD-woNNNN-desc.md` | Cresce (uma por delta) | Delta estruturado que o Code aplica: texto exato + âncora semântica. Autorado pelo chat. |
 | `analises/AAMMDD-ANALISE-<tema>.md` | Cresce (uma por decisão) | Antes de uma mudança não-trivial — a pasta nasce no primeiro uso. Modelo em `meta/analises/_TEMPLATE.md`. |
 
@@ -240,47 +240,59 @@ A raia de planejamento tem teto de contexto e lê só o que chega pelo mount; a 
 - **Fato que o usuário relata no chat não existe até estar num arquivo — e a origem vai junto.** `[relatado pelo dono]` e `[medido por instrumento]` têm forças diferentes, e a diferença é o que permite decidir se vale remedir. Apagar essa marca é pior que não registrar: cria um fato de primeira classe a partir de uma lembrança. É a metade simétrica da regra acima — a de cima protege o número que a execução mediu, esta protege o que o usuário contou, e as duas se perdem no mesmo lugar: a transferência entre conversas, onde só sobrevive o que está escrito.
 
 ## Bloco de fecho de turno (formato fixo)
-
 Todo turno de trabalho fecha assim, **emitindo só as linhas que se aplicam** — linha sem conteúdo real não aparece (não escreva «nada a arquivar» nem invente handoff). **Próximo** vem antes de um divisor; o resto vem depois dele:
-
-1. **Próximo** — sempre presente, ANTES do divisor, em duas partes: **(a) Ação** — a próxima coisa concreta a fazer; **(b) Peça no próximo turno** — a frase que o usuário pode mandar de volta para retomar sem reconstruir contexto. Não é lista de possibilidades: é uma ação e um pedido.
-2. **Estado** — uma linha: versão/fase, resultado da suíte (`python -m pytest -q`) quando houve mexida em código, e o commit, quando existir. **Todo dado desta linha vem de leitura FEITA NESTE TURNO.** Se algo não foi verificado agora, ou se verifica antes de escrever, ou se escreve "não verificado nesta rodada" — nunca se completa a linha de memória. Campo obrigatório é convite a preencher com o que se lembra, e o que se lembra é a expectativa do próprio turno anterior, não o repo. **Distinga «não verifiquei» de «não dá para ler daqui»:** o mount é uma cópia achatada e não tem `.git`, então nenhum `git log` existe para ler — nesse caso escreva «commit não legível pelo mount» e **peça uma vez** (`git log -1 --oneline`), em vez de repetir a ressalva todo turno. «Não verifiquei» é desleixo; «não é legível por este canal» é fato, e o remédio de cada um é diferente. *(Quando o FlatDrop passar a gravar o estado do repo no manifesto, use o que estiver lá e não peça — respeitando que é foto da hora da geração.)*
-3. **Arquivar / Manter** — só se houver notas avulsas no mount. Em lista: uma linha **Arquivar:** com os nomes já absorvidos e uma linha **Manter:** com os que seguem vivos, cada um com o motivo em poucas palavras. Nome por nome — e sem esperar que o usuário pergunte.
-4. **Config recomendada** — em lista, uma linha por raia (chat de planejamento / Claude Code), cada uma nomeando a raia, o tipo de modelo e o nível de esforço. Só as raias que o próximo passo realmente usa. Nunca afirme saber a config atual.
-5. **Handoff** — por último, só quando houver arquivo trocando de mão: arquivo por arquivo, onde cada um vai. Handoff de sessão completo: o artefato se chama `AAMMDD-HANDOFF-BRIEF.md`.
-
-**De quem é este bloco:** da raia de **planejamento** (o assistente no chat). Quem **executa** no Claude Code não fecha assim — fecha com o **relatório de trabalho**: o que fez, o que encontrou que foge do que a tarefa pedia, os arquivos tocados, o resultado de `python -m pytest -q` e o commit. Trocar o relatório por este formulário perde a informação que só quem executou tem.
-
-Este formato é ponto de partida, não jaula: se um dado recorrente deste projeto merece linha própria, acrescente; se uma linha nunca se aplica aqui, proponha removê-la no refino.
+1. **Próximo** — sempre presente, ANTES do divisor, em duas partes: **(a) Ação** — a próxima coisa concreta a fazer; **(b) Peça no próximo turno** — a frase que o usuário pode mandar de volta para retomar sem reconstruir contexto (a frente sugerida, já redigida como pedido). Não é lista de possibilidades: é uma ação e um pedido.
+   **A frase só pode conter resultado que o usuário saiba produzir.** É aqui que a regra de instruções cuidadosas costuma falhar — não por má vontade, mas porque a linha é redigida rápido, no fim do turno, e ninguém a lê como um pedido de trabalho. Antes de escrevê-la, pergunte de quem é cada resultado que ela menciona: se é do executor, peça o **relatório** («aplicada, aqui o relatório»); se é de fato do usuário, o **comando exato, quem roda e o que esperar ver** vêm no MESMO turno, não na resposta seguinte. Pedir «o teste manual deu X» sem nunca ter dito que teste é esse, quem o roda e como se roda transfere ao usuário um trabalho que ele não sabe que tem — e ele descobre isso escrevendo de volta para perguntar.
+2. **Estado** — uma linha: onde o projeto está agora (versão/fase e, havendo harness, o resultado dos testes) e o commit, quando existir. **Todo dado desta linha vem de leitura feita NESTE turno.** Se você não verificou, escreva «não verificado nesta rodada» — é resposta de primeira classe, não falha. E distinga do caso em que o dado **não é legível por este canal**: num Projeto alimentado por cópia achatada não há `.git`, então nenhum `git log` existe para ler — aí **comece pelo manifesto**: se o **manifesto da cópia achatada já trouxer o estado do repo** (último commit, branch, limpo/sujo), o dado está lido — use-o e NÃO peça, registrando que é foto da hora da geração, não do turno. Só quando não houver manifesto, ou ele não trouxer o estado, escreva «commit não legível pelo mount» e **peça uma vez** (`git log -1 --oneline`), em vez de repetir a ressalva todo turno. **A ordem desta regra é a regra:** exceção escrita depois da instrução chega tarde, porque quem lê de cima para baixo já pediu. **A linha abre com o carimbo `Base:`** — qual arquivo foi lido NESTE turno para saber o estado, com a data que ELE declara e o commit/versão que ELE traz (`Base: _MANIFEST 02/08 23:40 · d423747 · 3 .txt`). Sem cópia achatada, use o que houver: o doc de estado do projeto e a data dele. O carimbo existe porque campo de verificação genérico é inauditável — quem lê não sabe se você leu ou lembrou —, enquanto uma data que o próprio usuário gerou ele confere num olhar. Carimbo inventado é mentira detectável; campo vago não é. «Não verifiquei» é desleixo; «não dá para ler daqui» é fato, e o remédio de cada um é diferente. **O mount não carrega idade por arquivo** — medido: os arquivos chegam com a data zerada, e a única idade legível é a do manifesto, que vale para o lote inteiro e não diz qual arquivo mudou. Logo, «isto mudou desde que li?» é conferência de CONTEÚDO (uma frase-chave, um `grep`), nunca de data. Campo obrigatório sem dado fresco puxa a resposta da memória, e logo depois de entregar um trabalho a memória é a *expectativa* de que ele foi aplicado: previsão vestida de observação.
+3. **Arquivar / Manter** — só se houver notas avulsas no mount. **Em lista**, como a Config e o Handoff: uma linha **Arquivar:** com os nomes já absorvidos e uma linha **Manter:** com os que seguem vivos, cada uma com o motivo em poucas palavras. **A lista é EXAUSTIVA:** todo arquivo avulso do mount entra numa das duas. Omissão é ambígua e o leitor não tem como desfazer a ambiguidade — pode significar «já extraí tudo» ou «nunca abri», e as duas pedem ações opostas. **«Arquivar» é afirmação forte:** só entra o que você leu INTEIRO naquele turno; na dúvida, «Manter» com o motivo. **E «Manter: não li» tem prazo** — fila indefinida não é cuidado: um relatório ficou quatro turnos nessa fila carregando a armadilha que voltou a acontecer duas vezes enquanto ele esperava. Nome por nome — e não espere que eu pergunte.
+4. **Config recomendada** — em lista, **uma linha por raia**, cada uma nomeando a raia, o tipo de modelo e o nível de esforço (e o terminal, se a raia usar). Só as raias que este projeto realmente usa. Nunca afirme saber a config atual — recomende pela tarefa que vem.
+5. **Handoff** — por último, só quando houver arquivo trocando de mão: arquivo por arquivo, onde cada um vai. Handoff de conversa completa: o artefato se chama `AAMMDD-HANDOFF-BRIEF.md`.
+**De quem é este bloco:** da raia de **planejamento** (o assistente no chat). Quem **executa** no Claude Code não fecha assim — fecha com o **relatório de trabalho**: o que fez, o que encontrou que foge do que a tarefa pedia, os arquivos tocados, o resultado do build/validação e o commit. Trocar o relatório por este formulário perde a informação que só quem executou tem.
+**Este formato é o ponto de partida, não uma jaula.** Se este projeto tem um dado recorrente que merece linha própria (prazo, custo, publicação, estoque, o que for), acrescente — e se uma linha nunca se aplica aqui, proponha removê-la no refino.
+Vale para todo turno de trabalho, não só ao encerrar a conversa: é o que me deixa retomar sem reconstruir contexto.
 
 ## Tabela de gatilhos (evento → o que o assistente entrega)
 
 | Evento | O assistente entrega |
 |---|---|
-| Início de sessão | Lê CEREBRO.md → CONTEXT.md → STATUS.md → última entrada do CHANGELOG. |
+| Início de turno | Lê CEREBRO.md → CONTEXT.md → STATUS.md → última entrada do CHANGELOG. **Todo turno**, não só ao abrir a conversa. |
 | Decisão importante tomada | Entrega o DECISIONS.md completo e atualizado (nova entrada em formato ADR: contexto, decisão, alternativas, consequências). |
 | Bug grave resolvido | Entrega o DECISIONS.md completo (nova entrada: sintoma, causa raiz, solução, lição). |
 | Ideia mencionada (sua ou minha) | Entrega o IDEAS.md completo com a ideia capturada (na hora, sem pedir). |
 | Feedback sobre o kit — dito OU feito (desvio estrutural: diretriz nova neste CEREBRO.md, template alterado/dispensado, arquivo novo criado) | Registra na hora no IDEAS.md, seção «Feedback para o Kit»: o que foi observado/mudado e por quê. É o material que volta para evoluir o kit — sem o registro, o aprendizado deste projeto se perde. |
-| Fim de sessão | Entrega os arquivos completos afetados: STATUS.md + CHANGELOG.md (se fechou algo) + log da sessão. |
+| Fim de QUALQUER turno de trabalho | Emite o Bloco de fecho (formato fixo, secao propria). Nao espera fim de conversa: a maior parte do trabalho acontece em turnos que nao fecham nada. |
+| Fim da conversa | Entrega os arquivos completos afetados: STATUS.md + CHANGELOG.md (se fechou algo) + log do dia. |
+| Evento que MERECE log: cortar versao, registrar uma decisao ou um bug grave, virar o dia de trabalho | Escreve `logs/AAAA-MM-DD.md` na hora. O log nao espera o fim da conversa — numa conversa longa o fim nunca chega, e e assim que dias inteiros ficam sem registro. |
+| Precisa de um numero sobre material grande demais para a conversa | Manda MEDIR (sonda) em vez de deduzir ou pedir upload. Se ninguem sabe ainda qual e a pergunta, manda EXPLORAR primeiro: exploracao produz hipotese, sonda produz evidencia. |
+| Chega ou sai carta de outro projeto (negociacao de contrato entre frentes) | Extrai o durável AGORA — acordo vira decisao registrada, o que nao coube vira ideia com gatilho — e NAO versiona a carta. Se ela pede resposta do outro lado, cria o item de espera com prazo: espera sem gatilho trava o projeto sem ninguem perceber. |
+| Uma conferencia deu VERDE — antes de relatar | Pergunte qual das duas perguntas esse verde responde: «esta la?» ou «presta?». Verde de existencia lido como verde de aptidao ja passou por 45 arquivos destruidos por dentro. Se o instrumento nao abre o conteudo, diga isso na MESMA linha do verde, nao no rodape. |
+| Uma varredura ou conferencia nao achou NADA no lugar onde deveria achar algo | Confirme que o arquivo chegou ao mount antes de concluir que esta limpo. Cheque `.gitignore` e `.flatdropignore`: pasta excluida produz varredura muda, e silencio de ferramenta nao e ausencia de problema. |
+| Vai sobrescrever, mover ou apagar algo que ja existe (arquivo, pasta, config, artefato baixado) | LE antes. E se o dono pediu para NAO apagar algo, pergunte do que ele tem medo: quase sempre a resposta e copiar para fora do espaco de trabalho e seguir — cumprir a letra e deixar o problema de pe e obedecer contra o interesse de quem pediu. |
+| A tarefa criou algo FORA do repositorio (processo, porta, servidor de dev, arquivo temporario, download) | Quem abriu, fecha — a tarefa termina com a maquina como a encontrou. O que nao puder ser fechado e DECLARADO no relatorio, com o caminho: e o que ninguem lembra de limpar. |
 | Decisão de arquitetura ou troca de lib | Entrega o DECISIONS.md completo (nova DEC-N: contexto, decisão, alternativas, consequências). |
 | Mudança de fase do projeto | Entrega o ROADMAP.md completo com a fase atualizada (concluída / em curso / próxima). |
 | Termo técnico próprio do projeto usado | Entrega o GLOSSARY.md completo com o termo definido. |
 
 > Se um arquivo da **camada universal** (STATUS, IDEAS, DECISIONS) referenciado acima ainda não existir, o assistente o CRIA na primeira necessidade, a partir do papel descrito. **Arquivo que NÃO faz parte do conjunto deste projeto não é criado por conta própria** — a ausência é intencional, não um erro. Neste projeto o conjunto é: CONTEXT, STATUS, DECISIONS, CHANGELOG, IDEAS, ROADMAP, GLOSSARY, HISTORY, LOG-TEMPLATE, README (em `meta/`) + `logs/` e `meta/workorders/`. `meta/SPEC.md` e `meta/analises/` nascem **no primeiro uso real**, não antes.
 
-## Ao final de cada sessão, o assistente entrega (como arquivos completos)
+## Ao final da conversa, o assistente REGISTRA o que falta
 
-Cada arquivo abaixo vem INTEIRO e atualizado, pronto para você baixar e substituir o antigo. Aplicá-los é decisão sua:
+**A regra geral — «entregue tudo inteiro» — foi escrita para projeto SEM executor, onde regenerar é a única saída. Aqui ela se inverte:** com um executor no repositório, o registro do fecho é **WO cirúrgica**, e reescrever um documento grande no fim de uma conversa pesada é justamente onde se perde conteúdo.
+
+- **Registrar é o entregável; listar não é.** «O que ainda falta registrar» é o inventário da dívida, não o pagamento dela. Um fecho bom termina com essa lista **vazia** — e o que ficou de fora vira WO agora, nesta conversa, não recado para a próxima.
+- **Regenerar ≠ criar.** «Não regenere os arquivos de contexto» existe para não haver dois escritores no mesmo documento. Um arquivo que **não existe** não tem escritor nenhum: escrevê-lo não é regenerar, é criar — e é obrigatório. O log do dia é o caso que mais se perde por essa confusão.
+- **Qual canal para qual documento.** Documento grande e vivo → **WO** em `meta/workorders/`, com o texto exato de cada inserção e a linha `/apply-wo` junto. Arquivo **novo**, pequeno, ou que precise de curadoria que reescreve → **inteiro, para baixar**. Nunca os dois no mesmo ciclo para o mesmo documento.
+- **Nunca empurre bloco para o usuário colar no executor.** A caixa de mensagem dele tem limite de caracteres — é a razão de a WO existir. **Isso inclui pedido de medição.** Medição não tem âncora nem commit, então não é ordem de trabalho — mas continua sendo um arquivo: um script de sonda, ou um `.md` curto com o que rodar e o formato do relatório. «Não é WO» quer dizer «outro artefato», nunca «vai colado na mensagem». Se o usuário precisou criar o arquivo à mão para caber, o pedido estava errado.
+
+Os arquivos abaixo continuam sendo os afetados por este trabalho — o que muda é o canal de cada um, não a obrigação de registrar:
 
 1. STATUS.md — completo e atualizado (rolante: o resolvido sai)
 2. CHANGELOG.md — completo, com nova entrada se algo foi concluído
 3. DECISIONS.md — completo, com nova DEC/FIX se houve decisão ou bug grave
-4. IDEAS.md — completo, com as ideias da sessão capturadas e reclassificadas
+4. IDEAS.md — completo, com as ideias da conversa capturadas e reclassificadas
 5. ROADMAP.md — completo, se alguma fase mudou de estado (quando o projeto usa roadmap)
 6. GLOSSARY.md — completo, se surgiu termo novo (quando o projeto usa glossário)
-7. logs/AAAA-MM-DD.md — log da sessão preenchido (formato em LOG-TEMPLATE.md)
-8. **Fecho do turno** — as linhas que se aplicarem (formato abaixo)
+7. logs/AAAA-MM-DD.md — log do dia preenchido (formato em LOG-TEMPLATE.md)
 
 ## Quando perguntar vs. quando agir
 
@@ -308,9 +320,9 @@ O usuário trabalha em **Windows (CMD/Prompt de Comando)**. Qualquer comando de 
 
 Respostas em pt-BR, incluindo comentários quando houver código.
 
-## Recomendação de configuração (fim de sessão)
+## Recomendação de configuração (fim de turno)
 
-No fim de cada sessão, junto do resumo e de qualquer dúvida, avalie o que a **próxima etapa** exige e recomende a configuração de forma **completa e explícita**. Os controles dependem de ONDE se trabalha:
+No fim de cada turno, junto do resumo e de qualquer dúvida, avalie o que a **próxima etapa** exige e recomende a configuração de forma **completa e explícita**. Os controles dependem de ONDE se trabalha:
 - **No chat (claude.ai):** **modelo** (recomende pela capacidade — o mais capaz vs. um mais leve —, não pelo nome/versão, que muda), **esforço** (Baixo→Máximo) e **pensamento** (ligado/desligado): três controles independentes.
 - **No Claude Code (CLI/desktop):** **modelo** + **nível de esforço** (`/effort` baixo→máximo, ou `xhigh`/`ultracode` onde houver). **Não há toggle de pensamento** no Code — ele é acoplado ao esforço; para um turno difícil pontual, use `ultrathink` no prompt. Nunca recomende "ligar o pensamento" no Code.
 - **Nunca afirme saber a configuração atual** — ela não é legível de forma confiável. Recomende pela TAREFA e pela config que o usuário declarou.

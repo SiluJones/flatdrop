@@ -385,6 +385,14 @@ Registro do que ESTE projeto observou/mudou além do kit (material que volta par
   sozinha, um dia depois de existir. A correção: o campo `## Push` do relatório só é escrito com o
   resultado real, e se o push ficar pendente de confirmação o relatório é **reaberto e corrigido**
   quando ele sair. *Guardado para o mesmo merge.*
+- **O pacote v1.120.0 traz cinco bullets do «Refino das Instruções» dentro da seção «Bloco de fecho
+  de turno» — e some com eles da seção a que pertencem.** Medido em 2026-08-26, comparando as duas
+  versões do CEREBRO: os bullets «Sincronia com o CEREBRO», «Uma regra por linha», «Teto», «Teto por
+  configuração» e «Registre» estão nas linhas 304-308 do template, dentro do fecho, e **não** estão
+  na seção «Refino das Instruções do Projeto» (linhas 206-219), que é o lugar deles — e onde eles
+  vivem no nosso arquivo desde a v1.95.0. Não é conteúdo novo nem reorganização: é bloco deslocado.
+  Quem aplicasse o template ao pé da letra duplicaria os cinco no fecho e os perderia no Refino. A
+  fase 2b os retirou do texto adotado, de propósito, e isto volta ao kit como defeito de pacote.
 - **Número de checklist é DERIVADO do texto da WO, nunca estimado antes dela.** Terceira
   ocorrência da mesma falha em três WOs seguidas, o que já a qualifica como padrão e não como
   descuido: a wo0055 mandou trocar `118` em três lugares quando dois eram estado e um era registro
