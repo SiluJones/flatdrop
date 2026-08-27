@@ -1083,3 +1083,42 @@ confirmação atrasar um relatório correto, que é o defeito oposto e já acont
 leia como esquecimento. O `.flatdropignore` perde a linha das instruções e ganha a explicação do
 porquê — mas a linha vive DENTRO do bloco gerenciado, então o editor da GUI pode devolvê-la no
 próximo salvamento: conferir uma vez na tela faz parte desta decisão.
+
+## DEC-033 — o desvio do push é revogado: verde empurra sem perguntar
+
+**Contexto.** A **DEC-032** (24/08) adotou quase tudo o que o kit v1.104.0 trouxe sobre o fecho de
+trabalho, **menos** o push automático: o executor continuaria pedindo confirmação antes de empurrar.
+O gatilho de revisão ficou escrito: *a primeira vez que a confirmação atrasar um relatório correto*.
+
+**O que se mediu em três dias.** A confirmação foi pedida em **nove** aplicações (wo0053 a wo0061) e
+concedida em **nove**. Nunca serviu para impedir nada. E produziu dois defeitos:
+
+- **O relatório da wo0051 ficou afirmando «NÃO executei o push»** depois de o push ter saído. Foi
+  o caso que originou a nossa Devolução 2 ao KCM — e o desvio o mantinha vivo, porque a confirmação
+  cria um passo depois do relatório.
+- **Na wo0060 a confirmação saiu em PROSA** («Confirma que empurro `15afac5`?»), que é exatamente o
+  anti-padrão que o nosso próprio texto proíbe: *nunca pergunte em prosa, pergunta escrita no meio
+  do texto passa despercebida*. A causa é do desenho, não do executor: a DEC-032 criou um terceiro
+  estado — **verde-que-pergunta** — e não lhe deu forma. O menu estava reservado ao vermelho.
+
+**Decisão.** O desvio é revogado. **Verde → `add`, `commit` e `push`, sem perguntar.** O menu
+(`AskUserQuestion`, ou numerado com aviso de fallback) fica **só para o vermelho**. Dois estados,
+duas formas, nenhum estado sem forma.
+
+**O que sustenta.** O que a confirmação protegia era um push indesejado num remoto — e este é um
+repositório de um autor só, com histórico linear e `git revert` a um comando de distância. O custo
+era um turno por WO e um relatório podendo nascer falso. Trocamos uma proteção que nunca disparou
+por um relatório que sempre diz a verdade.
+
+**Alternativa considerada — «menu também no verde-com-desvio».** Foi o que o autor sugeriu ao ver a
+pergunta em prosa. Descartada por criar de novo o terceiro estado, com a agravante de o gatilho ser
+um erro do PLANEJAMENTO (a previsão do checklist da WO), não da aplicação: bloquear o push punia
+quem aplicou por erro de quem escreveu. **O que fica no lugar:** divergência entre previsto e medido
+**não bloqueia**, mas é obrigatória em seção própria do relatório — e o relatório vem logo depois do
+push, então a visibilidade é preservada sem custar um turno.
+
+**Consequências.** A `apply-wo/SKILL.md` e a `wrap/SKILL.md` passam a dizer isso, e as duas foram
+entregues **inteiras pelo chat**, não por WO: são arquivos sob `.claude/`, e o classificador do
+Claude Code bloqueia o executor de alterar a própria configuração (medido na wo0054). O `CLAUDE.md`
+volta ao texto do kit. A DEC-032 continua válida no resto — as instruções sobem ao mount, e o
+relatório é o último passo.

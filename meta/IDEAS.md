@@ -76,16 +76,6 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
   `CEREBRO.md` e registramos a divergência como desvio — sem esperar mais. *(Registrado por causa
   da seção «Correspondência entre projetos», que entrou na wo0059: o que fica pendente do outro
   lado é nosso, não dele; carta esperando sem gatilho é como o projeto trava sem ninguém perceber.)*
-- **O formato do `_MANIFEST` promete um nome que não existe no mount.** Carta 01 do KCM
-  (2026-08-21), com dois pedidos. **(1)** O cabeçalho diz que a tabela mapeia cada nome plano de
-  volta ao caminho original — e para dotfile e nome com ponto interno ela mapeia um nome que **não
-  está lá**: o Projeto do Claude sanitiza no upload (ponto inicial → `_`, ponto interno → `_`, só a
-  extensão final sobrevive). Medido neste mount em 23/08: 3 de 38 (`.gitignore`,
-  `.flatdropignore`, `settings.local.json`); medido pelo KCM: 11 de 109 em dois repos. Quem busca
-  pelo nome declarado encontra ausência, que é indistinguível de «não subiu». **(2)** O mount
-  **zera o `mtime`** de todo arquivo (`1979-12-31`), então não há como saber qual arquivo mudou
-  entre duas gerações — só se o manifesto carregar o `mtime` da origem. Quatro opções mapeadas em
-  `meta/analises/260823-ANALISE-formato-do-manifesto.md` (Em discussão) — **decisão do autor.**
 - **Editor de `.flatdropignore` deve gravar `pasta/*`, não `pasta/`.** Causa raiz medida em
   DEC-025: `_scan` poda o diretório casado antes de descer, então um `!` dentro dele nunca é
   avaliado. Hoje o editor grava a forma `pasta/` e, ao salvar com um filho marcado, cai no
@@ -126,23 +116,6 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
 - **Drag-and-drop da pasta raiz na janela.** Arrastar a pasta em vez de navegar
   (exigiria tkinterdnd2 — pesar contra o princípio de zero dependências). (Stand-by.)
 
-- **FlatDrop grava o estado do repo no `_MANIFEST`.** Quando a raiz tem `.git`, rodar
-  `git log -1 --format=%h %ad %s --date=short` e um **resumo** de `git status` (`branch main ·
-  limpo` ou `branch main · 3 modificados · 2 não rastreados · 1 à frente de origin`) e escrever
-  as duas linhas no manifesto, rotuladas como **foto do momento da geração** — não como estado
-  atual. Valor: o mount é uma cópia achatada e não tem `.git`, então hoje o assistente não
-  consegue ler commit nenhum e precisa pedir. Com isso, a ressalva vira dado, e some uma regra
-  inteira do CEREBRO. Se quiser a lista de arquivos, `--porcelain` com teto (~20 + «(+N mais)»):
-  `git status` verboso é ruído e vaza nome de arquivo não rastreado. (Autor, notas de 2026-07-30
-  e 2026-08-01; refinos do assistente.)
-- **Contrabarra em padrão deveria ser detectada.** Sintaxe `.gitignore` usa só barra normal — a
-  contrabarra é escape, não separador —, então `!pasta\arquivo.json` não casa nada e o arquivo
-  sobe achando que foi ignorado. **Medido:** o gerador do bloco monta todo caminho com
-  `as_posix()`/`/` (`core.py` `_walk_leaves`, `annotate_children`, emissão de `pasta/*`), logo a
-  linha problemática veio de edição manual, não da ferramenta. A correção não é no gerador: é o
-  editor **avisar (ou normalizar)** ao ler linha manual com `\`. Só faz sentido depois que o
-  gerador passar a enxergar o que está fora do bloco — **mesma frente do bug do bloco
-  gerenciado**, não uma frente separada. (Nota de 2026-08-01.)
 - **A amostra do `_TREE` não responde «o arquivo X existe?».** A faixa da 0.14.0 mostra as duas
   pontas e conta o meio — ótimo para ver até onde a coleção vai, inútil para confirmar a presença
   de um arquivo nomeado. Custou caro nesta sessão: `meta/workorders/_TEMPLATE.md` cairia
@@ -236,6 +209,12 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
   bloco **por último** —, e dele saiu também a exigência de a GUI **mostrar de onde vem cada
   trava herdada**, que virou o rótulo `travada (manual)` na wo0047. As três partes estão
   entregues.)*
+- **O formato do `_MANIFEST` promete um nome que não existe no mount.** **ENTREGUE (DEC-030,
+  wo0051 + wo0055).** A tabela não mudou — continua descrevendo o disco —, e a divergência saiu num
+  bloco de exceções rotulado como **previsão**, com o próprio teste de falsificação dentro («se o
+  arquivo aparecer no Projeto com o nome da coluna 1, a regra mudou»). Depois a carta 03 do KCM
+  mediu que o bloco *chegava por busca, não por leitura*, e a wo0055 subiu a **contagem** para o
+  cabeçalho, sempre presente, inclusive com `0`. Medido: 3 de 39 aqui, 11 de 109 nos repos do KCM.
 - **Contrabarra em padrão deveria ser detectada.** **ENTREGUE na 0.15.0** (wo0047): o editor avisa
   na abertura e aponta arquivo e linha. Confirmado por medição que o gerador nunca emitiu `\` — as
   linhas vinham sempre de edição manual, e por isso a ferramenta **avisa em vez de normalizar**.

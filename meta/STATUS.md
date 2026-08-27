@@ -105,49 +105,14 @@ mensagem e não escreve nada.
    arquivo novo. **Análise em discussão:** `meta/analises/260728-ANALISE-gerador-flatdropignore.md`
    — três opções (B, C, D); a decisão depende de responder *arquivo novo em pasta curada entra ou
    fica fora?*.
-3. **Merge do KCM v1.120.0 — em curso, 3 fases.** O pacote chegou em 25/08 com a carta 03 (o
-   `CEREBRO.md` daqui marcava v1.95.0: 23 versões de distância). **Varredura de linhas revogadas:
-   23 ocorrências, 18 para remoção, 5 relato legítimo.** Duas coberturas, que medem coisas
-   diferentes e não se substituem:
-   - **arquivos do pacote comparados: 8 de 20** — faltam os 2 de `fusao` e os 10 modelos de `meta/`;
-   - **ocorrências corrigidas: 8 de 18** (esta WO) — e a varredura é **PARCIAL**: não alcançou
-     `logs/` nem `meta/workorders/`, que o `.flatdropignore` mantém fora do mount.
-   **Fase 2a (wo0056, feita):** as «Regras de higiene» do CEREBRO passaram de 8 para **18** bullets
-   (3.443 → 12.922 bytes, medido em 26/08), entrou a seção «Medição delegada», e o `CLAUDE.md`
-   ganhou «Quando eu pedir medição» e «Push e relatório» (esta com o desvio da DEC-032 escrito no
-   corpo). **Fase 2b (wo0058, feita):** «Bloco de fecho de turno», «Tabela de gatilhos» (+8 linhas)
-   e a seção «Ao final de cada sessão… entrega arquivos completos» substituída por «Ao final da
-   conversa, o assistente REGISTRA o que falta» — mais os títulos do ritual e da recomendação de
-   configuração. **As 4 ocorrências de «sessão» no CEREBRO foram a zero** — pelo padrão varrido;
-   a fase 2c achou mais 3, de outra forma («log de sessão», «entre sessões», «se a sessão mexeu»),
-   e as fechou. **Fase 2c (wo0059, feita):** entraram as seções «Sonda e exploração»,
-   «Correspondência entre projetos» e «Técnicas específicas deste projeto» — esta última com seis
-   itens reais deste projeto, não vazia. Mais o funil da análise (agora com sonda), o parágrafo
-   «o merge sabe somar, não sabe subtrair» e o bullet «princípio sem gatilho não dispara».
-   **O merge do KCM v1.120.0 está FECHADO (wo0054 a wo0061).** Coberturas finais: **20 de 20
-   arquivos do pacote comparados**; **18 de 18 ocorrências de linha revogada** tratadas (as 5 que
-   restam no repo são relato legítimo, não instrução). Fase 3: o `_TEMPLATE.md` de WO absorveu o
-   que sete WOs ensinaram (wo0060); os 11 modelos restantes foram comparados um a um na wo0061 e
-   renderam quatro adoções — «Última conversa» no `STATUS`, gatilho por evento no `LOG-TEMPLATE`,
-   as duas regras de manutenção no cabeçalho do `DECISIONS` e o critério de conclusão por fase no
-   `ROADMAP` — mais uma frase no modelo de análise. **CONTEXT, CHANGELOG, IDEAS, GLOSSARY, HISTORY
-   e SPEC não mudaram:** os nossos são mais ricos que os modelos, e a regra é que genérico não
-   substitui vivo. Dois desvios ficam registrados no `IDEAS`: o `IDEAS` não separa ideias por autor,
-   e o agrupamento do `GLOSSARY` ficou como ideia com gatilho. **Pendência:** uma passada de diff
-   sobre o `meta/workorders/_TEMPLATE.md`, cuja redação foi escrita daqui enquanto o pacote estava
-   fora do mount.
-   **wo0057 (feita):** corrigiu os dois números que a wo0056 tinha escrito errado — o `STATUS`
-   afirmava 16 bullets (real: **18**, já refletido acima) e o `IDEAS` ganhou a lição de método
-   (número de checklist é derivado do texto final da WO, nunca estimado antes dela; terceira
-   ocorrência da mesma falha em três WOs seguidas).
-   **Fase 1 (wo0054, feita):** `Write` no `settings.json`, as 3 linhas revogadas da `wrap/SKILL.md`,
-   a instrução obsoleta do `.flatdropignore`, `sessão`→`turno` no `CLAUDE.md`, e as 4 das
-   instruções — que passam a subir ao mount (DEC-032). **Fase 2 (a fazer):** fusão do
-   `meta/CEREBRO.md` (10 ocorrências vivas) com o template de 83 KB, mais as duas seções novas do
-   `CLAUDE.md` («Quando eu pedir medição» e «Push e relatório — nesta ordem»). **Fase 3:** os
-   modelos (`_TEMPLATE.md` de WO e de análise, e os 10 de `meta/`).
-   *(O raciocínio completo do merge está numa análise que o autor decidiu NÃO versionar — por isso
-   os números que importam estão aqui e na DEC-032, e não numa referência a arquivo.)*
+3. **Arquivar o `meta/DECISIONS.md`** em `DECISIONS-archive.md`. O arquivo passou de **69 KB e
+   1.400 linhas**, contra o teto de ~700 que agora está escrito no cabeçalho dele (wo0061). Precisa
+   de um critério de corte antes de virar WO — por data ou por fase encerrada —, e o critério é
+   decisão do autor.
+   *(O item que estava neste lugar, o **merge do KCM v1.120.0**, saiu: fechou em 27/08 nas quatro
+   fases, wo0054 a wo0061. 20 de 20 arquivos do pacote comparados, 18 de 18 ocorrências de linha
+   revogada tratadas. O porquê vive na **DEC-032** e na **DEC-033**; o que sobrou de pendência está
+   aqui como itens 7 e 8.)*
 4. **Mostrar a REGRA de ignore que casou**, não só a contagem por motivo. **Reforçado em 07/08**
    pela nota `260807-1324`: em projeto irmão, um `.xlsx` inteiro sumiu do achatamento por estar em
    pasta gitignorada e a ausência só foi notada sessões depois. A contagem por motivo já existe na
@@ -156,6 +121,12 @@ mensagem e não escreve nada.
 6. Adiadas, com gatilho de retorno em `IDEAS.md`: multi-raiz na GUI, `pasta/` como exclusão dura,
    UI-2/UI-3, formato «caminho escrito». *(A **saída da CLI ASCII-safe** deixou de ser adiada — o
    gatilho disparou em 02/08 e a curadoria de 23/08 a moveu para «Ativas».)*
+7. **Critérios de conclusão das quatro fases do `ROADMAP`.** A regra entrou no cabeçalho (wo0061);
+   os critérios em si precisam ser decididos com o autor — a Fase 2 está «quase concluída» há dois
+   meses, que é o sintoma de fase sem critério.
+8. **Passada de diff sobre o `meta/workorders/_TEMPLATE.md`.** A redação dele foi escrita daqui
+   (wo0060) enquanto o pacote estava fora do mount; o pacote voltou, e vale conferir se o kit tem
+   formulação melhor. Barato.
 
 ## Riscos / pontos de atenção
 
