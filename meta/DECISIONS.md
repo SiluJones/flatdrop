@@ -4,7 +4,7 @@ Registro de decisões de arquitetura (ADR enxuto). Cada entrada: contexto, decis
 e consequência. Decisões não se reescrevem — se mudarem, adicione uma nova que
 supersede a anterior e marque a antiga como **SUPERADA por DEC-N**.
 **Quando passar de ~700 linhas, mova as mais antigas para `DECISIONS-archive.md`** — este arquivo
-já passou de 1.400, e o arquivamento está no backlog do `STATUS`.
+tem **1.124 linhas** (medido em 2026-08-27), e o arquivamento está no backlog do `STATUS`.
 
 ---
 

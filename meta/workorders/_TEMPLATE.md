@@ -22,6 +22,9 @@
 > turno. Nao vale "li o arquivo": diga a primeira linha de cada ancora, ou diga que o script as
 > extraiu. **Quem aplica pode recusar a WO se este campo vier vazio:** quem escreveu a WO e quem
 > tem o vies, e a conferencia e de quem aplica justamente por isso.
+> **Afirmacao sobre artefato legivel nao e opiniao, e leitura** — o que uma ferramenta faz, o que um
+> simbolo contem, em que estado esta o mount. Nao cite simbolo, caminho ou capacidade de ferramenta
+> que voce nao leu NESTE turno; dizer "nao li" nao autoriza escrever a WO em cima.
 > **Proximo comando:** a linha `/apply-wo ...` da PROXIMA WO, crua e sozinha, ou "nao ha".
 > **Ancora semantica:** se um trecho-ancora nao bater EXATAMENTE, **PARE e reporte** — nunca chute um
 > lugar proximo. Os arquivos podem ter mudado entre a escrita desta WO e a aplicacao.
@@ -46,6 +49,23 @@ por WO anterior, diga qual e assuma — historico honesto e o que impede repetir
 [Os fatos que os textos das edicoes afirmam, na ordem em que aconteceram. Esta secao e a FONTE dos
 blocos abaixo: fato que nao esta aqui nao deveria aparecer la. Marque o que foi **medido** e o que e
 **deduzido** — inferencia sem rotulo vira fato na leitura seguinte.]
+
+---
+
+## Inventario — de onde saiu a lista de edicoes *(apague se a WO tem uma edicao so)*
+
+[Quando as edicoes abaixo sao **todos os lugares** que precisam mudar, diga como voce achou esses lugares.
+Lista feita de cabeca, ou herdada do texto de quem apontou o problema, ja custou caro: o que ficou de fora
+fica invisivel dos dois lados, porque a correcao e a conferencia saem do mesmo inventario incompleto.]
+
+- **Saiu do artefato, nao da memoria.** A pergunta e sempre "que lugares declaram esta grandeza?", feita ao
+  codigo. Grepe o **fato**, nao a frase: o mesmo campo aparece com outro nome de variavel, e a mesma regra
+  aparece parafraseada. Procure o termo literal, a parafrase, e as listas de pendencia.
+- **Nao truncar.** Nada de `head`, nada de "os principais". Inventario paginado e inventario errado, e o
+  item que ficou de fora e justamente o que ninguem vai procurar depois.
+- **Declare quantos.** Escreva o numero de pontos encontrados — "onze lugares montam este caminho" — para
+  que quem aplica possa **contestar a contagem antes de agir**. Ja foi assim que um inventario truncado foi
+  pego: a WO dizia onze, o executor achou doze. A contagem e a rede; a proibicao do `head` sozinha nao pega.
 
 ---
 
@@ -87,11 +107,19 @@ vez de empilhar num bloco so — cada uma com a propria ancora.]
 [O que esta WO deliberadamente NAO faz, para que quem aplica nao "aproveite a viagem". Melhoria que
 voce enxergou no caminho vira ideia no IDEAS ou outra WO — nao entra aqui.]
 
+## Medicao previa *(so quando houver; nao e edicao)*
+
+[So quando esta WO depender de um numero que a raia de planejamento nao pode ler. Diga O QUE contar e o
+comando sugerido; peca de volta o valor e o comando que o produziu, sem interpretacao. Isto NAO tem ancora,
+NAO tem commit e NAO muda arquivo — se a medicao contrariar o que a WO assume, PARE antes de editar e relate.]
+
 ## Armadilhas desta WO
 
 [So quando houver. O que ja deu errado antes neste mesmo lugar e o que quem aplica pode quebrar sem
 perceber: ancora que aparece duas vezes, arquivo com fim de linha CRLF (ancora multi-linha colada com
-\n nao casa), bloco gerado que sera reescrito, numero de check ja usado.]
+\n nao casa), bloco gerado que sera reescrito, numero de check ja usado. Contra o CRLF a saida e
+sempre a mesma: ancora de UMA linha nao tem quebra dentro, entao o fim de linha nao morde — para
+inserir varias linhas, ancore em UMA so e diga se o texto novo entra antes ou depois dela.]
 
 ---
 

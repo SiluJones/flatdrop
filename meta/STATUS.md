@@ -46,22 +46,31 @@ daqui e vira `CHANGELOG`/`DECISIONS`). **Médio e longo prazo não ficam aqui �
 - **Contorno revogado:** o «use a curadoria manual OU o editor, nunca os dois» **não vale mais**.
   Respeitada a anatomia normativa (DEC-029), os dois convivem no mesmo arquivo.
 
-## ⏳ Pendente de validação visual no Windows
+## ⏳ Validação visual no Windows — 2 de 3 conferidos em 27/08
 
-O ambiente do Claude Code não tem display do Windows, então a **lógica** dos três foi exercitada e
-passou, mas **ninguém viu a tela**. É o primeiro gesto de quem retomar, e leva cinco minutos:
+**[relatado pelo dono, com print]** O dono rodou a GUI e o editor de `.flatdropignore` sobre **outro
+repositório** (um projeto com `meta/`, `src/`, `.githooks/` — não o FlatDrop) e mandou três capturas.
+O que elas mostram:
 
-1. **`travada (manual)`** — abrir o editor num projeto com pasta fechada por linha manual e
-   conferir a coluna «Arquivo novo». (`source(pasta/__flatdrop_arquivo_novo__)` já devolve
-   `flatdropignore` corretamente — o que falta é ver o rótulo.)
-2. **Aviso de contrabarra** — pôr uma linha com `\` num `.flatdropignore`, abrir o editor: o
-   aviso deve aparecer com arquivo e linha; corrigir para `/` e reabrir: sem aviso.
-3. **`askyesno` de regra depois do bloco** — escrever uma regra depois do marcador de fechamento
-   e salvar: deve perguntar antes de mover o bloco para o fim.
+1. **`travada (manual)` — CONFIRMADO.** Na coluna «Arquivo novo», `logs`, `meta/analises` e
+   `meta/workorders` aparecem com o rótulo `travada (manual)`, e `.claude`, `.githooks`, `meta` e
+   `src` com `entra`. É a entrega da wo0047 funcionando na tela, com a trava por pasta (DEC-027)
+   visível ao lado.
+2. **`askyesno` de regra depois do bloco — NÃO exercitado.** Não havia regra escrita depois do
+   marcador de fechamento no arquivo testado, então o diálogo não tinha por que aparecer.
+3. **Aviso de contrabarra — NÃO exercitado**, pelo mesmo motivo: o `.flatdropignore` daquele projeto
+   não tem nenhuma linha com `\`.
 
-E, no mesmo passo, o smoke da wo0045: salvar sem mexer em nada e conferir que o arquivo **não**
-ganhou linha em branco no fim; duplicar o bloco à mão e conferir que o salvamento **recusa** com
-mensagem e não escreve nada.
+**O que falta, e é o gesto de cinco minutos:** num `.flatdropignore` de teste, pôr uma linha com `\`
+e abrir o editor (o aviso deve trazer arquivo e linha; corrigir para `/` e reabrir: sem aviso), e
+escrever uma regra depois do marcador de fechamento e salvar (deve perguntar antes de mover o bloco
+para o fim). No mesmo passo, o smoke da wo0045: salvar sem mexer em nada e conferir que o arquivo
+**não** ganhou linha em branco no fim; duplicar o bloco à mão e conferir que o salvamento **recusa**
+com mensagem e não escreve nada.
+
+> **Por que os dois que faltam não são «quase o mesmo teste»:** os três caminhos são independentes
+> no código — o rótulo vem de `source()`, o aviso vem do parser de padrões e o `askyesno` vem do
+> salvamento. Ver um funcionar não diz nada sobre os outros dois.
 
 ## ✅ O que funciona (além do MVP)
 
@@ -99,14 +108,16 @@ mensagem e não escreve nada.
 
 ## Em aberto (produto) — backlog curto, na ordem sugerida
 
-1. **Validar na tela os três comportamentos novos** (seção «Pendente de validação visual»).
+1. **Fechar a validação visual** — 2 dos 3 comportamentos foram confirmados em 27/08 (ver a seção
+   «Validação visual no Windows»). Faltam o **aviso de contrabarra** e o **`askyesno` de regra depois
+   do bloco**, que precisam de um `.flatdropignore` de teste montado de propósito.
 2. **Editor deve gravar `pasta/*` + `!mantido`** em vez de listar a pasta parcial por folha.
    Depois do FIX-011 deixou de ser bloqueio, mas a lista por folha continua não sendo à prova de
    arquivo novo. **Análise em discussão:** `meta/analises/260728-ANALISE-gerador-flatdropignore.md`
    — três opções (B, C, D); a decisão depende de responder *arquivo novo em pasta curada entra ou
    fica fora?*.
-3. **Arquivar o `meta/DECISIONS.md`** em `DECISIONS-archive.md`. O arquivo passou de **69 KB e
-   1.400 linhas**, contra o teto de ~700 que agora está escrito no cabeçalho dele (wo0061). Precisa
+3. **Arquivar o `meta/DECISIONS.md`** em `DECISIONS-archive.md`. O arquivo tem **69 KB e 1.124
+   linhas** (medido em 27/08, `wc -l`), contra o teto de ~700 que agora está escrito no cabeçalho dele (wo0061). Precisa
    de um critério de corte antes de virar WO — por data ou por fase encerrada —, e o critério é
    decisão do autor.
    *(O item que estava neste lugar, o **merge do KCM v1.120.0**, saiu: fechou em 27/08 nas quatro
@@ -124,9 +135,12 @@ mensagem e não escreve nada.
 7. **Critérios de conclusão das quatro fases do `ROADMAP`.** A regra entrou no cabeçalho (wo0061);
    os critérios em si precisam ser decididos com o autor — a Fase 2 está «quase concluída» há dois
    meses, que é o sintoma de fase sem critério.
-8. **Passada de diff sobre o `meta/workorders/_TEMPLATE.md`.** A redação dele foi escrita daqui
-   (wo0060) enquanto o pacote estava fora do mount; o pacote voltou, e vale conferir se o kit tem
-   formulação melhor. Barato.
+8. **~~Passada de diff sobre o `meta/workorders/_TEMPLATE.md`~~ — FEITA em 27/08 (wo0063).** O
+   pacote voltou ao mount e a comparação rendeu três adoções: as seções **«Inventário»** e
+   **«Medição prévia»**, e o parágrafo *«afirmação sobre artefato legível não é opinião, é
+   leitura»*. Os dois blocos que este projeto escreveu sozinho (extrair âncora por script; a âncora
+   cobre o que o texto novo torna redundante) **não existem no kit** e ficaram — voltam ao KCM na
+   próxima carta.
 
 ## Riscos / pontos de atenção
 
@@ -149,10 +163,11 @@ mensagem e não escreve nada.
 
 ## Última conversa
 
-**2026-08-27** — o merge do KCM v1.120.0 fechou nas quatro fases (wo0054 a wo0061); o `CEREBRO.md`,
-o `CLAUDE.md`, as duas skills, as Instruções e os 12 modelos estão alinhados com o kit. **Onde
-parou:** nada em curso. **Próximo passo óbvio:** a validação visual no Windows, que é o item 1 do
-backlog e a única coisa entregue desde a 0.15.0 que ninguém viu na tela.
+**2026-08-27** — o merge do KCM v1.120.0 fechou (wo0054–wo0061), o desvio do push foi revogado
+(DEC-033, wo0062) e a última pendência do merge — a passada de diff no modelo de WO — fechou na
+wo0063. **Onde parou:** nada em curso; o kit está inteiro e o produto não anda desde 25/08.
+**Próximo passo óbvio:** decidir *arquivo novo em pasta curada entra ou fica fora?* — é a análise
+mais antiga em aberto (28/07) e destrava o item 2 do backlog e a Fase 2 do ROADMAP.
 
 > **Como manter esta seção:** 2 a 4 linhas, reescritas por inteiro a cada turno que mexer no
 > projeto — o que foi feito, **onde parou** e o **próximo passo óbvio**. É a primeira coisa que se
