@@ -409,6 +409,21 @@ Registro do que ESTE projeto observou/mudou além do kit (material que volta par
   vivem no nosso arquivo desde a v1.95.0. Não é conteúdo novo nem reorganização: é bloco deslocado.
   Quem aplicasse o template ao pé da letra duplicaria os cinco no fecho e os perderia no Refino. A
   fase 2b os retirou do texto adotado, de propósito, e isto volta ao kit como defeito de pacote.
+- **Desvio registrado: o `IDEAS.md` deste projeto NÃO separa «Ativas — Usuário» de «Ativas —
+  Assistente».** O modelo v1.120.0 propõe as duas seções, com o argumento de que ajuda a lembrar de
+  onde veio cada coisa. Aqui a origem viaja **dentro do item** («Ideia do usuário, nota
+  `260717-1338`», «nasceu do diagnóstico»), e isso funciona melhor para o caso comum deste projeto,
+  que é ideia de autoria mista — o usuário levanta o atrito, o assistente propõe a forma. Com duas
+  seções, esse item teria de escolher um lado ou ser duplicado, e mudaria de seção conforme quem
+  falou por último. **Mantido como está, de propósito, e registrado aqui para que o próximo merge
+  não proponha isto como lacuna.**
+- **Agrupar o `GLOSSARY.md` em seções.** O arquivo tem 15,8 KB e **nenhum `##`**: achar um termo é
+  varrer o texto inteiro. O modelo v1.120.0 sugere quatro baldes (conceitos · arquiteturas e
+  módulos · comandos e artefatos · identificadores) e eles cabem bem no nosso vocabulário. Não
+  entrou no merge porque **reorganizar 40 e poucos termos é edição do nosso conteúdo, não adoção de
+  modelo** — e edição desse tamanho merece uma passada própria, não um item no fim de uma WO de
+  fechamento. **Volta quando** alguém não achar um termo que sabe que está lá, ou na próxima vez que
+  o arquivo crescer.
 - **Número de checklist é DERIVADO do texto da WO, nunca estimado antes dela.** Terceira
   ocorrência da mesma falha em três WOs seguidas, o que já a qualifica como padrão e não como
   descuido: a wo0055 mandou trocar `118` em três lugares quando dois eram estado e um era registro

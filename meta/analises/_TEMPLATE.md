@@ -5,6 +5,10 @@
 - **Decisão registrada em:** DEC-NNN / FIX-NNN (preencher quando houver)
 - **Virou:** wo00NN / spec de feature / nada (preencher depois)
 
+> Análise é para quando a pergunta ainda é do dono. Se ele já decidiu o QUÊ, isto não é análise: é
+> decisão registrada + ordem de trabalho. E **se a leitura derrubar a premissa que disparou tudo,
+> PARE** — o achado técnico vai para as armadilhas da WO, não volta como pergunta.
+
 ## Problema
 
 O que dói, para quem, e o que acontece se nada for feito. Sintoma observado, não teoria.

@@ -1,7 +1,7 @@
 # STATUS — FlatDrop
 
-Estado atual do projeto. Atualize ao fim de cada sessão de trabalho (rolante: o
-resolvido sai daqui e vira `CHANGELOG`/`DECISIONS`).
+Estado atual do projeto. Atualize **a cada turno em que algo mudar** (rolante: o resolvido sai
+daqui e vira `CHANGELOG`/`DECISIONS`). **Médio e longo prazo não ficam aqui — ficam no `ROADMAP`.**
 
 > **Mudanças nesta revisão (2026-08-24) — quatro WOs e o fim do ciclo da carta 01:**
 >
@@ -124,13 +124,18 @@ mensagem e não escreve nada.
    «Correspondência entre projetos» e «Técnicas específicas deste projeto» — esta última com seis
    itens reais deste projeto, não vazia. Mais o funil da análise (agora com sonda), o parágrafo
    «o merge sabe somar, não sabe subtrair» e o bullet «princípio sem gatilho não dispara».
-   **O merge do CEREBRO está fechado. Fase 3 (parcial, wo0060):** o `meta/workorders/_TEMPLATE.md`
-   absorveu o que sete WOs seguidas ensinaram — campos «Âncoras lidas em» e «Próximo comando», a
-   regra de extrair âncora por script e de a âncora cobrir o que o texto novo torna redundante, e
-   os três campos de todo passo de conferência. **Escrito daqui, não copiado:** o pacote saiu do
-   mount antes desta fase, então a redação é nossa e os nomes dos campos vieram do que ficou
-   registrado na comparação de 25/08. **Falta:** os 11 modelos restantes e uma passada de diff
-   sobre o `_TEMPLATE.md` de WO quando o pacote voltar.
+   **O merge do KCM v1.120.0 está FECHADO (wo0054 a wo0061).** Coberturas finais: **20 de 20
+   arquivos do pacote comparados**; **18 de 18 ocorrências de linha revogada** tratadas (as 5 que
+   restam no repo são relato legítimo, não instrução). Fase 3: o `_TEMPLATE.md` de WO absorveu o
+   que sete WOs ensinaram (wo0060); os 11 modelos restantes foram comparados um a um na wo0061 e
+   renderam quatro adoções — «Última conversa» no `STATUS`, gatilho por evento no `LOG-TEMPLATE`,
+   as duas regras de manutenção no cabeçalho do `DECISIONS` e o critério de conclusão por fase no
+   `ROADMAP` — mais uma frase no modelo de análise. **CONTEXT, CHANGELOG, IDEAS, GLOSSARY, HISTORY
+   e SPEC não mudaram:** os nossos são mais ricos que os modelos, e a regra é que genérico não
+   substitui vivo. Dois desvios ficam registrados no `IDEAS`: o `IDEAS` não separa ideias por autor,
+   e o agrupamento do `GLOSSARY` ficou como ideia com gatilho. **Pendência:** uma passada de diff
+   sobre o `meta/workorders/_TEMPLATE.md`, cuja redação foi escrita daqui enquanto o pacote estava
+   fora do mount.
    **wo0057 (feita):** corrigiu os dois números que a wo0056 tinha escrito errado — o `STATUS`
    afirmava 16 bullets (real: **18**, já refletido acima) e o `IDEAS` ganhou a lição de método
    (número de checklist é derivado do texto final da WO, nunca estimado antes dela; terceira
@@ -168,3 +173,17 @@ mensagem e não escreve nada.
 - **Hábito da pausa:** `git push` antes de fechar a sessão. O remoto
   (`github.com:SiluJones/flatdrop.git`) rastreia a `main` desde 21/07, então o `git status` avisa
   sozinho quando houver commit local não enviado.
+
+---
+
+## Última conversa
+
+**2026-08-27** — o merge do KCM v1.120.0 fechou nas quatro fases (wo0054 a wo0061); o `CEREBRO.md`,
+o `CLAUDE.md`, as duas skills, as Instruções e os 12 modelos estão alinhados com o kit. **Onde
+parou:** nada em curso. **Próximo passo óbvio:** a validação visual no Windows, que é o item 1 do
+backlog e a única coisa entregue desde a 0.15.0 que ninguém viu na tela.
+
+> **Como manter esta seção:** 2 a 4 linhas, reescritas por inteiro a cada turno que mexer no
+> projeto — o que foi feito, **onde parou** e o **próximo passo óbvio**. É a primeira coisa que se
+> lê para retomar o fio, e ela é alimentada pelo «Onde parei» do log do dia. Não vire lista: se
+> precisar de mais de quatro linhas, o excesso pertence ao log ou ao backlog.

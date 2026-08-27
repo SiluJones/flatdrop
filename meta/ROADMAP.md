@@ -2,6 +2,8 @@
 
 Direção do projeto por fases. Sem datas: a ordem importa mais que o calendário.
 Itens em aberto vêm de `IDEAS.md`; ao concluir, registre em `CHANGELOG.md`.
+**Cada fase declara um objetivo e um critério de conclusão** — fase sem critério não fecha, só
+envelhece. Marque o estado no título: ✅ concluída · 🟡 em curso/próxima · 🔵 futura · 🚫 descartada.
 
 > **Mudanças nesta revisão (2026-08-01):** leva **0.12.0 → 0.14.0** absorvida na Fase 2 —
 > **FIX-011** (a negação `!` volta a resgatar arquivo dentro de pasta ignorada), a **trava por
