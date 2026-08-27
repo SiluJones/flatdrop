@@ -60,15 +60,22 @@ vira item do roadmap; implementada vai para "Concluídas"; recusada vai para
 ## Ativas
 
 
-> **Foco (2026-08-23):** a 0.15.0 fechou o único bug aberto e o repo ficou 20 dias parado
-> (`8913a39`, 02/08). A frente atual **não é código do produto**: é a **carta 01 do KCM sobre o
-> formato do `_MANIFEST`** — o nome plano declarado na tabela não existe no mount para dotfile e
-> nome com ponto interno (medido: 3 de 38 aqui, 11 de 109 lá), e falta `mtime` por arquivo. A
-> análise está em `meta/analises/260823-ANALISE-formato-do-manifesto.md`, «Em discussão», e para
-> num ponto de decisão do autor. Em paralelo, a **wo0050** completa a linha de git do manifesto
-> (`behind` e «sem upstream»), que já tinha o `ahead` desde a wo0048. Seguem esperando decisão do
-> autor, sem prazo: o gerador (`pasta/*` + `!mantido`) e a multi-raiz na GUI.
+> **Foco (2026-08-26):** o merge do KCM **v1.120.0** consumiu a semana e está na última fatia — o
+> `CEREBRO.md` fechou na wo0059; sobram os **12 modelos** do pacote (fase 3), que é a parte mais
+> mecânica. Do ciclo anterior, a carta 01 do KCM está inteiramente respondida: item 1 entregue
+> (DEC-030), item 3 entregue (wo0050) e item 2 **recusado com contraproposta entregue** (DEC-031).
+> Seguem esperando **decisão do autor, sem prazo**: o gerador (`pasta/*` + `!mantido`) e a
+> multi-raiz na GUI. E segue **sem resposta** a nossa carta 04 — ver o item com gatilho abaixo.
 
+- **Carta 04 ao KCM, enviada em 26/08 e ainda sem resposta.** Ela devolve que a regra «o relatório
+  lidera, sempre» só vale numa direção: quando o dono commita entre relatórios — o que aqui é
+  rotina —, o manifesto fica com o commit mais novo, e a regra manda concluir que a cópia está
+  atrasada justamente quando ela é a única em dia. A proposta é trocar a suposição por medição:
+  **compare os dois carimbos, o mais recente vence**. **Gatilho:** se não vier resposta até
+  **2026-09-09** (duas semanas), adotamos a regra por conta neste projeto, escrevemos a linha no
+  `CEREBRO.md` e registramos a divergência como desvio — sem esperar mais. *(Registrado por causa
+  da seção «Correspondência entre projetos», que entrou na wo0059: o que fica pendente do outro
+  lado é nosso, não dele; carta esperando sem gatilho é como o projeto trava sem ninguém perceber.)*
 - **O formato do `_MANIFEST` promete um nome que não existe no mount.** Carta 01 do KCM
   (2026-08-21), com dois pedidos. **(1)** O cabeçalho diz que a tabela mapeia cada nome plano de
   volta ao caminho original — e para dotfile e nome com ponto interno ela mapeia um nome que **não

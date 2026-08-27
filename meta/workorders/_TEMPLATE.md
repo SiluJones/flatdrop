@@ -18,6 +18,11 @@
 > **Pre-requisito:** versao/commit em que esta WO foi escrita, e o estado esperado (testes verdes, arvore limpa).
 > **Base:** a decisao, a analise ou a conversa que originou.
 > **Depende de:** WOs que precisam estar aplicadas antes — ou apague a linha.
+> **Ancoras lidas em:** *(obrigatorio)* de onde saiu cada ancora — arquivo e trecho — LIDOS NESTE
+> turno. Nao vale "li o arquivo": diga a primeira linha de cada ancora, ou diga que o script as
+> extraiu. **Quem aplica pode recusar a WO se este campo vier vazio:** quem escreveu a WO e quem
+> tem o vies, e a conferencia e de quem aplica justamente por isso.
+> **Proximo comando:** a linha `/apply-wo ...` da PROXIMA WO, crua e sozinha, ou "nao ha".
 > **Ancora semantica:** se um trecho-ancora nao bater EXATAMENTE, **PARE e reporte** — nunca chute um
 > lugar proximo. Os arquivos podem ter mudado entre a escrita desta WO e a aplicacao.
 > **Idempotencia:** antes de cada insercao, procure a frase-chave do texto NOVO. Se ja existir, **PULE**
@@ -51,6 +56,14 @@ blocos abaixo: fato que nao esta aqui nao deveria aparecer la. Marque o que foi 
 ```
 [trecho literal e unico do arquivo vivo, copiado sem reformatar]
 ```
+
+> **Extraia a ancora do arquivo, nao a digite.** Um script que le o trecho vivo e o cola aqui erra
+> zero; a mao, erra em quebra de linha, acento e barra invertida. Depois de montar a WO, rode o
+> mesmo script no sentido inverso: cada ancora tem de ser encontrada, literal, no arquivo vivo.
+> **A ancora precisa cobrir tudo o que o texto novo torna redundante.** Ancora de uma linha so e
+> segura quando o substituto fala so daquela linha; se o texto novo reescreve o paragrafo, a
+> ancora e o paragrafo. Senao sobram linhas orfas dizendo em versao velha o que a nova ja diz — e
+> quem aplica tem de decidir sozinho apaga-las, que e decisao que uma WO nao deveria delegar.
 
 **Substituir por:**
 
@@ -86,6 +99,24 @@ perceber: ancora que aparece duas vezes, arquivo com fim de linha CRLF (ancora m
 
 - [ ] `git diff` mostra **exatamente** os arquivos previstos, e nada alem.
 - [ ] [Conferencia de forma especifica desta WO — ex.: "a entrada nova ficou dentro da secao certa".]
+
+> **Todo passo de conferencia diz TRES coisas:** quem executa (voce ou o autor), o numero cru
+> esperado, e **qual das duas perguntas ele responde** — *"esta la?"* (existencia) ou *"presta?"*
+> (aptidao). Verde de existencia lido como verde de aptidao ja passou por aqui: contar arquivo nao
+> abre arquivo.
+>
+> **Numero de conferencia e MEDIDO no texto final da WO, nunca estimado antes dele.** Cinco WOs
+> seguidas erraram contagem por isso — `118` em tres lugares quando dois eram estado e um era
+> registro datado; "16 bullets" que eram 18; `grep -> 0` num arquivo onde o proprio texto novo
+> citava o termo; "18 linhas de tabela" que eram 18 mas por outro motivo; "2 ocorrencias de sess"
+> que viraram 3 porque a propria WO introduziu a terceira. Meca DEPOIS de fechar as edicoes,
+> contando tambem **o que a WO acrescenta**. Onde as ancoras ja saem por script, as contagens saem
+> do mesmo script.
+>
+> **`grep` casa por LINHA.** Frase quebrada em duas linhas devolve zero, e zero vira "nao existe"
+> na leitura seguinte. Quando o termo pode estar quebrado, procure a palavra mais rara dele.
+>
+> **A propria WO entra no `git add`** — ela e o registro de por que o commit tem essa forma.
 - [ ] **WO de codigo:** `python -m pytest -q` passa com **0 erros**. Se acusar erro, **PARE e reporte
       antes de commitar**.
 - [ ] **WO so de doc:** nao precisa de suite — a rede e o `git diff`.

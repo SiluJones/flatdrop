@@ -124,7 +124,13 @@ mensagem e não escreve nada.
    «Correspondência entre projetos» e «Técnicas específicas deste projeto» — esta última com seis
    itens reais deste projeto, não vazia. Mais o funil da análise (agora com sonda), o parágrafo
    «o merge sabe somar, não sabe subtrair» e o bullet «princípio sem gatilho não dispara».
-   **O merge do CEREBRO está fechado. Fase 3 (a fazer):** os 12 modelos do pacote.
+   **O merge do CEREBRO está fechado. Fase 3 (parcial, wo0060):** o `meta/workorders/_TEMPLATE.md`
+   absorveu o que sete WOs seguidas ensinaram — campos «Âncoras lidas em» e «Próximo comando», a
+   regra de extrair âncora por script e de a âncora cobrir o que o texto novo torna redundante, e
+   os três campos de todo passo de conferência. **Escrito daqui, não copiado:** o pacote saiu do
+   mount antes desta fase, então a redação é nossa e os nomes dos campos vieram do que ficou
+   registrado na comparação de 25/08. **Falta:** os 11 modelos restantes e uma passada de diff
+   sobre o `_TEMPLATE.md` de WO quando o pacote voltar.
    **wo0057 (feita):** corrigiu os dois números que a wo0056 tinha escrito errado — o `STATUS`
    afirmava 16 bullets (real: **18**, já refletido acima) e o `IDEAS` ganhou a lição de método
    (número de checklist é derivado do texto final da WO, nunca estimado antes dela; terceira
